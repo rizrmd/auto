@@ -22,7 +22,7 @@ export function App() {
       </div>
       <Card>
         <CardHeader className="gap-4">
-          <CardTitle className="text-3xl font-bold">joni</CardTitle>
+          <CardTitle className="text-3xl font-bold">Halo Auto Lumiku</CardTitle>
           <CardDescription>
             Auto-redeploy enabled! Changes push automatically.
           </CardDescription>
