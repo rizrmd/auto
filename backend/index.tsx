@@ -132,7 +132,10 @@ app.get('*', async (c) => {
       contentType = 'application/json';
     }
 
-    return new Response(distFile, {
+    // FIX: Read file content explicitly to avoid empty response
+    const fileContent = await distFile.arrayBuffer();
+
+    return new Response(fileContent, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': path.match(/\.[a-f0-9]{8}\.(js|css)$/)
@@ -157,7 +160,10 @@ app.get('*', async (c) => {
       contentType = 'image/jpeg';
     }
 
-    return new Response(frontendFile, {
+    // FIX: Read file content explicitly
+    const fileContent = await frontendFile.arrayBuffer();
+
+    return new Response(fileContent, {
       headers: {
         'Content-Type': contentType,
       },
@@ -166,7 +172,8 @@ app.get('*', async (c) => {
 
   // For all other routes, serve index.html (SPA routing)
   const indexFile = Bun.file('./frontend/dist/index.html');
-  return new Response(indexFile, {
+  const indexContent = await indexFile.arrayBuffer();
+  return new Response(indexContent, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       'Cache-Control': 'no-cache',
@@ -200,8 +207,9 @@ app.notFound(async (c) => {
   }
 
   // For non-API routes, serve the frontend (SPA fallback)
-  const indexFile = Bun.file('./frontend/index.html');
-  return new Response(indexFile, {
+  const indexFile = Bun.file('./frontend/dist/index.html');
+  const indexContent = await indexFile.arrayBuffer();
+  return new Response(indexContent, {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
     },
