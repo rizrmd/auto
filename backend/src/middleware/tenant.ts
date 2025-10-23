@@ -41,28 +41,31 @@ function extractDomain(c: Context): { domain: string; type: 'subdomain' | 'custo
     }
   }
 
-  // Check if it's a subdomain of main domain
-  // e.g., dealer1.autoleads.com -> dealer1
+  // For testing/development: Use full hostname as is
+  // This allows auto.lumiku.com to match subdomain = 'auto.lumiku.com'
+  // In production, you'd implement proper subdomain extraction logic
+
+  // For now, just use the full hostname
+  // Check if it looks like a subdomain (e.g., dealer1.autoleads.com)
   const parts = hostname.split('.');
   if (parts.length >= 3) {
-    // Subdomain case: dealer1.autoleads.com
-    const subdomain = parts[0];
+    // Could be subdomain like: dealer1.autoleads.com
+    // But for development, treat full hostname as subdomain
     return {
-      domain: subdomain,
+      domain: hostname,
       type: 'subdomain',
     };
   }
 
-  // Check if it's a custom domain
-  // e.g., dealer.com
-  if (parts.length >= 2) {
+  // Check if it's a custom domain (2 parts: domain.com)
+  if (parts.length === 2) {
     return {
       domain: hostname,
       type: 'customDomain',
     };
   }
 
-  // Fallback - treat as subdomain
+  // Fallback - treat full hostname as subdomain
   return {
     domain: hostname,
     type: 'subdomain',
