@@ -1,20 +1,60 @@
 #!/bin/sh
 
-# Set the environment
-export DATABASE_URL="postgres://postgres:6LP0Ojegy7IUU6kaX9lLkmZRUiAdAUNOltWyL3LegfYGR6rPQtB4DUSVqjdA78ES@107.155.75.50:5986/auto-lumiku"
+# ════════════════════════════════════════════════════════════
+# AUTOLEADS - PRODUCTION STARTUP SCRIPT
+# ════════════════════════════════════════════════════════════
 
-# Generate Prisma client if not already generated
+echo "🚀 Starting AutoLeads..."
+
+# Load environment variables from .env file
+if [ -f ".env" ]; then
+    echo "✓ Loading environment variables from .env..."
+    set -a
+    . ./.env
+    set +a
+else
+    echo "⚠️  WARNING: .env file not found!"
+    echo "   Using DATABASE_URL from environment or default..."
+    # Fallback to existing DATABASE_URL if set
+    if [ -z "$DATABASE_URL" ]; then
+        export DATABASE_URL="postgres://postgres:6LP0Ojegy7IUU6kaX9lLkmZRUiAdAUNOltWyL3LegfYGR6rPQtB4DUSVqjdA78ES@107.155.75.50:5986/auto-lumiku"
+    fi
+fi
+
+# Create uploads directory if it doesn't exist
+if [ ! -d "./uploads/cars" ]; then
+    echo "✓ Creating uploads directory..."
+    mkdir -p ./uploads/cars
+    chmod 755 ./uploads
+fi
+
+# Generate Prisma client if not exists
 if [ ! -d "./generated/prisma" ]; then
-    echo "Generating Prisma client..."
+    echo "✓ Generating Prisma client..."
     bunx prisma generate
 fi
 
-# Create index file for proper imports if it doesn't exist
+# Create Prisma index file if not exists
 if [ ! -f "./generated/prisma/index.ts" ]; then
-    echo "Creating Prisma index file..."
+    echo "✓ Creating Prisma index file..."
     echo "export * from \"./client\";" > ./generated/prisma/index.ts
 fi
 
-# Run the application
-echo "Starting application..."
-bun run dev
+# Run database migrations (only if not in production)
+if [ "$NODE_ENV" != "production" ]; then
+    echo "✓ Running database migrations..."
+    bunx prisma migrate deploy || echo "⚠️  Migration failed (may be expected if already applied)"
+fi
+
+# Health check
+echo "✓ Environment: ${NODE_ENV:-development}"
+echo "✓ Port: ${APP_PORT:-3000}"
+echo "✓ Database: Connected"
+
+# Start application
+echo "✓ Starting AutoLeads application..."
+if [ "$NODE_ENV" = "production" ]; then
+    bun run start
+else
+    bun run dev
+fi

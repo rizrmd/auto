@@ -1,11 +1,8 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
-  provider = "prisma-client"
+  provider = "prisma-client-js"
   output   = "../generated/prisma"
 }
 
@@ -14,28 +11,330 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ============================================
+// TENANTS (SHOWROOMS)
+// ============================================
+
+model Tenant {
+  id                        Int       @id @default(autoincrement())
+
+  // IDENTITY
+  name                      String    @db.VarChar(200)
+  slug                      String    @unique @db.VarChar(100)
+
+  // DOMAINS
+  subdomain                 String    @unique @db.VarChar(200)
+  customDomain              String?   @unique @map("custom_domain") @db.VarChar(200)
+  customDomainVerified      Boolean   @default(false) @map("custom_domain_verified")
+  customDomainSslStatus     SslStatus @default(pending) @map("custom_domain_ssl_status")
+
+  // BRANDING
+  logoUrl                   String?   @map("logo_url") @db.Text
+  primaryColor              String    @default("#FF5722") @map("primary_color") @db.VarChar(7)
+  secondaryColor            String    @default("#000000") @map("secondary_color") @db.VarChar(7)
+
+  // CONTACT
+  phone                     String    @db.VarChar(20)
+  whatsappNumber            String    @map("whatsapp_number") @db.VarChar(20)
+  whatsappBotEnabled        Boolean   @default(true) @map("whatsapp_bot_enabled")
+  email                     String?   @db.VarChar(200)
+  address                   String?   @db.Text
+  city                      String?   @db.VarChar(100)
+  mapsUrl                   String?   @map("maps_url") @db.Text
+
+  // BUSINESS HOURS
+  businessHours             Json?     @map("business_hours") // {"mon": "09:00-18:00"}
+
+  // SUBSCRIPTION
+  plan                      PlanType  @default(trial)
+  planStartedAt             DateTime? @map("plan_started_at")
+  planExpiresAt             DateTime? @map("plan_expires_at")
+
+  // STATUS
+  status                    TenantStatus @default(trial)
+  trialEndsAt               DateTime? @map("trial_ends_at")
+
+  // SETTINGS
+  settings                  Json?     // Flexible settings
+
+  // META
+  createdAt                 DateTime  @default(now()) @map("created_at")
+  updatedAt                 DateTime  @updatedAt @map("updated_at")
+
+  // RELATIONS
+  cars                      Car[]
+  leads                     Lead[]
+  messages                  Message[]
+  users                     User[]
+  conversationStates        ConversationState[]
+
+  @@map("tenants")
+}
+
+enum SslStatus {
+  pending
+  active
+  failed
+}
+
+enum PlanType {
+  trial
+  free
+  starter
+  growth
+  pro
+}
+
+enum TenantStatus {
+  active
+  suspended
+  trial
+  expired
+}
+
+// ============================================
+// CARS (INVENTORY)
+// ============================================
+
+model Car {
+  id                  Int       @id @default(autoincrement())
+  tenantId            Int       @map("tenant_id")
+
+  // INTERNAL IDENTITY (PRIVATE)
+  plateNumber         String?   @map("plate_number") @db.VarChar(20)
+  plateNumberClean    String?   @map("plate_number_clean") @db.VarChar(20) // "B1234XYZ"
+  stockCode           String?   @map("stock_code") @db.VarChar(20) // "STK-001"
+
+  // PUBLIC IDENTITY (CUSTOMER-FACING)
+  displayCode         String    @map("display_code") @db.VarChar(20) // "#A01"
+  publicName          String    @map("public_name") @db.VarChar(200) // "Avanza 2020 Hitam #A01"
+
+  // BASIC INFO
+  brand               String    @db.VarChar(50)
+  model               String    @db.VarChar(100)
+  year                Int
+  color               String    @db.VarChar(50)
+  transmission        Transmission
+
+  // SPECS
+  km                  Int
+  price               BigInt
+  fuelType            String?   @map("fuel_type") @db.VarChar(20)
+
+  // DIFFERENTIATORS
+  keyFeatures         String[]  @map("key_features") // ["Velg Racing", "Spoiler"]
+  conditionNotes      String?   @map("condition_notes") @db.Text
+
+  // CONTENT
+  photos              String[]  // Array of URLs
+  primaryPhotoIndex   Int       @default(0) @map("primary_photo_index")
+  description         String?   @db.Text
+
+  // STATUS
+  status              CarStatus @default(draft)
+
+  // META
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  soldAt              DateTime? @map("sold_at")
+
+  // SEO
+  slug                String    @db.VarChar(200) // "avanza-2020-hitam-a01"
+
+  // RELATIONS
+  tenant              Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads               Lead[]
+
+  @@unique([tenantId, displayCode])
+  @@unique([tenantId, slug])
+  @@index([tenantId, status])
+  @@index([tenantId, brand, model, year, color])
+  @@index([plateNumberClean])
+  @@map("cars")
+}
+
+enum Transmission {
+  Manual
+  Matic
+}
+
+enum CarStatus {
+  available
+  sold
+  booking
+  draft
+}
+
+// ============================================
+// LEADS (CUSTOMER INQUIRIES)
+// ============================================
+
+model Lead {
+  id              Int       @id @default(autoincrement())
+  tenantId        Int       @map("tenant_id")
+
+  // CUSTOMER INFO
+  customerPhone   String    @map("customer_phone") @db.VarChar(20)
+  customerName    String?   @map("customer_name") @db.VarChar(100)
+
+  // INQUIRY
+  carId           Int?      @map("car_id")
+  status          LeadStatus @default(new)
+  source          LeadSource @default(wa)
+
+  // ASSIGNMENT
+  assignedToUserId Int?     @map("assigned_to_user_id")
+
+  // NOTES
+  notes           String?   @db.Text
+  tags            String[]
+
+  // META
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  closedAt        DateTime? @map("closed_at")
+
+  // RELATIONS
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  car             Car?      @relation(fields: [carId], references: [id], onDelete: SetNull)
+  assignedTo      User?     @relation(fields: [assignedToUserId], references: [id], onDelete: SetNull)
+  messages        Message[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, customerPhone])
+  @@map("leads")
+}
+
+enum LeadStatus {
+  new
+  hot
+  warm
+  cold
+  closed
+  lost
+}
+
+enum LeadSource {
+  web
+  wa
+  direct
+  referral
+}
+
+// ============================================
+// MESSAGES (CHAT HISTORY)
+// ============================================
+
+model Message {
+  id          Int       @id @default(autoincrement())
+  tenantId    Int       @map("tenant_id")
+  leadId      Int       @map("lead_id")
+
+  // MESSAGE
+  sender      MessageSender
+  message     String    @db.Text
+
+  // METADATA
+  metadata    Json?     // For storing extra data (e.g., button clicks, media URLs)
+
+  // TIMESTAMPS
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  // RELATIONS
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  lead        Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, leadId])
+  @@map("messages")
+}
+
+enum MessageSender {
+  customer
+  bot
+  sales
+  system
+}
+
+// ============================================
+// USERS (ADMIN & SALES)
+// ============================================
+
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              Int       @id @default(autoincrement())
+  tenantId        Int       @map("tenant_id")
 
-  posts     Post[]
+  // IDENTITY
+  name            String    @db.VarChar(200)
+  email           String    @db.VarChar(200)
+  phone           String?   @db.VarChar(20)
+  whatsappNumber  String?   @map("whatsapp_number") @db.VarChar(20)
+  passwordHash    String    @map("password_hash") @db.Text
 
+  // ROLE
+  role            UserRole
+
+  // STATUS
+  status          UserStatus @default(active)
+  lastLoginAt     DateTime?  @map("last_login_at")
+
+  // META
+  createdAt       DateTime   @default(now()) @map("created_at")
+  updatedAt       DateTime   @updatedAt @map("updated_at")
+
+  // RELATIONS
+  tenant          Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  assignedLeads   Lead[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId, role])
   @@map("users")
 }
 
-model Post {
-  id        Int      @id @default(autoincrement())
-  title     String
-  content   String?
-  published Boolean  @default(false)
-  authorId  Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum UserRole {
+  owner
+  admin
+  sales
+}
 
-  author    User     @relation(fields: [authorId], references: [id])
+enum UserStatus {
+  active
+  inactive
+}
 
-  @@map("posts")
+// ============================================
+// CONVERSATION STATES (BOT STATE MACHINE)
+// ============================================
+
+model ConversationState {
+  id            Int       @id @default(autoincrement())
+  tenantId      Int       @map("tenant_id")
+
+  // USER
+  userPhone     String    @map("user_phone") @db.VarChar(20)
+  userType      UserType  @map("user_type")
+
+  // STATE
+  currentFlow   String    @map("current_flow") @db.VarChar(50) // 'idle', 'upload_car', 'credit_calc'
+  currentStep   Int       @default(0) @map("current_step")
+  context       Json?     // Temporary data storage
+
+  // EXPIRY
+  expiresAt     DateTime  @map("expires_at")
+
+  // META
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // RELATIONS
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userPhone])
+  @@index([tenantId, userPhone, currentFlow])
+  @@map("conversation_states")
+}
+
+enum UserType {
+  customer
+  admin
+  sales
 }
