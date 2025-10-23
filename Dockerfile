@@ -14,8 +14,11 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Make startup script executable
+RUN chmod +x start.sh
+
 # Expose port
 EXPOSE 3000
 
-# Development mode command
-CMD ["bun", "run", "dev"]
+# Use startup script to handle Prisma setup
+CMD ["./start.sh"]
