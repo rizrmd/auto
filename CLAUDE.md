@@ -109,6 +109,6 @@ For more information, read the Bun API docs in `node_modules/bun-types/docs/**.m
 ⚠️ **DO NOT RUN OR WRITE ANY FILE LOCALLY**: use ssh root@cf.avolut.com and put changes in docker with container id b8sc48s8s0c4w00008k808w8.
 This project should only be run and modified in deployed environments. Never execute `bun --hot ./index.ts` or similar commands locally. 
 - to check the log use: ssh root@cf.avolut.com "docker logs b8sc48s8s0c4w00008k808w8"
-- after commit and push, it is auto deployed
+- after commit and push, it is auto deployed (check progress using curl https://cf.avolut.com/api/v1/deployments/applications/b8sc48s8s0c4w00008k808w8 --header 'Authorization: Bearer 7|rsu1vBA8EzDIeetffQQk8PhM2pUqAiAKeHoaObun2bec5fc5')
 - we use prisma with DATABASE_URL already set in the docker container, you can query using psql in docker container when testing.
 - the url is https://auto.lumiku.com
