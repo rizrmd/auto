@@ -7,6 +7,7 @@
     "dev": "bun --hot backend/index.tsx",
     "start": "NODE_ENV=production bun backend/index.tsx",
     "build": "bun run build.ts",
+    "build:frontend": "bun run build-frontend.ts",
     "db:generate": "bunx prisma generate",
     "db:migrate": "bunx prisma migrate dev",
     "db:studio": "bunx prisma studio",

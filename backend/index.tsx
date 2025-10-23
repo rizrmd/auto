@@ -100,26 +100,28 @@ app.get('/api', (c) => {
 });
 
 /**
- * Frontend routes - Serve static files and index.html
+ * Frontend routes - Serve bundled static files and index.html
  * This enables client-side routing for the React app
  */
 app.get('*', async (c) => {
   const path = new URL(c.req.url).pathname;
 
-  // Serve static files from frontend directory
-  const filePath = `./frontend${path}`;
-  const file = Bun.file(filePath);
+  // Try to serve from dist directory first (bundled files)
+  const distFilePath = `./frontend/dist${path}`;
+  const distFile = Bun.file(distFilePath);
 
-  if (await file.exists()) {
+  if (await distFile.exists()) {
     // Determine MIME type based on file extension
     let contentType = 'application/octet-stream';
 
-    if (path.endsWith('.tsx') || path.endsWith('.ts') || path.endsWith('.jsx') || path.endsWith('.js')) {
-      contentType = 'text/javascript';
+    if (path.endsWith('.js')) {
+      contentType = 'application/javascript; charset=utf-8';
     } else if (path.endsWith('.css')) {
-      contentType = 'text/css';
+      contentType = 'text/css; charset=utf-8';
     } else if (path.endsWith('.html')) {
-      contentType = 'text/html';
+      contentType = 'text/html; charset=utf-8';
+    } else if (path.endsWith('.map')) {
+      contentType = 'application/json';
     } else if (path.endsWith('.svg')) {
       contentType = 'image/svg+xml';
     } else if (path.endsWith('.png')) {
@@ -130,7 +132,32 @@ app.get('*', async (c) => {
       contentType = 'application/json';
     }
 
-    return new Response(file, {
+    return new Response(distFile, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': path.match(/\.[a-f0-9]{8}\.(js|css)$/)
+          ? 'public, max-age=31536000, immutable'
+          : 'public, max-age=3600',
+      },
+    });
+  }
+
+  // Fallback: try to serve from frontend directory (static assets like logo.svg)
+  const frontendFilePath = `./frontend${path}`;
+  const frontendFile = Bun.file(frontendFilePath);
+
+  if (await frontendFile.exists()) {
+    let contentType = 'application/octet-stream';
+
+    if (path.endsWith('.svg')) {
+      contentType = 'image/svg+xml';
+    } else if (path.endsWith('.png')) {
+      contentType = 'image/png';
+    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      contentType = 'image/jpeg';
+    }
+
+    return new Response(frontendFile, {
       headers: {
         'Content-Type': contentType,
       },
@@ -138,10 +165,11 @@ app.get('*', async (c) => {
   }
 
   // For all other routes, serve index.html (SPA routing)
-  const indexFile = Bun.file('./frontend/index.html');
+  const indexFile = Bun.file('./frontend/dist/index.html');
   return new Response(indexFile, {
     headers: {
-      'Content-Type': 'text/html',
+      'Content-Type': 'text/html; charset=utf-8',
+      'Cache-Control': 'no-cache',
     },
   });
 });
