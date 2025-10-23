@@ -24,8 +24,7 @@ export function App() {
         <CardHeader className="gap-4">
           <CardTitle className="text-3xl font-bold">Hello Auto Lumiku</CardTitle>
           <CardDescription>
-            Edit <code className="rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono">src/App.tsx</code> and save to
-            test HMR
+            Auto-redeploy enabled! Changes push automatically.
           </CardDescription>
         </CardHeader>
         <CardContent>
