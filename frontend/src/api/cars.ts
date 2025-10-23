@@ -177,13 +177,23 @@ export async function searchCars(query: string, limit = 5) {
 export async function getFeaturedCars(limit = 6) {
   const response = await apiClient<any>(`/api/cars/featured?limit=${limit}`);
 
-  // Handle backend's response structure
+  // Handle backend's response structure: { success, data: { cars, total } }
   if (response.data?.success && response.data?.data) {
     return {
-      data: response.data.data,
+      data: {
+        cars: response.data.data.cars || [],
+        total: response.data.data.total || 0,
+      },
       status: response.status,
     };
   }
 
-  return response;
+  return {
+    data: {
+      cars: [],
+      total: 0,
+    },
+    status: response.status,
+    error: response.error,
+  };
 }

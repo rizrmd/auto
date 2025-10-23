@@ -98,6 +98,66 @@ publicCars.get(
 );
 
 /**
+ * GET /api/cars/featured
+ * Get featured cars for homepage
+ */
+publicCars.get(
+  '/featured',
+  asyncHandler(async (c) => {
+    const tenant = getTenant(c);
+    const carService = new CarService();
+
+    // Parse limit (default 6, max 12)
+    const limit = Math.min(
+      parseInt(c.req.query('limit') || '6'),
+      12
+    );
+
+    // Get latest available cars as featured
+    const result = await carService.getPublicCars(tenant.id, {
+      page: 1,
+      limit,
+      offset: 0,
+    });
+
+    // Format response with price formatting
+    const formattedCars = result.cars.map((car) => ({
+      id: car.id,
+      displayCode: car.displayCode,
+      publicName: car.publicName,
+      slug: car.slug,
+      brand: car.brand,
+      model: car.model,
+      year: car.year,
+      color: car.color,
+      transmission: car.transmission,
+      km: car.km,
+      price: Number(car.price),
+      priceFormatted: formatPrice(car.price),
+      priceFormattedShort: formatPrice(car.price, { short: true }),
+      fuelType: car.fuelType,
+      keyFeatures: car.keyFeatures,
+      photos: car.photos,
+      primaryPhotoIndex: car.primaryPhotoIndex,
+      primaryPhoto: car.photos[car.primaryPhotoIndex] || car.photos[0],
+      photoCount: car.photos.length,
+      description: car.description,
+      createdAt: car.createdAt,
+    }));
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        cars: formattedCars,
+        total: result.total,
+      },
+    };
+
+    return c.json(response);
+  })
+);
+
+/**
  * GET /api/cars/:slug
  * Get car details by slug
  */
