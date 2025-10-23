@@ -2,6 +2,9 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
+# Install PostgreSQL client and system dependencies
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+
 # Copy package files first for better caching
 COPY package.json bunfig.toml ./
 
