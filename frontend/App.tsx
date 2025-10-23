@@ -1,37 +1,50 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./src/components/ui/card";
-import { APITester } from "./APITester";
-import "./index.css";
+/**
+ * AutoLeads - Car Catalog App
+ * Main app component with routing
+ */
 
-import logo from "./logo.svg";
-import reactLogo from "./react.svg";
+import React from 'react';
+import "./index.css";
+import { TenantProvider } from './src/context/TenantContext';
+import { HomePage } from './src/pages/HomePage';
+import { CarListingPage } from './src/pages/CarListingPage';
+import { CarDetailPage } from './src/pages/CarDetailPage';
 
 export function App() {
+  // Simple client-side routing based on URL path
+  const path = window.location.pathname;
+  const params = new URLSearchParams(window.location.search);
+
+  // Determine which page to render
+  let PageComponent = HomePage;
+  let pageProps = {};
+
+  if (path.startsWith('/cars/')) {
+    // Car detail page: /cars/avanza-2020-hitam-a01
+    const slug = path.replace('/cars/', '');
+    PageComponent = CarDetailPage;
+    pageProps = { slug };
+  } else if (path === '/cars' || path === '/catalog') {
+    // Car listing page: /cars?brand=Toyota
+    PageComponent = CarListingPage;
+    pageProps = {
+      initialFilters: {
+        brand: params.get('brand') || undefined,
+        minYear: params.get('minYear') ? parseInt(params.get('minYear')!) : undefined,
+        maxYear: params.get('maxYear') ? parseInt(params.get('maxYear')!) : undefined,
+        transmission: params.get('transmission') || undefined,
+        minPrice: params.get('minPrice') ? parseInt(params.get('minPrice')!) : undefined,
+        maxPrice: params.get('maxPrice') ? parseInt(params.get('maxPrice')!) : undefined,
+        search: params.get('search') || undefined,
+      }
+    };
+  }
+  // Default: HomePage at /
+
   return (
-    <div className="container mx-auto p-8 text-center relative z-10">
-      <div className="flex justify-center items-center gap-8 mb-8">
-        <img
-          src={logo}
-          alt="Bun Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#646cffaa] scale-120"
-        />
-        <img
-          src={reactLogo}
-          alt="React Logo"
-          className="h-36 p-6 transition-all duration-300 hover:drop-shadow-[0_0_2em_#61dafbaa] [animation:spin_20s_linear_infinite]"
-        />
-      </div>
-      <Card>
-        <CardHeader className="gap-4">
-          <CardTitle className="text-3xl font-bold">Halo Auto Lumiku</CardTitle>
-          <CardDescription>
-            Auto-redeploy enabled! Changes push automatically.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <APITester />
-        </CardContent>
-      </Card>
-    </div>
+    <TenantProvider>
+      <PageComponent {...pageProps} />
+    </TenantProvider>
   );
 }
 
