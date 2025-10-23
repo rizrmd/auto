@@ -111,7 +111,30 @@ app.get('*', async (c) => {
   const file = Bun.file(filePath);
 
   if (await file.exists()) {
-    return new Response(file);
+    // Determine MIME type based on file extension
+    let contentType = 'application/octet-stream';
+
+    if (path.endsWith('.tsx') || path.endsWith('.ts') || path.endsWith('.jsx') || path.endsWith('.js')) {
+      contentType = 'text/javascript';
+    } else if (path.endsWith('.css')) {
+      contentType = 'text/css';
+    } else if (path.endsWith('.html')) {
+      contentType = 'text/html';
+    } else if (path.endsWith('.svg')) {
+      contentType = 'image/svg+xml';
+    } else if (path.endsWith('.png')) {
+      contentType = 'image/png';
+    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      contentType = 'image/jpeg';
+    } else if (path.endsWith('.json')) {
+      contentType = 'application/json';
+    }
+
+    return new Response(file, {
+      headers: {
+        'Content-Type': contentType,
+      },
+    });
   }
 
   // For all other routes, serve index.html (SPA routing)
@@ -148,11 +171,11 @@ app.notFound(async (c) => {
     );
   }
 
-  // For non-API routes, serve the frontend
+  // For non-API routes, serve the frontend (SPA fallback)
   const indexFile = Bun.file('./frontend/index.html');
   return new Response(indexFile, {
     headers: {
-      'Content-Type': 'text/html',
+      'Content-Type': 'text/html; charset=utf-8',
     },
   });
 });
