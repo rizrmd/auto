@@ -9,7 +9,6 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serve } from 'bun';
-import index from '../frontend/index.html';
 import { errorHandler } from './src/middleware/error-handler';
 import { CORS_CONFIG } from './src/config/constants';
 import { env, isDevelopment } from './src/config/env';
@@ -101,11 +100,27 @@ app.get('/api', (c) => {
 });
 
 /**
- * Frontend routes - Serve index.html for all unmatched routes
+ * Frontend routes - Serve static files and index.html
  * This enables client-side routing for the React app
  */
-app.get('*', (c) => {
-  return c.html(index);
+app.get('*', async (c) => {
+  const path = new URL(c.req.url).pathname;
+
+  // Serve static files from frontend directory
+  const filePath = `./frontend${path}`;
+  const file = Bun.file(filePath);
+
+  if (await file.exists()) {
+    return new Response(file);
+  }
+
+  // For all other routes, serve index.html (SPA routing)
+  const indexFile = Bun.file('./frontend/index.html');
+  return new Response(indexFile, {
+    headers: {
+      'Content-Type': 'text/html',
+    },
+  });
 });
 
 /**
@@ -118,7 +133,7 @@ app.onError((err, c) => {
 /**
  * 404 Handler for API routes
  */
-app.notFound((c) => {
+app.notFound(async (c) => {
   if (c.req.url.includes('/api/')) {
     return c.json(
       {
@@ -134,7 +149,12 @@ app.notFound((c) => {
   }
 
   // For non-API routes, serve the frontend
-  return c.html(index);
+  const indexFile = Bun.file('./frontend/index.html');
+  return new Response(indexFile, {
+    headers: {
+      'Content-Type': 'text/html',
+    },
+  });
 });
 
 /**
