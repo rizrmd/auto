@@ -1,0 +1,14 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Deployment
+        run: |
+          curl -X POST 'https://cf.avolut.com/api/v1/deploy?uuid=b8sc48s8s0c4w00008k808w8' \
+            --header 'Authorization: Bearer 8|nzADA9bCp6oqkbN70djoGW64GbBIZsOFGIxukVZr5f80af7c'

@@ -9,3 +9,6 @@ dist
 build
 .DS_Store
 *.log
+.github
+.cursor
+*.md

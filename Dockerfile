@@ -2,14 +2,14 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
-# Install git
-RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
-
-# Clone the repository
-RUN git clone https://github.com/rizrmd/auto.git .
+# Copy package files first for better caching
+COPY package.json bunfig.toml ./
 
 # Install dependencies
 RUN bun install --frozen-lockfile
+
+# Copy source code
+COPY . .
 
 # Expose port
 EXPOSE 3000
