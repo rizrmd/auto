@@ -1,7 +1,7 @@
 # 🤖 AutoLeads - Claude Code Agents Quick Reference
 
 **Last Updated**: 2025-10-23
-**Total Agents**: 8
+**Total Agents**: 9
 **Project**: AutoLeads - WhatsApp Bot SAAS for Automotive Showrooms
 
 ---
@@ -10,6 +10,7 @@
 
 | Task | Command |
 |------|---------|
+| **⭐ Product Strategy** | `/agents autoleads-product-strategist` |
 | **Code Review** | `/agents senior-code-reviewer` |
 | **Refactoring** | `/agents code-refactorer` |
 | **Bug Finding** | `/agents code-reviewer-debugger` |
@@ -22,6 +23,20 @@
 ---
 
 ## 🚀 Common Workflows
+
+### 0. Before Starting ANY Feature ⭐ **START HERE**
+```bash
+# Step 1: Validate with Product Strategist FIRST
+/agents autoleads-product-strategist
+I want to build [feature name].
+- Is this the right priority?
+- What's the business impact?
+- Design the user flow
+- Technical approach?
+
+# Step 2: Only proceed if RICE score is high
+# Then continue to workflow #1 below
+```
 
 ### 1. New Feature Development
 ```bash
@@ -90,6 +105,35 @@ Review [component] for accessibility
 ---
 
 ## 💡 When to Use Which Agent
+
+### AutoLeads Product Strategist ⭐ **USE FIRST**
+**Use when**:
+- ✅ Planning any new feature (ALWAYS use this FIRST)
+- ✅ Prioritizing roadmap
+- ✅ Validating feature ideas
+- ✅ Designing user flows
+- ✅ Before releasing to production
+- ✅ Making product decisions
+- ✅ Estimating business impact
+
+**Example**:
+```bash
+/agents autoleads-product-strategist
+
+Feature idea: Allow customers to schedule test drives via WA bot.
+
+Questions:
+1. Is this high priority? (RICE score?)
+2. What's the user flow?
+3. Business impact estimate?
+4. Technical complexity?
+5. Should we build this now or later?
+```
+
+**Why use this agent?**
+This is your product thinking partner. Use BEFORE writing any code to avoid building the wrong thing. Saves weeks of wasted development time.
+
+---
 
 ### Senior Code Reviewer 🔍
 **Use when**:

@@ -156,7 +156,38 @@ Review Avatar Creator UI:
 
 ### Custom AutoLeads Agents
 
-#### 7. **AutoLeads Deployment Specialist** (`/agents autoleads-deployment-specialist`)
+#### 7. **AutoLeads Product Strategist** (`/agents autoleads-product-strategist`) ⭐ **NEW**
+**Best for**: Your strategic partner before building ANY feature
+- Product strategy and feature prioritization (RICE framework)
+- UI/UX flow design and user journey mapping
+- Business value analysis and ROI calculation
+- Technical feasibility assessment
+- Pre-release feature review
+- Automotive showroom business expertise
+- WhatsApp commerce and LLM integration strategy
+
+**Status**: ✅ Available
+
+**When to use**:
+- Before starting any new feature development
+- When prioritizing roadmap
+- When designing user flows
+- Before releasing features to production
+- When making product decisions
+
+**Example**:
+```
+/agents autoleads-product-strategist
+
+I want to add test drive booking via WhatsApp bot.
+Help me:
+- Analyze if this is the right priority
+- Design the user flow
+- Estimate business impact
+- Technical approach recommendation
+```
+
+#### 8. **AutoLeads Deployment Specialist** (`/agents autoleads-deployment-specialist`)
 **Best for**: Coolify deployment and production issues for AutoLeads platform
 - Docker configuration on cf.avolut.com
 - Environment variables management
