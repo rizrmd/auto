@@ -1,7 +1,14 @@
 import { PrismaClient } from '../generated/prisma';
-import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+// Hash password helper using Bun's built-in password hashing
+async function hashPassword(password: string): Promise<string> {
+  return await Bun.password.hash(password, {
+    algorithm: 'bcrypt',
+    cost: 12,
+  });
+}
 
 async function main() {
   console.log('🌱 Starting seed...');
@@ -61,7 +68,7 @@ async function main() {
   // ============================================
   // 2. CREATE USERS
   // ============================================
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await hashPassword('password123');
 
   const owner = await prisma.user.create({
     data: {
