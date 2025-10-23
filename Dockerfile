@@ -2,6 +2,9 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
+# Install git
+RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
+
 # Copy package files
 COPY package.json bun.lockb* ./
 
