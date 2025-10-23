@@ -1,5 +1,8 @@
 import { serve } from "bun";
 import index from "../frontend/index.html";
+import { PrismaClient } from "../generated/prisma";
+
+const prisma = new PrismaClient();
 
 const server = serve({
   routes: {
@@ -26,6 +29,72 @@ const server = serve({
       return Response.json({
         message: `Hello, ${name}!`,
       });
+    },
+
+    // Users API endpoints
+    "/api/users": {
+      async GET() {
+        try {
+          const users = await prisma.user.findMany({
+            include: {
+              posts: true,
+            },
+          });
+          return Response.json(users);
+        } catch (error) {
+          return Response.json(
+            { error: 'Failed to fetch users' },
+            { status: 500 }
+          );
+        }
+      },
+      async POST(req) {
+        try {
+          const { email, name } = await req.json();
+          const user = await prisma.user.create({
+            data: { email, name },
+          });
+          return Response.json(user, { status: 201 });
+        } catch (error) {
+          return Response.json(
+            { error: 'Failed to create user' },
+            { status: 500 }
+          );
+        }
+      },
+    },
+
+    // Posts API endpoints
+    "/api/posts": {
+      async GET() {
+        try {
+          const posts = await prisma.post.findMany({
+            include: {
+              author: true,
+            },
+          });
+          return Response.json(posts);
+        } catch (error) {
+          return Response.json(
+            { error: 'Failed to fetch posts' },
+            { status: 500 }
+          );
+        }
+      },
+      async POST(req) {
+        try {
+          const { title, content, authorId } = await req.json();
+          const post = await prisma.post.create({
+            data: { title, content, authorId },
+          });
+          return Response.json(post, { status: 201 });
+        } catch (error) {
+          return Response.json(
+            { error: 'Failed to create post' },
+            { status: 500 }
+          );
+        }
+      },
     },
   },
 
