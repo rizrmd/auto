@@ -134,7 +134,7 @@ export function rateLimiter(config: RateLimiterConfig = {}) {
     const key = keyGenerator(c);
     const entry = rateLimitStore.get(key, windowMs);
 
-    // Check if limit exceeded
+    // Check if limit exceeded BEFORE processing request
     if (entry.count >= maxRequests) {
       const resetInSeconds = Math.ceil((entry.resetTime - Date.now()) / 1000);
 
@@ -160,21 +160,23 @@ export function rateLimiter(config: RateLimiterConfig = {}) {
       );
     }
 
-    // Increment counter before request
-    if (!skipSuccessfulRequests && !skipFailedRequests) {
-      rateLimitStore.increment(key);
-    }
-
-    // Process request
+    // Process request FIRST
     await next();
 
-    // Increment counter based on response status
+    // THEN increment counter based on response status (SINGLE INCREMENT ONLY)
     const status = c.res.status;
-    if (skipSuccessfulRequests && status >= 200 && status < 300) {
-      // Don't count successful requests
-    } else if (skipFailedRequests && status >= 400) {
-      // Don't count failed requests
-    } else if (skipSuccessfulRequests || skipFailedRequests) {
+    const isSuccess = status >= 200 && status < 300;
+    const isFailure = status >= 400;
+
+    let shouldCount = true;
+
+    if (skipSuccessfulRequests && isSuccess) {
+      shouldCount = false; // Don't count successful requests
+    } else if (skipFailedRequests && isFailure) {
+      shouldCount = false; // Don't count failed requests
+    }
+
+    if (shouldCount) {
       rateLimitStore.increment(key);
     }
 
