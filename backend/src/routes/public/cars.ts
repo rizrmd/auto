@@ -5,6 +5,7 @@
  */
 
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { CarService } from '../../services/car.service';
 import { tenantMiddleware, getTenant } from '../../middleware/tenant';
 import { asyncHandler } from '../../middleware/error-handler';
@@ -65,7 +66,7 @@ publicCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       priceFormattedShort: formatPrice(car.price, { short: true }),
       fuelType: car.fuelType,
@@ -132,7 +133,7 @@ publicCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       priceFormattedShort: formatPrice(car.price, { short: true }),
       fuelType: car.fuelType,
@@ -198,7 +199,7 @@ publicCars.get(
       brand: car.brand,
       model: car.model,
       year: car.year,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price, { short: true }),
       transmission: car.transmission,
       km: car.km,
@@ -268,7 +269,7 @@ publicCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       priceFormattedShort: formatPrice(car.price, { short: true }),
       fuelType: car.fuelType,

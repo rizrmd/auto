@@ -5,10 +5,13 @@
  */
 
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { LeadService } from '../../services/lead.service';
 import { tenantMiddleware, getTenant } from '../../middleware/tenant';
 import { authMiddleware, requireSales } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/error-handler';
+import { validate, getValidatedData } from '../../middleware/validation';
+import { LeadUpdateSchema, LeadAssignSchema, LeadStatusSchema } from '../../validation/schemas';
 import { PAGINATION, HTTP_STATUS, MESSAGES } from '../../config/constants';
 import type { ApiResponse, UpdateLeadRequest } from '../../types/context';
 
@@ -139,7 +142,7 @@ adminLeads.get(
             brand: (lead as any).car.brand,
             model: (lead as any).car.model,
             year: (lead as any).car.year,
-            price: Number((lead as any).car.price),
+            price: (lead as any).car.price.toString(),
           }
         : null,
       status: lead.status,
@@ -175,12 +178,13 @@ adminLeads.get(
  */
 adminLeads.put(
   '/:id',
+  validate(LeadUpdateSchema),
   asyncHandler(async (c) => {
     const tenant = getTenant(c);
     const leadService = new LeadService();
     const leadId = parseInt(c.req.param('id'));
 
-    const body: UpdateLeadRequest = await c.req.json();
+    const body = getValidatedData<z.infer<typeof LeadUpdateSchema>>(c);
 
     // Update lead
     const lead = await leadService.update(tenant.id, leadId, body);
@@ -204,24 +208,14 @@ adminLeads.put(
  */
 adminLeads.put(
   '/:id/assign',
+  validate(LeadAssignSchema),
   asyncHandler(async (c) => {
     const tenant = getTenant(c);
     const leadService = new LeadService();
     const leadId = parseInt(c.req.param('id'));
 
-    const body = await c.req.json();
+    const body = getValidatedData<z.infer<typeof LeadAssignSchema>>(c);
     const userId = body.userId;
-
-    if (!userId) {
-      const response: ApiResponse = {
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'userId is required',
-        },
-      };
-      return c.json(response, HTTP_STATUS.BAD_REQUEST);
-    }
 
     // Assign lead
     const lead = await leadService.assign(tenant.id, leadId, userId);
@@ -249,24 +243,14 @@ adminLeads.put(
  */
 adminLeads.put(
   '/:id/status',
+  validate(LeadStatusSchema),
   asyncHandler(async (c) => {
     const tenant = getTenant(c);
     const leadService = new LeadService();
     const leadId = parseInt(c.req.param('id'));
 
-    const body = await c.req.json();
+    const body = getValidatedData<z.infer<typeof LeadStatusSchema>>(c);
     const status = body.status;
-
-    if (!status) {
-      const response: ApiResponse = {
-        success: false,
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: 'status is required',
-        },
-      };
-      return c.json(response, HTTP_STATUS.BAD_REQUEST);
-    }
 
     // Update status
     const lead = await leadService.updateStatus(tenant.id, leadId, status);

@@ -5,10 +5,13 @@
  */
 
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { AuthService } from '../../services/auth.service';
 import { tenantMiddleware, getTenant } from '../../middleware/tenant';
 import { asyncHandler, ValidationError } from '../../middleware/error-handler';
 import { strictRateLimiter } from '../../middleware/rate-limiter';
+import { validate, getValidatedData } from '../../middleware/validation';
+import { LoginSchema } from '../../validation/schemas';
 import { HTTP_STATUS, MESSAGES } from '../../config/constants';
 import type { ApiResponse, LoginRequest } from '../../types/context';
 
@@ -24,20 +27,13 @@ adminAuth.use('/login', strictRateLimiter());
  */
 adminAuth.post(
   '/login',
+  validate(LoginSchema),
   asyncHandler(async (c) => {
     const tenant = getTenant(c);
     const authService = new AuthService();
 
-    // Parse request body
-    const body: LoginRequest = await c.req.json();
-
-    // Validate input
-    if (!body.email || !body.password) {
-      throw new ValidationError('Email and password are required', {
-        email: !body.email ? 'Email is required' : undefined,
-        password: !body.password ? 'Password is required' : undefined,
-      });
-    }
+    // Get validated credentials
+    const body = getValidatedData<z.infer<typeof LoginSchema>>(c);
 
     // Authenticate user
     const loginResponse = await authService.authenticate(

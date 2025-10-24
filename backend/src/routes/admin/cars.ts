@@ -5,10 +5,13 @@
  */
 
 import { Hono } from 'hono';
+import { z } from 'zod';
 import { CarService } from '../../services/car.service';
 import { tenantMiddleware, getTenant } from '../../middleware/tenant';
 import { authMiddleware, requireAdmin } from '../../middleware/auth';
 import { asyncHandler } from '../../middleware/error-handler';
+import { validate, getValidatedData } from '../../middleware/validation';
+import { CarCreateSchema, CarUpdateSchema } from '../../validation/schemas';
 import { PAGINATION, HTTP_STATUS, MESSAGES } from '../../config/constants';
 import { formatPrice } from '../../utils/price-formatter';
 import type { ApiResponse, CreateCarRequest, UpdateCarRequest } from '../../types/context';
@@ -67,7 +70,7 @@ adminCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       priceFormattedShort: formatPrice(car.price, { short: true }),
       fuelType: car.fuelType,
@@ -136,7 +139,7 @@ adminCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       fuelType: car.fuelType,
       plateNumber: car.plateNumber,
@@ -167,11 +170,12 @@ adminCars.get(
  */
 adminCars.post(
   '/',
+  validate(CarCreateSchema),
   asyncHandler(async (c) => {
     const tenant = getTenant(c);
     const carService = new CarService();
 
-    const body: CreateCarRequest = await c.req.json();
+    const body = getValidatedData<z.infer<typeof CarCreateSchema>>(c);
 
     // Create car
     const car = await carService.create(tenant.id, body);
@@ -188,7 +192,7 @@ adminCars.post(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       status: car.status,
       createdAt: car.createdAt,
@@ -209,12 +213,13 @@ adminCars.post(
  */
 adminCars.put(
   '/:id',
+  validate(CarUpdateSchema),
   asyncHandler(async (c) => {
     const tenant = getTenant(c);
     const carService = new CarService();
     const carId = parseInt(c.req.param('id'));
 
-    const body: UpdateCarRequest = await c.req.json();
+    const body = getValidatedData<z.infer<typeof CarUpdateSchema>>(c);
 
     // Update car
     const car = await carService.update(tenant.id, carId, body);
@@ -231,7 +236,7 @@ adminCars.put(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       priceFormatted: formatPrice(car.price),
       status: car.status,
       updatedAt: car.updatedAt,
