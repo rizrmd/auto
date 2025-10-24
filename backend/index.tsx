@@ -9,6 +9,7 @@ import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
 import { serve } from 'bun';
+import * as path from 'node:path';
 import { errorHandler } from './src/middleware/error-handler';
 import { CORS_CONFIG } from './src/config/constants';
 import { env, isDevelopment } from './src/config/env';
@@ -20,6 +21,7 @@ import fontteWebhookRoutes from './src/routes/webhook/fonnte';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
+import tenantRoutes from './src/routes/tenant';
 
 /**
  * Create Hono application
@@ -65,6 +67,9 @@ app.route('/health', healthRoutes);
 // Public API routes
 app.route('/api/cars', publicCarsRoutes);
 
+// Tenant routes (public)
+app.route('/api/tenant', tenantRoutes);
+
 // Webhook routes
 app.route('/webhook/fonnte', fontteWebhookRoutes);
 
@@ -99,36 +104,88 @@ app.get('/api', (c) => {
   });
 });
 
+// ========================================
+// IMAGE SERVING - Must be BEFORE wildcard
+// ========================================
+app.get('/uploads/*', async (c) => {
+  const requestPath = c.req.path.replace('/uploads/', '');
+  const filepath = `./uploads/${requestPath}`;
+
+  // Security: Prevent path traversal attacks
+  const normalizedPath = path.normalize(filepath);
+  if (!normalizedPath.startsWith('./uploads/')) {
+    console.error('[SECURITY] Path traversal attempt blocked:', requestPath);
+    return c.text('Forbidden', 403);
+  }
+
+  try {
+    // Check if file exists
+    const file = Bun.file(filepath);
+    if (!(await file.exists())) {
+      console.error('[IMAGE] File not found:', filepath);
+      return c.notFound();
+    }
+
+    // Read file content
+    const buffer = await file.arrayBuffer();
+    const ext = filepath.split('.').pop()?.toLowerCase() || '';
+
+    // Determine MIME type
+    const mimeTypes: Record<string, string> = {
+      jpg: 'image/jpeg',
+      jpeg: 'image/jpeg',
+      png: 'image/png',
+      webp: 'image/webp',
+      gif: 'image/gif',
+      svg: 'image/svg+xml',
+    };
+
+    const contentType = mimeTypes[ext] || 'application/octet-stream';
+
+    // Return image with proper headers
+    return new Response(buffer, {
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=86400', // 24 hours
+        'Access-Control-Allow-Origin': '*',
+      },
+    });
+  } catch (error) {
+    console.error('[IMAGE] Error serving file:', error);
+    return c.text('Internal Server Error', 500);
+  }
+});
+
 /**
  * Frontend routes - Serve bundled static files and index.html
  * This enables client-side routing for the React app
  */
 app.get('*', async (c) => {
-  const path = new URL(c.req.url).pathname;
+  const requestPath = new URL(c.req.url).pathname;
 
   // Try to serve from dist directory first (bundled files)
-  const distFilePath = `./frontend/dist${path}`;
+  const distFilePath = `./frontend/dist${requestPath}`;
   const distFile = Bun.file(distFilePath);
 
   if (await distFile.exists()) {
     // Determine MIME type based on file extension
     let contentType = 'application/octet-stream';
 
-    if (path.endsWith('.js')) {
+    if (requestPath.endsWith('.js')) {
       contentType = 'application/javascript; charset=utf-8';
-    } else if (path.endsWith('.css')) {
+    } else if (requestPath.endsWith('.css')) {
       contentType = 'text/css; charset=utf-8';
-    } else if (path.endsWith('.html')) {
+    } else if (requestPath.endsWith('.html')) {
       contentType = 'text/html; charset=utf-8';
-    } else if (path.endsWith('.map')) {
+    } else if (requestPath.endsWith('.map')) {
       contentType = 'application/json';
-    } else if (path.endsWith('.svg')) {
+    } else if (requestPath.endsWith('.svg')) {
       contentType = 'image/svg+xml';
-    } else if (path.endsWith('.png')) {
+    } else if (requestPath.endsWith('.png')) {
       contentType = 'image/png';
-    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+    } else if (requestPath.endsWith('.jpg') || requestPath.endsWith('.jpeg')) {
       contentType = 'image/jpeg';
-    } else if (path.endsWith('.json')) {
+    } else if (requestPath.endsWith('.json')) {
       contentType = 'application/json';
     }
 
@@ -138,7 +195,7 @@ app.get('*', async (c) => {
     return new Response(fileContent, {
       headers: {
         'Content-Type': contentType,
-        'Cache-Control': path.match(/\.[a-f0-9]{8}\.(js|css)$/)
+        'Cache-Control': requestPath.match(/\.[a-f0-9]{8}\.(js|css)$/)
           ? 'public, max-age=31536000, immutable'
           : 'public, max-age=3600',
       },
@@ -146,17 +203,17 @@ app.get('*', async (c) => {
   }
 
   // Fallback: try to serve from frontend directory (static assets like logo.svg)
-  const frontendFilePath = `./frontend${path}`;
+  const frontendFilePath = `./frontend${requestPath}`;
   const frontendFile = Bun.file(frontendFilePath);
 
   if (await frontendFile.exists()) {
     let contentType = 'application/octet-stream';
 
-    if (path.endsWith('.svg')) {
+    if (requestPath.endsWith('.svg')) {
       contentType = 'image/svg+xml';
-    } else if (path.endsWith('.png')) {
+    } else if (requestPath.endsWith('.png')) {
       contentType = 'image/png';
-    } else if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+    } else if (requestPath.endsWith('.jpg') || requestPath.endsWith('.jpeg')) {
       contentType = 'image/jpeg';
     }
 

@@ -1,89 +1,88 @@
-/**
- * Tenant API Routes
- */
+import { Hono } from 'hono';
+import { asyncHandler } from '../middleware/error-handler';
+import { prisma } from '../db';
+import { NotFoundError } from '../middleware/error-handler';
 
-import type { Context } from 'hono';
-import { PrismaClient } from '../../../generated/prisma';
+const tenantRoutes = new Hono();
 
-const prisma = new PrismaClient();
+// GET /api/tenant - Get tenant by domain
+tenantRoutes.get('/', asyncHandler(async (c) => {
+  const hostname = c.req.header('host') || '';
+  const domain = hostname.split(':')[0]; // Remove port if present
 
-/**
- * GET /api/tenant - Get current tenant info
- * This would typically get the tenant based on the domain/subdomain
- * For now, we'll return the first tenant
- */
-export async function getTenant(c: Context) {
-  try {
-    // In production, you would get tenant by subdomain from request hostname
-    // const hostname = c.req.header('host');
-    // const subdomain = hostname?.split('.')[0];
+  console.log('[TENANT] Looking up tenant for domain:', domain);
 
-    // For now, get the first tenant
-    const tenant = await prisma.tenant.findFirst({
-      where: { status: 'active' },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        subdomain: true,
-        logoUrl: true,
-        primaryColor: true,
-        secondaryColor: true,
-        phone: true,
-        whatsappNumber: true,
-        email: true,
-        address: true,
-        city: true,
-        mapsUrl: true,
-        businessHours: true,
-      },
-    });
+  const tenant = await prisma.tenant.findFirst({
+    where: {
+      OR: [
+        { subdomain: { equals: domain, mode: 'insensitive' } },
+        { customDomain: { equals: domain, mode: 'insensitive' } },
+      ],
+      status: 'active',
+    },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      subdomain: true,
+      customDomain: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      phone: true,
+      whatsappNumber: true,
+      email: true,
+      address: true,
+      businessHours: true,
+    },
+  });
 
-    if (!tenant) {
-      return c.json({ error: 'Tenant not found' }, 404);
-    }
-
-    return c.json(tenant);
-  } catch (error) {
-    console.error('Error fetching tenant:', error);
-    return c.json({ error: 'Failed to fetch tenant information' }, 500);
+  if (!tenant) {
+    console.error('[TENANT] Tenant not found for domain:', domain);
+    throw new NotFoundError(`Tenant not found for domain: ${domain}`);
   }
-}
 
-/**
- * GET /api/tenant/:id - Get tenant by ID
- */
-export async function getTenantById(c: Context) {
-  try {
-    const id = parseInt(c.req.param('id'));
+  console.log('[TENANT] Found tenant:', tenant.slug);
 
-    const tenant = await prisma.tenant.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        subdomain: true,
-        logoUrl: true,
-        primaryColor: true,
-        secondaryColor: true,
-        phone: true,
-        whatsappNumber: true,
-        email: true,
-        address: true,
-        city: true,
-        mapsUrl: true,
-        businessHours: true,
-      },
-    });
+  return c.json({
+    success: true,
+    data: tenant,
+  });
+}));
 
-    if (!tenant) {
-      return c.json({ error: 'Tenant not found' }, 404);
-    }
+// GET /api/tenant/:id - Get tenant by ID (for admin)
+tenantRoutes.get('/:id', asyncHandler(async (c) => {
+  const id = parseInt(c.req.param('id'));
 
-    return c.json(tenant);
-  } catch (error) {
-    console.error('Error fetching tenant:', error);
-    return c.json({ error: 'Failed to fetch tenant information' }, 500);
+  const tenant = await prisma.tenant.findUnique({
+    where: { id },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      subdomain: true,
+      customDomain: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      phone: true,
+      whatsappNumber: true,
+      email: true,
+      address: true,
+      businessHours: true,
+      status: true,
+      plan: true,
+    },
+  });
+
+  if (!tenant) {
+    throw new NotFoundError('Tenant not found');
   }
-}
+
+  return c.json({
+    success: true,
+    data: tenant,
+  });
+}));
+
+export default tenantRoutes;

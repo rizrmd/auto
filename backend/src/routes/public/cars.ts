@@ -158,6 +158,68 @@ publicCars.get(
 );
 
 /**
+ * GET /api/cars/search
+ * Search autocomplete endpoint
+ * IMPORTANT: Must be BEFORE /:slug route to avoid matching "search" as a slug
+ */
+publicCars.get(
+  '/search',
+  asyncHandler(async (c) => {
+    const query = c.req.query('search')?.trim() || '';
+    const limit = Math.min(parseInt(c.req.query('limit') || '5'), 20);
+
+    // Return empty if query too short
+    if (query.length < 2) {
+      return c.json({
+        success: true,
+        data: { cars: [], total: 0 },
+      });
+    }
+
+    const tenant = getTenant(c);
+    const carService = new CarService();
+
+    console.log('[SEARCH] Autocomplete query:', query, 'limit:', limit);
+
+    // Search in multiple fields
+    const result = await carService.getPublicCars(tenant.id, {
+      page: 1,
+      limit,
+      offset: 0,
+      search: query,
+    });
+
+    // Format response with price formatting
+    const formattedCars = result.cars.map((car) => ({
+      id: car.id,
+      displayCode: car.displayCode,
+      publicName: car.publicName,
+      slug: car.slug,
+      brand: car.brand,
+      model: car.model,
+      year: car.year,
+      price: Number(car.price),
+      priceFormatted: formatPrice(car.price, { short: true }),
+      transmission: car.transmission,
+      km: car.km,
+      primaryPhoto: car.photos[car.primaryPhotoIndex] || car.photos[0] || null,
+    }));
+
+    console.log('[SEARCH] Found', formattedCars.length, 'results');
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        cars: formattedCars,
+        total: formattedCars.length,
+      },
+    };
+
+    return c.json(response);
+  })
+);
+
+/**
  * GET /api/cars/:slug
  * Get car details by slug
  */

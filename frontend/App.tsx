@@ -23,7 +23,7 @@ export function App() {
     // Car detail page: /cars/avanza-2020-hitam-a01
     const slug = path.replace('/cars/', '');
     PageComponent = CarDetailPage;
-    pageProps = { slug };
+    pageProps = { carSlug: slug };
   } else if (path === '/cars' || path === '/catalog') {
     // Car listing page: /cars?brand=Toyota
     PageComponent = CarListingPage;

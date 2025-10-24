@@ -21,11 +21,12 @@ else
     fi
 fi
 
-# Create uploads directory if it doesn't exist
-if [ ! -d "./uploads/cars" ]; then
+# Create uploads directory structure
+if [ ! -d "./uploads" ]; then
     echo "✓ Creating uploads directory..."
-    mkdir -p ./uploads/cars
+    mkdir -p ./uploads
     chmod 755 ./uploads
+    echo "  Directory created: ./uploads"
 fi
 
 # Generate Prisma client if not exists
@@ -40,10 +41,13 @@ if [ ! -f "./generated/prisma/index.ts" ]; then
     echo "export * from \"./client\";" > ./generated/prisma/index.ts
 fi
 
-# Run database migrations (only if not in production)
-if [ "$NODE_ENV" != "production" ]; then
-    echo "✓ Running database migrations..."
-    bunx prisma migrate deploy || echo "⚠️  Migration failed (may be expected if already applied)"
+# Run database migrations in production
+if [ "$NODE_ENV" = "production" ]; then
+    echo "✓ Running production database migrations..."
+    bunx prisma migrate deploy || {
+        echo "❌ Migration failed!"
+        exit 1
+    }
 fi
 
 # Health check
