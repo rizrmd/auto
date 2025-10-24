@@ -9,6 +9,8 @@ import { TenantProvider } from './src/context/TenantContext';
 import { HomePage } from './src/pages/HomePage';
 import { CarListingPage } from './src/pages/CarListingPage';
 import { CarDetailPage } from './src/pages/CarDetailPage';
+import { ErrorBoundary } from './src/components/ErrorBoundary';
+import { ErrorTest } from './src/components/ErrorTest';
 
 export function App() {
   // Simple client-side routing based on URL path
@@ -19,7 +21,11 @@ export function App() {
   let PageComponent = HomePage;
   let pageProps = {};
 
-  if (path.startsWith('/cars/')) {
+  if (path === '/test-error') {
+    // Error test page (development/testing only)
+    PageComponent = ErrorTest;
+    pageProps = {};
+  } else if (path.startsWith('/cars/')) {
     // Car detail page: /cars/avanza-2020-hitam-a01
     const slug = path.replace('/cars/', '');
     PageComponent = CarDetailPage;
@@ -42,9 +48,23 @@ export function App() {
   // Default: HomePage at /
 
   return (
-    <TenantProvider>
-      <PageComponent {...pageProps} />
-    </TenantProvider>
+    <ErrorBoundary
+      onError={(error, errorInfo) => {
+        // Log to error tracking service in production
+        console.error('App Error:', error, errorInfo);
+
+        // TODO: Send to Sentry or similar error tracking service
+        // if (import.meta.env.PROD) {
+        //   Sentry.captureException(error, {
+        //     contexts: { react: { componentStack: errorInfo.componentStack } },
+        //   });
+        // }
+      }}
+    >
+      <TenantProvider>
+        <PageComponent {...pageProps} />
+      </TenantProvider>
+    </ErrorBoundary>
   );
 }
 

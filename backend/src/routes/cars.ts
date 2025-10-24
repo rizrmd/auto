@@ -3,9 +3,7 @@
  */
 
 import type { Context } from 'hono';
-import { PrismaClient } from '../../../generated/prisma';
-
-const prisma = new PrismaClient();
+import { prisma } from '../db';
 
 /**
  * GET /api/cars - Get cars with filters and pagination

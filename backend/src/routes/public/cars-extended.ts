@@ -44,7 +44,7 @@ publicCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       photos: car.photos,
       primaryPhotoIndex: car.primaryPhotoIndex,
     }));
@@ -88,7 +88,7 @@ publicCars.get(
       color: car.color,
       transmission: car.transmission,
       km: car.km,
-      price: Number(car.price),
+      price: car.price.toString(),
       keyFeatures: car.keyFeatures,
       photos: car.photos,
       primaryPhotoIndex: car.primaryPhotoIndex,
