@@ -76,7 +76,7 @@ export class LeadService {
     const existingLead = await this.findById(tenantId, leadId);
 
     if (!existingLead) {
-      throw new NotFoundError(MESSAGES.LEAD_NOT_FOUND);
+      throw new NotFoundError('Lead');
     }
 
     // Validate phone number if provided
@@ -115,7 +115,7 @@ export class LeadService {
     const lead = await this.findById(tenantId, leadId);
 
     if (!lead) {
-      throw new NotFoundError(MESSAGES.LEAD_NOT_FOUND);
+      throw new NotFoundError('Lead');
     }
 
     await prisma.lead.delete({
@@ -294,7 +294,7 @@ export class LeadService {
     const lead = await this.findById(tenantId, leadId);
 
     if (!lead) {
-      throw new NotFoundError(MESSAGES.LEAD_NOT_FOUND);
+      throw new NotFoundError('Lead');
     }
 
     // Verify user belongs to tenant
@@ -337,7 +337,7 @@ export class LeadService {
     const lead = await this.findById(tenantId, leadId);
 
     if (!lead) {
-      throw new NotFoundError(MESSAGES.LEAD_NOT_FOUND);
+      throw new NotFoundError('Lead');
     }
 
     const existingTags = lead.tags || [];
@@ -360,7 +360,7 @@ export class LeadService {
     const lead = await this.findById(tenantId, leadId);
 
     if (!lead) {
-      throw new NotFoundError(MESSAGES.LEAD_NOT_FOUND);
+      throw new NotFoundError('Lead');
     }
 
     const existingTags = lead.tags || [];

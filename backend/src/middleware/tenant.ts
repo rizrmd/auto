@@ -118,7 +118,7 @@ export async function tenantMiddleware(c: Context, next: Next) {
     const tenant = await tenantService.findByDomain(domain, type);
 
     if (!tenant) {
-      throw new NotFoundError(MESSAGES.TENANT_NOT_FOUND);
+      throw new NotFoundError('Showroom');
     }
 
     // Validate tenant status

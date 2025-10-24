@@ -103,7 +103,7 @@ export class CarService {
     const existingCar = await this.findById(tenantId, carId);
 
     if (!existingCar) {
-      throw new NotFoundError(MESSAGES.CAR_NOT_FOUND);
+      throw new NotFoundError('Car');
     }
 
     // Validate input
@@ -205,7 +205,7 @@ export class CarService {
     const car = await this.findById(tenantId, carId);
 
     if (!car) {
-      throw new NotFoundError(MESSAGES.CAR_NOT_FOUND);
+      throw new NotFoundError('Car');
     }
 
     await prisma.car.delete({
