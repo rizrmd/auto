@@ -8,6 +8,7 @@
 import { Hono } from 'hono';
 import { cors } from 'hono/cors';
 import { logger } from 'hono/logger';
+import { secureHeaders } from 'hono/secure-headers';
 import { serve } from 'bun';
 import * as path from 'node:path';
 import { errorHandler } from './src/middleware/error-handler';
@@ -40,9 +41,65 @@ app.use(
     allowMethods: CORS_CONFIG.ALLOWED_METHODS,
     allowHeaders: CORS_CONFIG.ALLOWED_HEADERS,
     exposeHeaders: CORS_CONFIG.EXPOSED_HEADERS,
-    credentials: true,
+    credentials: CORS_CONFIG.CREDENTIALS,
+    maxAge: CORS_CONFIG.MAX_AGE,
   })
 );
+
+// ========================================
+// SECURITY HEADERS
+// ========================================
+
+/**
+ * Content Security Policy Configuration
+ *
+ * Production: Strict CSP to prevent XSS attacks
+ * Development: More permissive to allow HMR and hot reload
+ */
+const cspConfig = env.NODE_ENV === 'production' ? {
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'"],  // No unsafe-inline in production
+  styleSrc: ["'self'"],   // No unsafe-inline in production
+  imgSrc: ["'self'", 'https://auto.lumiku.com', 'data:'],
+  connectSrc: ["'self'", 'https://auto.lumiku.com'],
+  fontSrc: ["'self'"],
+  objectSrc: ["'none'"],
+  mediaSrc: ["'self'"],
+  frameSrc: ["'none'"],
+  upgradeInsecureRequests: [],
+} : {
+  // Development CSP (more permissive for hot reload)
+  defaultSrc: ["'self'"],
+  scriptSrc: ["'self'", "'unsafe-inline'"],  // Required for Vite HMR
+  styleSrc: ["'self'", "'unsafe-inline'"],   // Required for Tailwind JIT
+  imgSrc: ["'self'", 'data:', 'http:', 'https:'],
+  connectSrc: ["'self'", 'ws:', 'wss:'],  // Required for WebSocket (HMR)
+  fontSrc: ["'self'"],
+  objectSrc: ["'none'"],
+  mediaSrc: ["'self'"],
+  frameSrc: ["'none'"],
+};
+
+/**
+ * Apply comprehensive security headers
+ *
+ * Headers include:
+ * - Content-Security-Policy: Prevents XSS attacks
+ * - X-Frame-Options: Prevents clickjacking
+ * - X-Content-Type-Options: Prevents MIME-sniffing attacks
+ * - Referrer-Policy: Protects sensitive URL parameters
+ * - Strict-Transport-Security: Forces HTTPS (production only)
+ */
+app.use('*', secureHeaders({
+  contentSecurityPolicy: cspConfig,
+  crossOriginEmbedderPolicy: false, // Needed for image loading from different origins
+  xFrameOptions: 'DENY',
+  xContentTypeOptions: 'nosniff',
+  referrerPolicy: 'strict-origin-when-cross-origin',
+  strictTransportSecurity: env.NODE_ENV === 'production'
+    ? 'max-age=31536000; includeSubDomains; preload'  // 1 year in production
+    : false,  // Disabled in development (no HTTPS locally)
+}));
 
 // Request logging (only in development)
 if (isDevelopment) {
@@ -63,6 +120,27 @@ app.use('*', async (c, next) => {
 
 // Health check
 app.route('/health', healthRoutes);
+
+// CSP Violation Reporting
+app.post('/api/csp-report', async (c) => {
+  try {
+    const report = await c.req.json();
+    console.error('[CSP VIOLATION]', {
+      timestamp: new Date().toISOString(),
+      'blocked-uri': report['csp-report']?.['blocked-uri'],
+      'violated-directive': report['csp-report']?.['violated-directive'],
+      'document-uri': report['csp-report']?.['document-uri'],
+      'source-file': report['csp-report']?.['source-file'],
+      'line-number': report['csp-report']?.['line-number'],
+      fullReport: report,
+    });
+    // TODO: Send to error tracking service (Sentry, DataDog, etc.)
+    return c.json({ received: true });
+  } catch (error) {
+    console.error('[CSP REPORT ERROR]', error);
+    return c.json({ error: 'Failed to process CSP report' }, 400);
+  }
+});
 
 // Public API routes
 app.route('/api/cars', publicCarsRoutes);

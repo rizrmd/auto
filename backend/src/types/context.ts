@@ -106,8 +106,11 @@ export interface JwtPayload {
   tenantId: number;
   email: string;
   role: string;
-  iat?: number;
-  exp?: number;
+  iat: number;
+  exp: number;
+  iss: string;
+  aud: string;
+  sub: string;
 }
 
 /**

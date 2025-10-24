@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clickjacking Protection Test - AutoLeads Security</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-box {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #FF5722;
+        }
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #FF5722;
+            border-radius: 4px;
+        }
+        .result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔒 Clickjacking Protection Test</h1>
+
+    <div class="warning">
+        ⚠️ <strong>IMPORTANT:</strong> This test file must be hosted on a DIFFERENT domain than https://auto.lumiku.com to properly test clickjacking protection.
+        <br><br>
+        To test:
+        <ol>
+            <li>Host this file on a different domain (e.g., localhost, example.com)</li>
+            <li>Update the iframe src below to point to https://auto.lumiku.com</li>
+            <li>The iframe should refuse to load with X-Frame-Options error</li>
+        </ol>
+    </div>
+
+    <div class="test-box">
+        <h2>Test 1: Embedding AutoLeads in iframe</h2>
+        <p>The iframe below attempts to load AutoLeads. It should be <strong>BLOCKED</strong>:</p>
+
+        <!-- Change this URL to your actual production URL -->
+        <iframe
+            src="https://auto.lumiku.com"
+            title="AutoLeads - Should be blocked"
+            onload="document.getElementById('iframeResult').className = 'result fail'; document.getElementById('iframeResult').innerHTML = '❌ FAIL: iframe loaded (X-Frame-Options not working!)';"
+            onerror="document.getElementById('iframeResult').className = 'result pass'; document.getElementById('iframeResult').innerHTML = '✅ PASS: iframe blocked by X-Frame-Options';"
+        ></iframe>
+
+        <div id="iframeResult" class="result pass">
+            ⏳ Loading... (Should show error in console)
+        </div>
+    </div>
+
+    <div class="test-box">
+        <h2>📊 How to Verify Protection</h2>
+        <ol>
+            <li>Open your browser's Developer Console (F12)</li>
+            <li>Check for an error message like:
+                <pre>Refused to display 'https://auto.lumiku.com' in a frame because it set 'X-Frame-Options' to 'DENY'.</pre>
+            </li>
+            <li>The iframe above should be empty or show an error</li>
+            <li>If you see the AutoLeads site in the iframe, X-Frame-Options is NOT working</li>
+        </ol>
+    </div>
+
+    <div class="test-box">
+        <h2>🛡️ What is Clickjacking?</h2>
+        <p>
+            Clickjacking (UI redressing) is an attack where an attacker embeds your site in an invisible iframe
+            on their malicious website. Users think they're clicking on the attacker's page, but they're actually
+            clicking on your site.
+        </p>
+        <p>
+            <strong>Example Attack:</strong> An attacker could overlay a "Click Here to Win!" button on top of
+            your "Delete Account" button, tricking users into deleting their accounts.
+        </p>
+        <p>
+            <strong>Protection:</strong> The <code>X-Frame-Options: DENY</code> header prevents your site from
+            being embedded in ANY iframe, protecting users from clickjacking attacks.
+        </p>
+    </div>
+
+    <div class="test-box">
+        <h2>✅ Expected Behavior</h2>
+        <ul>
+            <li>The iframe above should be empty</li>
+            <li>Console should show: "Refused to display in a frame"</li>
+            <li>This confirms X-Frame-Options header is working</li>
+        </ul>
+    </div>
+
+    <script>
+        console.log('=== Clickjacking Protection Test ===');
+        console.log('Attempting to load https://auto.lumiku.com in iframe...');
+        console.log('Check for X-Frame-Options error in console');
+
+        // Check after 3 seconds
+        setTimeout(() => {
+            const iframe = document.querySelector('iframe');
+            try {
+                // Try to access iframe content (will fail if loaded cross-origin)
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                if (iframeDoc) {
+                    console.log('❌ WARNING: iframe content accessible (possible security issue)');
+                    document.getElementById('iframeResult').className = 'result fail';
+                    document.getElementById('iframeResult').innerHTML = '❌ FAIL: iframe loaded successfully (X-Frame-Options not working)';
+                }
+            } catch (e) {
+                console.log('✅ PASS: iframe blocked (as expected)');
+                console.log('Error:', e.message);
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

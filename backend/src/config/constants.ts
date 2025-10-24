@@ -201,8 +201,30 @@ export const UPLOAD_LIMITS = {
  * CORS Configuration
  */
 export const CORS_CONFIG = {
-  ALLOWED_ORIGINS: ['*'], // Should be restricted in production
-  ALLOWED_METHODS: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  ALLOWED_HEADERS: ['Content-Type', 'Authorization', 'X-Tenant-Domain'],
-  EXPOSED_HEADERS: ['X-Total-Count', 'X-Page', 'X-Per-Page'],
-} as const;
+  ALLOWED_ORIGINS: process.env.NODE_ENV === 'production'
+    ? (process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || [
+        'https://auto.lumiku.com',
+        'https://admin.lumiku.com',
+      ])
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://127.0.0.1:3000'],
+
+  ALLOWED_METHODS: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'] as string[],
+
+  ALLOWED_HEADERS: [
+    'Content-Type',
+    'Authorization',
+    'X-Tenant-Domain',
+    'X-Requested-With',
+  ] as string[],
+
+  EXPOSED_HEADERS: [
+    'X-Total-Count',
+    'X-Page',
+    'X-Per-Page',
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+  ] as string[],
+
+  CREDENTIALS: true,
+  MAX_AGE: 86400, // 24 hours
+};

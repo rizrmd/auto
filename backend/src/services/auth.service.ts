@@ -10,9 +10,10 @@ import { env } from '../config/env';
 import { JWT_CONFIG } from '../config/constants';
 import type { JwtPayload, LoginResponse } from '../types/context';
 import { UnauthorizedError } from '../middleware/error-handler';
+import jwt from 'jsonwebtoken';
 
 /**
- * JWT signing and verification using Bun's built-in methods
+ * JWT signing and verification using industry-standard jsonwebtoken library
  */
 export class AuthService {
   /**
@@ -36,29 +37,20 @@ export class AuthService {
    * Generate JWT token
    */
   generateToken(user: User): string {
-    const payload: JwtPayload = {
+    const payload = {
       userId: user.id,
       tenantId: user.tenantId,
       email: user.email,
       role: user.role,
     };
 
-    // Calculate expiration time
-    const expiresIn = env.JWT_EXPIRES_IN;
-    const expirationMs = this.parseExpiresIn(expiresIn);
-    const exp = Math.floor((Date.now() + expirationMs) / 1000);
-
-    const fullPayload = {
-      ...payload,
-      iat: Math.floor(Date.now() / 1000),
-      exp,
-      iss: JWT_CONFIG.ISSUER,
-      aud: JWT_CONFIG.AUDIENCE,
-    };
-
-    // For simplicity, we'll use a basic JWT implementation
-    // In production, consider using a JWT library
-    return this.createJwt(fullPayload);
+    return jwt.sign(payload, env.JWT_SECRET, {
+      algorithm: 'HS256' as const,
+      expiresIn: (env.JWT_EXPIRES_IN || '7d') as any,
+      issuer: 'autoleads-api',
+      audience: 'autoleads-client',
+      subject: user.id.toString(),
+    });
   }
 
   /**
@@ -66,19 +58,26 @@ export class AuthService {
    */
   verifyToken(token: string): JwtPayload {
     try {
-      const payload = this.verifyJwt(token);
+      const decoded = jwt.verify(token, env.JWT_SECRET, {
+        algorithms: ['HS256'],  // Prevent algorithm confusion
+        issuer: 'autoleads-api',
+        audience: 'autoleads-client',
+      });
 
-      // Validate required fields
-      if (!payload.userId || !payload.tenantId || !payload.email || !payload.role) {
-        throw new UnauthorizedError('Invalid token payload');
+      // Type guard
+      if (typeof decoded === 'string') {
+        throw new UnauthorizedError('Invalid token format');
       }
 
-      return payload as JwtPayload;
+      return decoded as JwtPayload;
     } catch (error) {
-      if (error instanceof UnauthorizedError) {
-        throw error;
+      if (error instanceof jwt.TokenExpiredError) {
+        throw new UnauthorizedError('Token expired');
       }
-      throw new UnauthorizedError('Invalid token');
+      if (error instanceof jwt.JsonWebTokenError) {
+        throw new UnauthorizedError('Invalid token');
+      }
+      throw new UnauthorizedError('Token verification failed');
     }
   }
 
@@ -142,106 +141,5 @@ export class AuthService {
         slug: user.tenant.slug,
       },
     };
-  }
-
-  /**
-   * Create a simple JWT (basic implementation)
-   */
-  private createJwt(payload: any): string {
-    const header = {
-      alg: JWT_CONFIG.ALGORITHM,
-      typ: 'JWT',
-    };
-
-    const encodedHeader = this.base64UrlEncode(JSON.stringify(header));
-    const encodedPayload = this.base64UrlEncode(JSON.stringify(payload));
-    const signature = this.sign(`${encodedHeader}.${encodedPayload}`);
-
-    return `${encodedHeader}.${encodedPayload}.${signature}`;
-  }
-
-  /**
-   * Verify a JWT
-   */
-  private verifyJwt(token: string): any {
-    const parts = token.split('.');
-
-    if (parts.length !== 3) {
-      throw new UnauthorizedError('Invalid token format');
-    }
-
-    const [encodedHeader, encodedPayload, signature] = parts;
-
-    // Verify signature
-    const expectedSignature = this.sign(`${encodedHeader}.${encodedPayload}`);
-
-    if (signature !== expectedSignature) {
-      throw new UnauthorizedError('Invalid token signature');
-    }
-
-    // Decode payload
-    const payload = JSON.parse(this.base64UrlDecode(encodedPayload));
-
-    // Check expiration
-    if (payload.exp && payload.exp < Math.floor(Date.now() / 1000)) {
-      throw new UnauthorizedError('Token has expired');
-    }
-
-    return payload;
-  }
-
-  /**
-   * Sign data with secret
-   */
-  private sign(data: string): string {
-    const hasher = new Bun.CryptoHasher('sha256');
-    hasher.update(data + env.JWT_SECRET);
-    return this.base64UrlEncode(hasher.digest('base64'));
-  }
-
-  /**
-   * Base64 URL encode
-   */
-  private base64UrlEncode(str: string): string {
-    return Buffer.from(str)
-      .toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-  }
-
-  /**
-   * Base64 URL decode
-   */
-  private base64UrlDecode(str: string): string {
-    let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
-    while (base64.length % 4) {
-      base64 += '=';
-    }
-    return Buffer.from(base64, 'base64').toString('utf-8');
-  }
-
-  /**
-   * Parse expires-in string to milliseconds
-   */
-  private parseExpiresIn(expiresIn: string): number {
-    const match = expiresIn.match(/^(\d+)([smhd])$/);
-
-    if (!match) {
-      // Default to 7 days
-      return 7 * 24 * 60 * 60 * 1000;
-    }
-
-    const value = parseInt(match[1], 10);
-    const unit = match[2];
-
-    const multipliers: Record<string, number> = {
-      s: 1000,
-      m: 60 * 1000,
-      h: 60 * 60 * 1000,
-      d: 24 * 60 * 60 * 1000,
-    };
-
-    return value * (multipliers[unit] || 1000);
   }
 }
