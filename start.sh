@@ -69,8 +69,4 @@ echo "✓ Database: Connected"
 
 # Start application
 echo "✓ Starting AutoLeads application..."
-if [ "$NODE_ENV" = "production" ]; then
-    bun run start
-else
-    bun run dev
-fi
+exec bun backend/index.tsx

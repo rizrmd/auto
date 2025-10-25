@@ -4,8 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun run scripts/dev.ts",
-    "start": "NODE_ENV=production bun backend/index.tsx",
+    "start": "bun backend/index.tsx",
     "build": "bun run build.ts",
     "build:frontend": "bun run scripts/build/build-frontend.ts",
     "db:generate": "bunx prisma generate",

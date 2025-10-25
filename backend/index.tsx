@@ -364,9 +364,13 @@ app.notFound(async (c) => {
 /**
  * Start Server
  */
+const port = process.env.PORT ? parseInt(process.env.PORT) : (process.env.APP_PORT ? parseInt(process.env.APP_PORT) : 3000);
+
+console.log(`🚀 Starting server on port ${port}...`);
+
 const server = serve({
   fetch: app.fetch,
-  port: process.env.PORT ? parseInt(process.env.PORT) : (process.env.APP_PORT ? parseInt(process.env.APP_PORT) : 3000),
+  port: port,
   development: isDevelopment
     ? {
         // Enable hot module reloading in development
