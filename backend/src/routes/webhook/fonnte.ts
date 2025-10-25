@@ -1,25 +1,25 @@
 /**
- * Fonnte Webhook Route
+ * WhatsApp Webhook Route
  *
- * Handles incoming WhatsApp messages from Fonnte.
+ * Handles incoming WhatsApp messages.
  */
 
 import { Hono } from 'hono';
 import { LeadService } from '../../services/lead.service';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
-import { FonnteClient } from '../../whatsapp/fonnte-client';
+import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
 import { RAGEngine } from '../../bot/customer/rag-engine';
 import { IntentRecognizer } from '../../bot/customer/intent-recognizer';
 import type { FontteWebhookPayload, ApiResponse } from '../../types/context';
 
-const fontteWebhook = new Hono();
+const whatsappWebhook = new Hono();
 
 /**
  * POST /webhook/fonnte
  * Handle incoming WhatsApp messages
  */
-fontteWebhook.post(
+whatsappWebhook.post(
   '/',
   asyncHandler(async (c) => {
     const startTime = Date.now();
@@ -27,7 +27,7 @@ fontteWebhook.post(
 
     // Log request details
     console.log('='.repeat(50));
-    console.log(`[WEBHOOK] Fonnte webhook received - Request ID: ${requestId}`);
+    console.log(`[WEBHOOK] WhatsApp webhook received - Request ID: ${requestId}`);
     console.log(`[WEBHOOK] Timestamp: ${new Date().toISOString()}`);
     console.log(`[WEBHOOK] Method: ${c.req.method}`);
     console.log(`[WEBHOOK] URL: ${c.req.url}`);
@@ -106,9 +106,9 @@ fontteWebhook.post(
 
     // Generate intelligent response using LLM
     try {
-      const fonnte = new FonnteClient();
+      const whatsapp = new WhatsAppClient();
       
-      if (fonnte.isConfigured()) {
+      if (whatsapp.isConfigured()) {
         console.log(`[WEBHOOK] Generating LLM response for message: "${payload.message}"`);
         
         // Recognize intent and extract entities
@@ -130,32 +130,73 @@ fontteWebhook.post(
         console.log(`[WEBHOOK] LLM Response: "${llmResponse}"`);
         
         // Send LLM response
-        await fonnte.sendMessage({
+        const sendResult = await whatsapp.sendMessage({
           target: customerPhone,
           message: llmResponse
         });
         
-        console.log(`[WEBHOOK] LLM reply sent to ${customerPhone}`);
-        
-        // Save LLM reply to database
-        await prisma.message.create({
-          data: {
-            tenantId: tenant.id,
-            leadId: lead.id,
-            sender: 'bot',
-            message: llmResponse,
-            metadata: {
-              type: 'text',
-              autoReply: true,
-              intent: intent.type,
-              confidence: intent.confidence,
-              entities: intent.entities,
+        if (sendResult.success) {
+          console.log(`[WEBHOOK] LLM reply sent to ${customerPhone}`);
+          
+          // Save LLM reply to database
+          await prisma.message.create({
+            data: {
+              tenantId: tenant.id,
+              leadId: lead.id,
+              sender: 'bot',
+              message: llmResponse,
+              metadata: {
+                type: 'text',
+                autoReply: true,
+                intent: intent.type,
+                confidence: intent.confidence,
+                entities: intent.entities,
+              },
             },
-          },
-        });
+          });
+        } else {
+          console.error('[WEBHOOK] Failed to send LLM reply:', sendResult.error);
+        }
       } else {
-        console.warn('[WEBHOOK] Fonnte not configured, skipping reply');
+        console.warn('[WEBHOOK] WhatsApp API not configured, skipping reply');
       }
+    } catch (error) {
+      console.error('[WEBHOOK] Error generating/sending LLM reply:', error);
+      
+      // Fallback to simple error message
+      try {
+        const whatsapp = new WhatsAppClient();
+        if (whatsapp.isConfigured()) {
+          const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
+          const sendResult = await whatsapp.sendMessage({
+            target: customerPhone,
+            message: fallbackMessage
+          });
+          
+          if (sendResult.success) {
+            // Save fallback reply
+            await prisma.message.create({
+              data: {
+                tenantId: tenant.id,
+                leadId: lead.id,
+                sender: 'bot',
+                message: fallbackMessage,
+                metadata: {
+                  type: 'text',
+                  autoReply: true,
+                  fallback: true,
+                },
+              },
+            });
+          } else {
+            console.error('[WEBHOOK] Failed to send fallback reply:', sendResult.error);
+          }
+        }
+      } catch (fallbackError) {
+        console.error('[WEBHOOK] Error sending fallback reply:', fallbackError);
+      }
+      // Continue anyway - we still want to acknowledge webhook
+    }
     } catch (error) {
       console.error('[WEBHOOK] Error generating/sending LLM reply:', error);
       
@@ -203,4 +244,4 @@ fontteWebhook.post(
   })
 );
 
-export default fontteWebhook;
+export default whatsappWebhook;
