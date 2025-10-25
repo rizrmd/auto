@@ -42,6 +42,7 @@ whatsappWebhook.post(
     let customerName: string | undefined;
     let message: string;
     let messageType: string = 'text';
+    let messageId: string | undefined;
 
     // Check if it's the old Fonnte format or new format
     if (payload.sender) {
@@ -57,12 +58,14 @@ whatsappWebhook.post(
       console.log(`[WEBHOOK]   - File: ${payload.file || 'No file'}`);
       console.log(`[WEBHOOK]   - URL: ${payload.url || 'No URL'}`);
       console.log(`[WEBHOOK]   - Location: ${payload.location || 'No location'}`);
+      console.log(`[WEBHOOK]   - Message ID: ${payload.id || 'Not provided'}`);
 
       // Extract phone number from WhatsApp JID format
       customerPhone = payload.sender.split('@')[0].split(':')[0];
       customerName = payload.pushname || payload.member?.name;
       message = payload.message;
       messageType = payload.type || 'text';
+      messageId = payload.id;
     } else if (payload.phone) {
       // Simple format for testing
       console.log(`[WEBHOOK] Simple payload detected:`);
@@ -72,6 +75,7 @@ whatsappWebhook.post(
       customerPhone = payload.phone;
       customerName = undefined;
       message = payload.message;
+      messageId = payload.id;
     } else {
       console.error('[WEBHOOK] Invalid payload format:', payload);
       const response: ApiResponse = {
@@ -130,6 +134,7 @@ whatsappWebhook.post(
           file: payload.file,
           url: payload.url,
           timestamp: payload.timestamp,
+          messageId: messageId,
         },
       },
     });
@@ -184,6 +189,19 @@ whatsappWebhook.post(
               },
             },
           });
+
+          // Mark original message as read after successfully responding
+          try {
+            const messageIds = messageId ? [messageId] : undefined;
+            const readResult = await whatsapp.markAsRead(customerPhone, messageIds);
+            if (readResult.success) {
+              console.log(`[WEBHOOK] Message marked as read for ${customerPhone}${messageId ? ` (ID: ${messageId})` : ''}`);
+            } else {
+              console.warn(`[WEBHOOK] Failed to mark message as read: ${readResult.error}`);
+            }
+          } catch (readError) {
+            console.warn('[WEBHOOK] Error marking message as read:', readError);
+          }
         } else {
           console.error('[WEBHOOK] Failed to send LLM reply:', sendResult.error);
         }
@@ -218,6 +236,19 @@ whatsappWebhook.post(
                 },
               },
             });
+
+            // Mark message as read even for fallback replies
+            try {
+              const messageIds = messageId ? [messageId] : undefined;
+              const readResult = await whatsapp.markAsRead(customerPhone, messageIds);
+              if (readResult.success) {
+                console.log(`[WEBHOOK] Message marked as read for ${customerPhone}${messageId ? ` (ID: ${messageId})` : ''} (fallback)`);
+              } else {
+                console.warn(`[WEBHOOK] Failed to mark message as read (fallback): ${readResult.error}`);
+              }
+            } catch (readError) {
+              console.warn('[WEBHOOK] Error marking message as read (fallback):', readError);
+            }
           } else {
             console.error('[WEBHOOK] Failed to send fallback reply:', sendResult.error);
           }
