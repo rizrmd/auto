@@ -224,7 +224,14 @@ app.get('/uploads/*', async (c) => {
       svg: 'image/svg+xml',
     };
 
-    const contentType = mimeTypes[ext] || 'application/octet-stream';
+    // Check if file is actually SVG by reading first few bytes
+    let contentType = mimeTypes[ext] || 'application/octet-stream';
+    if (ext === 'webp') {
+      const header = fileContent.slice(0, 20).toString();
+      if (header.includes('<svg')) {
+        contentType = 'image/svg+xml';
+      }
+    }
 
     // Read file content using Node.js fs
     const fileContent = await readFile(filepath);
