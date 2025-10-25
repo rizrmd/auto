@@ -12,7 +12,6 @@ interface FooterProps {
 }
 
 export function Footer({ className }: FooterProps) {
-  // Footer component - rebuilt with fix
   const { tenant } = useTenantContext();
 
   const formatBusinessHours = (hours: Record<string, string> | null) => {
@@ -106,7 +105,7 @@ export function Footer({ className }: FooterProps) {
               <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <div>
                 <p>{tenant.address}</p>
-                {tenant.city && <p>{tenant.city}</p>
+                {tenant.city && <p>{tenant.city}</p>}
               </div>
             </div>
             {tenant.mapsUrl && (
