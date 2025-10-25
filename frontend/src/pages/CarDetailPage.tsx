@@ -89,10 +89,10 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-24">
+    <div className="min-h-screen">
       <Header showSearch={false} />
 
-      <main className="flex-1">
+      <main>
         <div className="container mx-auto px-4 py-6">
           {/* Back Button */}
           <Button
@@ -249,11 +249,6 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
           </div>
         </div>
       </main>
-
-      <Footer />
-
-      {/* Sticky WhatsApp Button (Mobile) */}
-      <WhatsAppButton car={car} />
     </div>
   );
 }
