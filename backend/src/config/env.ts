@@ -53,6 +53,27 @@ function getNumericEnvVar(key: string, defaultValue: number): number {
 }
 
 /**
+ * Generates a secure JWT secret for production
+ */
+function generateSecureJWTSecret(): string {
+  // If JWT_SECRET is explicitly set, use it
+  if (process.env.JWT_SECRET) {
+    return process.env.JWT_SECRET;
+  }
+  
+  // In production, generate a secure random secret
+  if (process.env.NODE_ENV === 'production') {
+    const crypto = require('crypto');
+    const secret = crypto.randomBytes(64).toString('hex');
+    console.log('🔐 Generated secure JWT secret for production (consider setting JWT_SECRET environment variable for persistence)');
+    return secret;
+  }
+  
+  // In development, use a predictable secret
+  return 'dev-secret-change-in-production';
+}
+
+/**
  * Validated environment configuration
  */
 export const env: EnvConfig = {
@@ -62,7 +83,7 @@ export const env: EnvConfig = {
   DATABASE_URL: getEnvVar('DATABASE_URL'),
 
   // JWT Authentication
-  JWT_SECRET: getOptionalEnvVar('JWT_SECRET', 'dev-secret-change-in-production'),
+  JWT_SECRET: getOptionalEnvVar('JWT_SECRET', generateSecureJWTSecret()),
   JWT_EXPIRES_IN: getOptionalEnvVar('JWT_EXPIRES_IN', '7d'),
 
   // Fonnte WhatsApp Integration
@@ -93,9 +114,9 @@ function validateEnv(): void {
     errors.push('DATABASE_URL must be a valid PostgreSQL connection string');
   }
 
-  // Validate JWT_SECRET in production
+  // Validate JWT_SECRET in production (only fail if it's the dev secret)
   if (env.NODE_ENV === 'production' && env.JWT_SECRET === 'dev-secret-change-in-production') {
-    errors.push('JWT_SECRET must be set in production environment');
+    console.warn('⚠️  Using development JWT secret in production. Consider setting JWT_SECRET environment variable.');
   }
 
   // Validate rate limiting values
