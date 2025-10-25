@@ -225,8 +225,11 @@ app.get('/uploads/*', async (c) => {
 
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
-    // Return image with proper headers using stream
-    return new Response(file.stream(), {
+    // Read file content properly
+    const fileContent = await file.arrayBuffer();
+    
+    // Return image with proper headers
+    return new Response(fileContent, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400', // 24 hours
