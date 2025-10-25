@@ -49,13 +49,13 @@ set -e\n\
 echo "🚀 Starting AutoLeads application..."\n\
 \n\
 # Start WhatsApp Web API in background\n\
-if [ -f "/app/whatsapp-api.env" ] && [ -n "$WA_DATABASE_URL" ]; then\n\
+if [ -f "/app/whatsapp-api.env" ] && [ -n "$DATABASE_URL" ]; then\n\
     echo "📱 Starting WhatsApp Web API on port 8080..."\n\
-    DATABASE_URL="$WA_DATABASE_URL" /usr/local/bin/whatsapp-web-api &\n\
+    PORT=8080 DATABASE_URL="$DATABASE_URL" /usr/local/bin/whatsapp-web-api &\n\
     WHATSAPP_PID=$!\n\
     echo "WhatsApp API started with PID: $WHATSAPP_PID"\n\
 else\n\
-    echo "⚠️  WhatsApp API not configured (missing WA_DATABASE_URL)"\n\
+    echo "⚠️  WhatsApp API not configured (missing DATABASE_URL)"\n\
 fi\n\
 \n\
 # Start main application\n\
