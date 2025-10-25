@@ -68,19 +68,20 @@ Apakah masih tersedia?`;
 
   if (sticky) {
     return (
-      <div className="fixed bottom-0 inset-x-0 p-4 bg-gradient-to-t from-background via-background to-transparent pointer-events-none z-40">
+      <div className="fixed bottom-6 right-6 z-40 pointer-events-none">
         <Button
           onClick={handleClick}
           size="lg"
           className={cn(
-            'w-full max-w-md mx-auto shadow-xl hover:shadow-2xl transition-all duration-300 pointer-events-auto',
-            'bg-[#25D366] hover:bg-[#20BA5A] text-white font-semibold',
-            'animate-in slide-in-from-bottom-5 duration-500',
+            'w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 pointer-events-auto',
+            'bg-[#25D366] hover:bg-[#20BA5A] text-white',
+            'animate-in fade-in zoom-in-95 duration-300',
+            'flex items-center justify-center p-0',
             className
           )}
+          aria-label="Hubungi via WhatsApp"
         >
-          <MessageCircle className="h-5 w-5 mr-2" />
-          Hubungi via WhatsApp
+          <MessageCircle className="h-6 w-6" />
         </Button>
       </div>
     );
