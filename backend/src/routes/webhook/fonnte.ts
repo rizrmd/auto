@@ -47,8 +47,9 @@ fontteWebhook.post(
     console.log(`[WEBHOOK]   - URL: ${payload.url || 'No URL'}`);
     console.log(`[WEBHOOK]   - Location: ${payload.location || 'No location'}`);
 
-    // Extract phone number (remove @s.whatsapp.net suffix if present)
-    const customerPhone = payload.sender.replace('@s.whatsapp.net', '');
+    // Extract phone number from WhatsApp JID format
+    // Handle formats like: 6281298329132@s.whatsapp.net or 6281298329132:84@s.whatsapp.net
+    const customerPhone = payload.sender.split('@')[0].split(':')[0];
     const customerName = payload.pushname || payload.member?.name;
 
     // Determine tenant based on device/number
