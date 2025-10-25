@@ -214,12 +214,8 @@ app.get('/uploads/*', async (c) => {
     // Read file content using Node.js fs
     const fileContent = await readFile(filepath);
     
-    // Debug logging
-    console.log('[IMAGE] File size:', fileContent.length, 'bytes for:', filepath);
-    
+    // Simple MIME type detection
     const ext = filepath.split('.').pop()?.toLowerCase() || '';
-
-    // Determine MIME type
     const mimeTypes: Record<string, string> = {
       jpg: 'image/jpeg',
       jpeg: 'image/jpeg',
@@ -229,21 +225,13 @@ app.get('/uploads/*', async (c) => {
       svg: 'image/svg+xml',
     };
 
-    // Check if file is actually SVG by reading first few bytes
+    // Check if it's actually SVG content
     let contentType = mimeTypes[ext] || 'application/octet-stream';
-    if (ext === 'webp') {
-      const header = fileContent.slice(0, 20).toString();
-      if (header.includes('<svg')) {
-        contentType = 'image/svg+xml';
-      }
+    const contentPreview = fileContent.slice(0, 100).toString();
+    if (contentPreview.includes('<svg')) {
+      contentType = 'image/svg+xml';
     }
 
-    // Read file content using Node.js fs
-    const fileContent = await readFile(filepath);
-    
-    // Debug logging
-    console.log('[IMAGE] File size:', fileContent.length, 'bytes for:', filepath);
-    
     // Return image with proper headers
     return new Response(fileContent, {
       headers: {
