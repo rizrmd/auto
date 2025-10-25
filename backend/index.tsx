@@ -187,8 +187,12 @@ app.get('/api', (c) => {
 // ========================================
 // Serve files from /app/data directory (persistent storage)
 app.get('/uploads/*', async (c) => {
-  const requestPath = c.req.path.replace('/uploads/', '');
+  console.log('[IMAGE] Request received for:', c.req.path);
+  
+  const requestPath = c.req.path.replace(/^\/uploads\//, '');
   const filepath = `/app/data/${requestPath}`;
+
+  console.log('[IMAGE] Resolved filepath:', filepath);
 
   // Security: Prevent path traversal attacks
   const normalizedPath = path.normalize(filepath);
@@ -200,6 +204,8 @@ app.get('/uploads/*', async (c) => {
   try {
     // Check if file exists
     const file = Bun.file(filepath);
+    console.log('[IMAGE] File exists check:', await file.exists());
+    
     if (!(await file.exists())) {
       console.error('[IMAGE] File not found:', filepath, '| URL:', c.req.path);
       return c.notFound();
