@@ -210,8 +210,8 @@ app.get('/uploads/*', async (c) => {
       console.log('[IMAGE] Serving:', filepath);
     }
 
-    // Read file content
-    const fileData = await file.arrayBuffer();
+    // Read file content as bytes
+    const fileData = await file.bytes();
     const ext = filepath.split('.').pop()?.toLowerCase() || '';
 
     // Determine MIME type
