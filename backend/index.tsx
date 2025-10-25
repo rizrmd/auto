@@ -211,7 +211,12 @@ app.get('/uploads/*', async (c) => {
       console.log('[IMAGE] Serving:', filepath);
     }
 
-    // Read file content
+    // Read file content using Node.js fs
+    const fileContent = await readFile(filepath);
+    
+    // Debug logging
+    console.log('[IMAGE] File size:', fileContent.length, 'bytes for:', filepath);
+    
     const ext = filepath.split('.').pop()?.toLowerCase() || '';
 
     // Determine MIME type
