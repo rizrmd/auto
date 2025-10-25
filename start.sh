@@ -50,6 +50,15 @@ if [ "$NODE_ENV" = "production" ]; then
     }
 fi
 
+# Build frontend for production
+if [ "$NODE_ENV" = "production" ]; then
+    echo "✓ Building frontend..."
+    bun run build:frontend || {
+        echo "❌ Frontend build failed!"
+        exit 1
+    }
+fi
+
 # Health check
 echo "✓ Environment: ${NODE_ENV:-development}"
 echo "✓ Port: ${APP_PORT:-3000}"
