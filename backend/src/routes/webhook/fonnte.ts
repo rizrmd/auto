@@ -307,14 +307,21 @@ Current customer message: "${message}"`,
               finalResponse = response.message || 'Maaf, saya tidak bisa memproses permintaan Anda saat ini.';
               console.log(`[WEBHOOK] Final response generated: "${finalResponse.substring(0, 100)}..."`);
 
-              // 🚨 VALIDATION: Detect false photo promises
-              const isFalsePhotoPromise = (
-                (finalResponse.toLowerCase().includes('akan mengirim') ||
-                 finalResponse.toLowerCase().includes('akan kirim') ||
-                 finalResponse.toLowerCase().includes('segera mengirim')) &&
-                (finalResponse.toLowerCase().includes('foto') ||
-                 finalResponse.toLowerCase().includes('gambar'))
+              // 🚨 VALIDATION: Detect false photo promises (all tenses!)
+              const responseText = finalResponse.toLowerCase();
+              const hasFotoMention = responseText.includes('foto') || responseText.includes('gambar');
+              const hasFalsePhotoPromise = hasFotoMention && (
+                responseText.includes('akan mengirim') ||      // future: "akan mengirimkan"
+                responseText.includes('akan kirim') ||         // future: "akan kirimkan"
+                responseText.includes('segera mengirim') ||    // immediate: "segera mengirimkan"
+                responseText.includes('telah mengirim') ||     // past: "telah mengirimkan" ⚠️ BYPASS ATTEMPT
+                responseText.includes('sudah mengirim') ||     // past: "sudah mengirimkan" ⚠️ BYPASS ATTEMPT
+                responseText.includes('sudah kirim') ||        // past: "sudah kirimkan" ⚠️ BYPASS ATTEMPT
+                responseText.includes('saya kirim') ||         // present: "saya kirimkan"
+                (responseText.includes('foto') && responseText.includes('dikirim'))  // passive: "foto dikirimkan"
               );
+
+              const isFalsePhotoPromise = hasFalsePhotoPromise;
 
               const isPhotoRequest = (
                 message.toLowerCase().includes('foto') ||
