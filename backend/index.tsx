@@ -23,7 +23,6 @@ import fontteWebhookRoutes from './src/routes/webhook/fonnte';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
-import adminWhatsAppRoutes from './src/routes/admin/whatsapp';
 import tenantRoutes from './src/routes/tenant';
 
 /**
@@ -157,7 +156,6 @@ app.route('/webhook/fonnte', fontteWebhookRoutes);
 app.route('/api/admin/auth', adminAuthRoutes);
 app.route('/api/admin/cars', adminCarsRoutes);
 app.route('/api/admin/leads', adminLeadsRoutes);
-app.route('/api/admin/whatsapp', adminWhatsAppRoutes);
 
 /**
  * Root route - API info
@@ -177,7 +175,6 @@ app.get('/api', (c) => {
         auth: '/api/admin/auth/login',
         cars: '/api/admin/cars',
         leads: '/api/admin/leads',
-        whatsapp: '/api/admin/whatsapp',
       },
       webhooks: {
         fonnte: '/webhook/fonnte',
