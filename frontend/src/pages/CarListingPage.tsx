@@ -70,10 +70,7 @@ export function CarListingPage() {
   }, [filters]);
 
   const handleCarClick = (car: Car) => {
-    return (e: React.MouseEvent) => {
-      e.preventDefault();
-      window.location.href = `/cars/${car.slug}`;
-    };
+    window.location.href = `/cars/${car.slug}`;
   };
 
   const handleSearch = (query: string) => {

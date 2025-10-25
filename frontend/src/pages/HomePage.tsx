@@ -30,10 +30,7 @@ export function HomePage() {
   }, []);
 
   const handleCarClick = (car: CarType) => {
-    return (e: React.MouseEvent) => {
-      e.preventDefault();
-      window.location.href = `/cars/${car.slug}`;
-    };
+    window.location.href = `/cars/${car.slug}`;
   };
 
   const handleBrowseAll = (e: React.MouseEvent) => {

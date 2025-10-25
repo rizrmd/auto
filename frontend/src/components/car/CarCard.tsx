@@ -28,14 +28,15 @@ export function CarCard({ car, onClick, className }: CarCardProps) {
 
   return (
     <Card
+      asChild
       className={cn(
         'group cursor-pointer overflow-hidden border shadow-md hover:shadow-2xl transition-all duration-500 bg-card',
         'hover:-translate-y-1 hover:border-primary/20',
         onClick && 'active:scale-[0.98]',
         className
       )}
-      onClick={onClick}
     >
+      <a href={`/cars/${car.slug}`} onClick={(e) => { e.preventDefault(); onClick?.(); }}>
       {/* Image Container */}
       <div className="relative aspect-[4/3] overflow-hidden bg-muted">
         {primaryPhoto ? (
@@ -128,6 +129,7 @@ export function CarCard({ car, onClick, className }: CarCardProps) {
           </div>
         )}
       </CardContent>
+      </a>
     </Card>
   );
 }
