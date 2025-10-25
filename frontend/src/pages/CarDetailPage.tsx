@@ -89,10 +89,10 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen flex flex-col">
       <Header showSearch={false} />
 
-      <main>
+      <main className="flex-1">
         <div className="container mx-auto px-4 py-6">
           {/* Back Button */}
           <Button
@@ -249,6 +249,8 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
           </div>
         </div>
       </main>
+
+      <Footer />
     </div>
   );
 }

@@ -141,29 +141,26 @@ export function Footer({ className }: FooterProps) {
       )}
     </div>
 
-    {/* Bottom Bar - Combined Row */}
-    <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-      <div className="space-y-2">
-        <p className="font-medium">
+    {/* Bottom Bar - Single Clean Row */}
+    <div className="mt-12 pt-8 border-t">
+      <div className="flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground">
+        <p className="font-medium mb-2 md:mb-0">
           © {currentYear} {tenant?.name || 'AutoLeads'}. All rights reserved.
         </p>
-        <p className="text-xs">
-          Premium automotive marketplace platform powered by{' '}
-          <a
-            href="https://lumiku.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary hover:underline font-medium"
-          >
-            Lumiku AutoLeads
-          </a>
-        </p>
-        <div className="flex justify-center items-center gap-4 mt-3 text-xs">
-          <span>Trusted by thousands of buyers</span>
-          <span>•</span>
-          <span>Quality guaranteed</span>
-          <span>•</span>
-          <span>24/7 support</span>
+        <div className="flex items-center gap-4 text-xs">
+          <span>
+            Powered by{' '}
+            <a
+              href="https://lumiku.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline font-medium"
+            >
+              Lumiku AutoLeads
+            </a>
+          </span>
+          <span className="hidden md:inline">•</span>
+          <span className="hidden md:inline">Trusted by thousands</span>
         </div>
       </div>
     </div>
