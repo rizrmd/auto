@@ -7,7 +7,9 @@ import { writeFile, mkdir } from 'fs/promises';
 import { join } from 'path';
 
 export class MediaDownloader {
-  private readonly UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads';
+  // UPDATED: Changed from ./uploads to ./data for persistent storage in Coolify
+  // /data directory will be mounted as persistent volume
+  private readonly UPLOAD_DIR = process.env.UPLOAD_DIR || './data';
   private readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
   /**
@@ -43,7 +45,8 @@ export class MediaDownloader {
       const filepath = join(tenantDir, filename);
       await writeFile(filepath, Buffer.from(buffer));
 
-      // Return relative URL
+      // Return relative URL (keep /uploads in URL for backward compatibility)
+      // Note: /uploads URLs are served from /data directory in backend/index.tsx
       return `/uploads/tenant-${tenantId}/${filename}`;
 
     } catch (error) {

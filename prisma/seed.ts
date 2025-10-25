@@ -43,7 +43,7 @@ async function main() {
       status: 'active',
       primaryColor: '#FF5722',
       secondaryColor: '#212121',
-      logoUrl: '/uploads/logos/showroom-surabaya.png',
+      logoUrl: '/uploads/logos/showroom-surabaya.png', // Note: /uploads URLs served from /data directory
       whatsappBotEnabled: true,
       planStartedAt: new Date('2025-01-01'),
       planExpiresAt: new Date('2025-12-31'),

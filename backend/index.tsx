@@ -185,14 +185,17 @@ app.get('/api', (c) => {
 // ========================================
 // IMAGE SERVING - Must be BEFORE wildcard
 // ========================================
+// UPDATED: Changed from ./uploads to ./data for persistent storage
+// /data directory will be mounted as persistent volume in Coolify
+// Keeping /uploads/* URL for backward compatibility with existing database records
 app.get('/uploads/*', async (c) => {
   const requestPath = c.req.path.replace('/uploads/', '');
-  const filepath = `./uploads/${requestPath}`;
+  const filepath = `./data/${requestPath}`;
 
   // Security: Prevent path traversal attacks
   const normalizedPath = path.normalize(filepath);
-  // path.normalize() removes the ./ prefix, so check for both ./uploads/ and uploads/
-  if (!normalizedPath.startsWith('./uploads/') && !normalizedPath.startsWith('uploads/')) {
+  // path.normalize() removes the ./ prefix, so check for both ./data/ and data/
+  if (!normalizedPath.startsWith('./data/') && !normalizedPath.startsWith('data/')) {
     console.error('[SECURITY] Path traversal attempt blocked:', requestPath);
     return c.text('Forbidden', 403);
   }
@@ -201,8 +204,14 @@ app.get('/uploads/*', async (c) => {
     // Check if file exists
     const file = Bun.file(filepath);
     if (!(await file.exists())) {
-      console.error('[IMAGE] File not found:', filepath);
+      console.error('[IMAGE] File not found:', filepath, '| URL:', c.req.path);
+      console.error('[IMAGE] Tip: Ensure files are in /data directory, not /uploads');
       return c.notFound();
+    }
+
+    // Log successful file access in development
+    if (isDevelopment) {
+      console.log('[IMAGE] Serving:', filepath);
     }
 
     // Read file content
@@ -376,6 +385,7 @@ console.log('='.repeat(60));
 console.log(`Environment: ${env.NODE_ENV}`);
 console.log(`Server running at: ${server.url}`);
 console.log(`Database: ${env.DATABASE_URL.split('@')[1] || 'Connected'}`);
+console.log(`Storage: /uploads/* URLs served from ./data/ directory`);
 console.log('='.repeat(60));
 console.log('API Endpoints:');
 console.log(`  Health Check:    ${server.url}health`);
