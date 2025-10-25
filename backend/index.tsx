@@ -185,14 +185,10 @@ app.get('/api', (c) => {
 // ========================================
 // IMAGE SERVING - Must be BEFORE wildcard
 // ========================================
-// Serve files from /app/data directory (persistent storage)
+// Serve files from /app/uploads directory (persistent storage)
 app.get('/uploads/*', async (c) => {
-  console.log('[IMAGE] Request received for:', c.req.path);
-  
   const requestPath = c.req.path.replace(/^\/uploads\//, '');
   const filepath = `/app/uploads/${requestPath}`;
-
-  console.log('[IMAGE] Resolved filepath:', filepath);
 
   // Security: Prevent path traversal attacks
   const normalizedPath = path.normalize(filepath);
@@ -204,8 +200,6 @@ app.get('/uploads/*', async (c) => {
   try {
     // Check if file exists
     const file = Bun.file(filepath);
-    console.log('[IMAGE] File exists check:', await file.exists());
-    
     if (!(await file.exists())) {
       console.error('[IMAGE] File not found:', filepath, '| URL:', c.req.path);
       return c.notFound();
