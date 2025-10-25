@@ -21,13 +21,7 @@ else
     fi
 fi
 
-# Create uploads directory structure
-if [ ! -d "./uploads" ]; then
-    echo "✓ Creating uploads directory..."
-    mkdir -p ./uploads
-    chmod 755 ./uploads
-    echo "  Directory created: ./uploads"
-fi
+
 
 # Generate Prisma client (always generate at runtime to ensure it's up to date)
 echo "✓ Generating Prisma client..."

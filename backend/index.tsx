@@ -185,9 +185,7 @@ app.get('/api', (c) => {
 // ========================================
 // IMAGE SERVING - Must be BEFORE wildcard
 // ========================================
-// UPDATED: Changed from ./uploads to ./data for persistent storage
-// /data directory will be mounted as persistent volume in Coolify
-// Keeping /uploads/* URL for backward compatibility with existing database records
+// Serve files from /data directory (persistent storage)
 app.get('/uploads/*', async (c) => {
   const requestPath = c.req.path.replace('/uploads/', '');
   const filepath = `./data/${requestPath}`;
@@ -205,7 +203,6 @@ app.get('/uploads/*', async (c) => {
     const file = Bun.file(filepath);
     if (!(await file.exists())) {
       console.error('[IMAGE] File not found:', filepath, '| URL:', c.req.path);
-      console.error('[IMAGE] Tip: Ensure files are in /data directory, not /uploads');
       return c.notFound();
     }
 
@@ -369,7 +366,7 @@ console.log('AutoLeads Backend Server');
 console.log('='.repeat(60));
 console.log(`Environment: ${env.NODE_ENV}`);
 console.log(`Database: ${env.DATABASE_URL.split('@')[1] || 'Connected'}`);
-console.log(`Storage: /uploads/* URLs served from ./data/ directory`);
+console.log(`Storage: /uploads/* URLs served from /data/ directory`);
 console.log('='.repeat(60));
 console.log('API Endpoints:');
 console.log(`  Health Check:    /health`);
