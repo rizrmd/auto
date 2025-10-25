@@ -193,13 +193,34 @@ Business Information:
 - WhatsApp: ${tenant.whatsappNumber}
 - Location: ${tenant.address || 'Contact us for showroom location'}
 
-Communication Guidelines:
-- Be friendly, professional, and helpful
-- Use Indonesian language naturally (mix Indonesian-English is okay for car terms)
-- Provide specific information when available from tools
-- If you need to send photos, use the send_car_photos tool
-- Always confirm important details like test drive appointments
-- For complex inquiries, offer to have a sales representative call them
+🚨 CRITICAL RULES - NEVER VIOLATE THESE:
+
+1. PHOTO REQUEST HANDLING (MANDATORY):
+   ❌ NEVER say "Saya akan mengirimkan foto..." without ACTUALLY calling send_car_photos tool
+   ❌ NEVER say "Saya akan kirim..." without ACTUALLY calling send_car_photos tool
+   ❌ NEVER promise to send photos if you haven't called the tool
+   ✅ ALWAYS call send_car_photos tool FIRST, then say "Saya sudah kirimkan foto..."
+   ✅ If customer asks for photos but you don't know the code, call search_cars FIRST to find the code, THEN call send_car_photos
+
+   Example (CORRECT):
+   Customer: "Mau lihat foto Brio"
+   You: [Call search_cars(brand: "Honda", model: "Brio")] → get code #B01
+        [Call send_car_photos(displayCode: "B01")]
+        Then respond: "Saya sudah kirimkan 3 foto Honda Brio ke WhatsApp Anda ✅"
+
+   Example (WRONG - NEVER DO THIS):
+   Customer: "Mau lihat foto Brio"
+   You: "Saya akan segera mengirimkan foto Honda Brio..." ❌ NO TOOL CALLED!
+
+2. CODE ACCURACY:
+   ✅ ONLY use display codes from search_cars tool results
+   ❌ NEVER invent or guess display codes (like #B02, #J02, etc)
+   ❌ NEVER mention codes that weren't returned by search_cars
+
+3. TOOL USAGE ORDER (for photo requests):
+   Step 1: Call search_cars if you don't have the exact displayCode
+   Step 2: Call send_car_photos with the displayCode from Step 1
+   Step 3: Only then respond to customer with "Saya sudah kirimkan..."
 
 Available Tools:
 - search_cars: Find cars matching customer criteria
@@ -285,6 +306,37 @@ Current customer message: "${message}"`,
               // No tool calls, this is the final response
               finalResponse = response.message || 'Maaf, saya tidak bisa memproses permintaan Anda saat ini.';
               console.log(`[WEBHOOK] Final response generated: "${finalResponse.substring(0, 100)}..."`);
+
+              // 🚨 VALIDATION: Detect false photo promises
+              const isFalsePhotoPromise = (
+                (finalResponse.toLowerCase().includes('akan mengirim') ||
+                 finalResponse.toLowerCase().includes('akan kirim') ||
+                 finalResponse.toLowerCase().includes('segera mengirim')) &&
+                (finalResponse.toLowerCase().includes('foto') ||
+                 finalResponse.toLowerCase().includes('gambar'))
+              );
+
+              const isPhotoRequest = (
+                message.toLowerCase().includes('foto') ||
+                message.toLowerCase().includes('gambar') ||
+                message.toLowerCase().includes('photo') ||
+                message.toLowerCase().includes('pic')
+              );
+
+              if (isFalsePhotoPromise && isPhotoRequest && iterations === 1) {
+                console.warn('⚠️ [WEBHOOK] DETECTED FALSE PHOTO PROMISE! Forcing retry with stricter instruction...');
+
+                // Add a forcing message to make LLM call the tool
+                messages.push({
+                  role: 'user',
+                  content: 'ERROR: You MUST call send_car_photos tool to actually send photos. DO NOT just promise to send. Call search_cars first if needed to find the car code, then call send_car_photos. Do it now.',
+                });
+
+                // Force retry
+                iterations--; // Don't count this as an iteration
+                continue;
+              }
+
               break;
             }
           } catch (loopError) {

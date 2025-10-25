@@ -103,7 +103,7 @@ export const tools: Tool[] = [
     type: 'function',
     function: {
       name: 'send_car_photos',
-      description: 'Send car photos to customer via WhatsApp. Use this when customer asks to see photos/pictures/images of a car. Keywords: "lihat foto", "kirim gambar", "show photos", "mau liat", "ada foto?", "gambarnya dong", "send pics", "foto mobil", "fotonya", "gambar mobil". If customer mentions a car brand/model but not the display code, first use search_cars to find the car, then use this tool with the display code from search results. ALWAYS send photos when customer shows interest in a specific car.',
+      description: 'IMMEDIATELY send car photos to customer via WhatsApp. CRITICAL: You MUST call this tool when customer requests photos - never just promise to send without calling this tool. WORKFLOW: (1) If you don\'t know the displayCode, call search_cars first to get it, (2) Then IMMEDIATELY call this tool with the displayCode. Keywords indicating photo request: "lihat foto", "kirim foto", "kirim gambar", "show photos", "mau liat", "ada foto?", "gambarnya dong", "send pics", "foto mobil", "fotonya", "gambar mobil", "foto [car name]", "kalau foto", "minta foto". NEVER say "akan mengirim foto" without actually calling this tool - that is a critical error.',
       parameters: {
         type: 'object',
         properties: {
