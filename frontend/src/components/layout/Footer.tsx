@@ -143,20 +143,29 @@ export function Footer({ className }: FooterProps) {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <p>
-            {currentYear} {tenant?.name || 'AutoLeads'}. Hak cipta dilindungi.
-          </p>
-          <p className="mt-1">
-            Didukung oleh{' '}
-            <a
-              href="https://lumiku.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:underline font-medium"
-            >
-              Lumiku AutoLeads
-            </a>
-          </p>
+          <div className="space-y-2">
+            <p className="font-medium">
+              © {currentYear} {tenant?.name || 'AutoLeads'}. All rights reserved.
+            </p>
+            <p className="text-xs">
+              Premium automotive marketplace platform powered by{' '}
+              <a
+                href="https://lumiku.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary hover:underline font-medium"
+              >
+                Lumiku AutoLeads
+              </a>
+            </p>
+            <div className="flex justify-center items-center gap-4 mt-3 text-xs">
+              <span>Trusted by thousands of buyers</span>
+              <span>•</span>
+              <span>Quality guaranteed</span>
+              <span>•</span>
+              <span>24/7 support</span>
+            </div>
+          </div>
         </div>
       </div>
     </footer>
