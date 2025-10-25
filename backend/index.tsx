@@ -211,7 +211,7 @@ app.get('/uploads/*', async (c) => {
     }
 
     // Read file content
-    const buffer = await file.arrayBuffer();
+    const fileData = await file.arrayBuffer();
     const ext = filepath.split('.').pop()?.toLowerCase() || '';
 
     // Determine MIME type
@@ -227,7 +227,7 @@ app.get('/uploads/*', async (c) => {
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
     // Return image with proper headers
-    return new Response(buffer, {
+    return new Response(fileData, {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400', // 24 hours
