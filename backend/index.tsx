@@ -11,6 +11,7 @@ import { logger } from 'hono/logger';
 import { secureHeaders } from 'hono/secure-headers';
 import { serve } from 'bun';
 import * as path from 'node:path';
+import { readFile } from 'node:fs/promises';
 import { errorHandler } from './src/middleware/error-handler';
 import { CORS_CONFIG } from './src/config/constants';
 import { env, isDevelopment } from './src/config/env';
@@ -225,8 +226,8 @@ app.get('/uploads/*', async (c) => {
 
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
-    // Read file content properly
-    const fileContent = await file.arrayBuffer();
+    // Read file content using Node.js fs
+    const fileContent = await readFile(filepath);
     
     // Return image with proper headers
     return new Response(fileContent, {
