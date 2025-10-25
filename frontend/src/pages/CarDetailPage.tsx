@@ -136,7 +136,7 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                 alt={car.publicName}
               />
 
-              <div className="flex flex-col gap-4">
+              <div className="flex flex-col space-y-6">
                 {/* Title & Price Card */}
                 <Card>
                   <CardContent className="p-6">
@@ -248,37 +248,35 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                   conditionNotes={car.conditionNotes}
                 />
               </div>
+            </div>
 
-              {/* Right Column - Contact Card (Desktop) */}
-              <div className="hidden lg:block">
-                <div className="sticky top-24">
-                  <Card>
-                    <CardContent className="p-6 space-y-4">
-                      <div>
-                        <h3 className="font-semibold text-lg mb-1">
-                          Tertarik?
-                        </h3>
-                        <p className="text-sm text-muted-foreground">
-                          Hubungi kami untuk informasi lebih lanjut atau
-                          jadwalkan kunjungan
-                        </p>
-                      </div>
+            {/* Right Column - Contact Card (Desktop) */}
+            <div className="hidden lg:block">
+              <div className="sticky top-24">
+                <Card>
+                  <CardContent className="p-6 space-y-4">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-1">Tertarik?</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Hubungi kami untuk informasi lebih lanjut atau jadwalkan
+                        kunjungan
+                      </p>
+                    </div>
 
-                      <WhatsAppButton car={car} sticky={false} />
+                    <WhatsAppButton car={car} sticky={false} />
 
-                      <div className="pt-4 border-t space-y-2 text-sm text-muted-foreground">
-                        <p className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500" />
-                          Biasanya merespons dalam hitungan menit
-                        </p>
-                        <p className="flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          Pelayanan profesional terjamin
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
+                    <div className="pt-4 border-t space-y-2 text-sm text-muted-foreground">
+                      <p className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-green-500" />
+                        Biasanya merespons dalam hitungan menit
+                      </p>
+                      <p className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                        Pelayanan profesional terjamin
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </div>
