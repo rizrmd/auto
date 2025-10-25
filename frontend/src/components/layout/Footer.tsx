@@ -58,9 +58,7 @@ export function Footer({ className }: FooterProps) {
           )}
           <span className="font-bold text-lg">{tenant?.name || 'AutoLeads'}</span>
         </div>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Mitra terpercaya untuk mobil bekas berkualitas. Temukan mobil impian Anda dengan harga kompetitif dan pelayanan terbaik.
-        </p>
+
       </div>
 
       {/* Contact */}
