@@ -26,13 +26,17 @@ export function Header({
   const { tenant } = useTenantContext();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  const handleLogoClick = () => {
+  const handleLogoClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     window.location.href = '/';
   };
 
   const handleCarSelect = (car: Car) => {
-    window.location.href = `/cars/${car.slug}`;
-    onCarSelect?.(car);
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      window.location.href = `/cars/${car.slug}`;
+      onCarSelect?.(car);
+    };
   };
 
   return (
@@ -46,7 +50,8 @@ export function Header({
         {/* Main Header */}
         <div className="flex items-center justify-between h-16 gap-4">
           {/* Logo */}
-          <button
+          <a
+            href="/"
             onClick={handleLogoClick}
             className="flex items-center gap-3 hover:opacity-80 transition-opacity"
             aria-label="Go to homepage"
@@ -70,7 +75,7 @@ export function Header({
                 </span>
               </div>
             )}
-          </button>
+          </a>
 
           {/* Desktop Search */}
           {showSearch && (

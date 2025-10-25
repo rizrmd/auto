@@ -70,7 +70,10 @@ export function CarListingPage() {
   }, [filters]);
 
   const handleCarClick = (car: Car) => {
-    window.location.href = `/cars/${car.slug}`;
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      window.location.href = `/cars/${car.slug}`;
+    };
   };
 
   const handleSearch = (query: string) => {
@@ -82,7 +85,8 @@ export function CarListingPage() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = (e: React.MouseEvent) => {
+    e.preventDefault();
     window.location.href = '/cars';
   };
 
@@ -174,6 +178,8 @@ export function CarListingPage() {
                       description="Coba sesuaikan filter atau kata kunci pencarian Anda"
                       icon="search"
                       actionLabel="Hapus Filter"
+                      actionAsLink={true}
+                      actionHref="/cars"
                       onAction={handleClearFilters}
                     />
                   )}

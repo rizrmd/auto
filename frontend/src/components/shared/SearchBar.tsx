@@ -122,9 +122,10 @@ export function SearchBar({
         <div className="absolute top-full mt-2 w-full bg-background border rounded-xl shadow-lg overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
           <div className="max-h-80 overflow-y-auto">
             {results.map((car) => (
-              <button
+              <a
                 key={car.id}
-                onClick={() => handleSelectCar(car)}
+                href={`/cars/${car.slug}`}
+                onClick={(e) => { e.preventDefault(); handleSelectCar(car); }}
                 className="w-full flex items-start gap-3 p-3 hover:bg-accent transition-colors text-left"
               >
                 {car.photos[car.primaryPhotoIndex] && (
@@ -143,7 +144,7 @@ export function SearchBar({
                     {formatPrice(car.price)}
                   </p>
                 </div>
-              </button>
+              </a>
             ))}
           </div>
         </div>

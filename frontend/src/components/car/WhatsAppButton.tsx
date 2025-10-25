@@ -24,25 +24,20 @@ export function WhatsAppButton({
 }: WhatsAppButtonProps) {
   const { tenant } = useTenantContext();
 
-  const handleClick = () => {
-    if (!tenant?.whatsappNumber) {
-      console.error('WhatsApp number not configured');
-      return;
-    }
+  const formatPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseInt(price) : price;
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(numPrice);
+  };
 
-    let whatsappMessage = message;
-
-    if (!whatsappMessage && car) {
-      const formatPrice = (price: string | number) => {
-        const numPrice = typeof price === 'string' ? parseInt(price) : price;
-        return new Intl.NumberFormat('id-ID', {
-          style: 'currency',
-          currency: 'IDR',
-          minimumFractionDigits: 0,
-        }).format(numPrice);
-      };
-
-      whatsappMessage = `Halo, saya tertarik dengan mobil ${car.publicName}
+  // Generate WhatsApp message
+  let whatsappMessage = message;
+  
+  if (!whatsappMessage && car) {
+    whatsappMessage = `Halo, saya tertarik dengan mobil ${car.publicName}
 
 Detail:
 - Tahun: ${car.year}
@@ -53,16 +48,18 @@ Detail:
 - Kode: ${car.displayCode}
 
 Apakah masih tersedia?`;
-    }
+  }
 
-    if (!whatsappMessage) {
-      whatsappMessage = 'Halo, saya tertarik dengan mobil yang Anda jual.';
-    }
+  if (!whatsappMessage) {
+    whatsappMessage = 'Halo, saya tertarik dengan mobil yang Anda jual.';
+  }
 
-    const encodedMessage = encodeURIComponent(whatsappMessage);
-    const phoneNumber = tenant.whatsappNumber.replace(/[^0-9]/g, '');
-    const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
+  const encodedMessage = encodeURIComponent(whatsappMessage);
+  const phoneNumber = tenant?.whatsappNumber?.replace(/[^0-9]/g, '') || '';
+  const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -70,7 +67,7 @@ Apakah masih tersedia?`;
     return (
       <div className="fixed bottom-6 right-6 z-40 pointer-events-none">
         <Button
-          onClick={handleClick}
+          asChild
           size="lg"
           className={cn(
             'w-14 h-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 pointer-events-auto',
@@ -81,7 +78,9 @@ Apakah masih tersedia?`;
           )}
           aria-label="Hubungi via WhatsApp"
         >
-          <MessageCircle className="h-6 w-6" />
+          <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={handleClick}>
+            <MessageCircle className="h-6 w-6" />
+          </a>
         </Button>
       </div>
     );
@@ -89,7 +88,7 @@ Apakah masih tersedia?`;
 
   return (
     <Button
-      onClick={handleClick}
+      asChild
       size="lg"
       className={cn(
         'w-full shadow-md hover:shadow-lg transition-all duration-300',
@@ -97,8 +96,10 @@ Apakah masih tersedia?`;
         className
       )}
     >
-      <MessageCircle className="h-5 w-5 mr-2" />
-      Hubungi via WhatsApp
+      <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={handleClick}>
+        <MessageCircle className="h-5 w-5 mr-2" />
+        Hubungi via WhatsApp
+      </a>
     </Button>
   );
 }

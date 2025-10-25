@@ -11,7 +11,9 @@ interface EmptyStateProps {
   description?: string;
   icon?: 'search' | 'car';
   actionLabel?: string;
-  onAction?: () => void;
+  onAction?: (e?: React.MouseEvent) => void;
+  actionAsLink?: boolean;
+  actionHref?: string;
 }
 
 export function EmptyState({
@@ -20,6 +22,8 @@ export function EmptyState({
   icon = 'search',
   actionLabel,
   onAction,
+  actionAsLink = false,
+  actionHref = '#',
 }: EmptyStateProps) {
   const Icon = icon === 'search' ? SearchX : Car;
 
@@ -33,8 +37,19 @@ export function EmptyState({
       <p className="text-muted-foreground max-w-sm mb-6">{description}</p>
 
       {actionLabel && onAction && (
-        <Button onClick={onAction} size="lg" className="shadow-sm">
-          {actionLabel}
+        <Button 
+          asChild={actionAsLink}
+          onClick={actionAsLink ? undefined : onAction} 
+          size="lg" 
+          className="shadow-sm"
+        >
+          {actionAsLink ? (
+            <a href={actionHref} onClick={onAction}>
+              {actionLabel}
+            </a>
+          ) : (
+            <>{actionLabel}</>
+          )}
         </Button>
       )}
     </div>

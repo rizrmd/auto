@@ -150,13 +150,14 @@ export class ErrorBoundary extends Component<Props, State> {
               >
                 Coba Lagi
               </button>
-              <button
-                onClick={() => window.location.href = '/'}
-                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+              <a
+                href="/"
+                onClick={(e) => { e.preventDefault(); window.location.href = '/'; }}
+                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 text-center"
                 aria-label="Kembali ke beranda"
               >
                 Kembali ke Beranda
-              </button>
+              </a>
             </div>
 
             {/* Support Link */}

@@ -43,7 +43,8 @@ export function CarFilters({
     onFiltersChange({ ...filters, [key]: value, page: 1 });
   };
 
-  const handleClearFilters = () => {
+  const handleClearFilters = (e?: React.MouseEvent) => {
+    e?.preventDefault();
     onFiltersChange({
       page: 1,
       limit: filters.limit,
@@ -228,11 +229,13 @@ export function CarFilters({
       {/* Clear Filters */}
       {hasActiveFilters && (
         <Button
+          asChild
           variant="outline"
           className="w-full"
-          onClick={handleClearFilters}
         >
-          Hapus Semua Filter
+          <a href="/cars" onClick={handleClearFilters}>
+            Hapus Semua Filter
+          </a>
         </Button>
       )}
     </div>

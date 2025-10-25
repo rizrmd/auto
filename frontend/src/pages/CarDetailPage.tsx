@@ -80,7 +80,9 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
             <p className="text-muted-foreground mb-6">
               {error || 'Mobil yang Anda cari tidak ada'}
             </p>
-            <Button onClick={handleBack}>Kembali</Button>
+            <Button asChild>
+              <a href="#" onClick={(e) => { e.preventDefault(); handleBack(); }}>Kembali</a>
+            </Button>
           </div>
         </div>
         <Footer />
@@ -96,12 +98,14 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
         <div className="container mx-auto px-4 py-6">
           {/* Back Button */}
           <Button
+            asChild
             variant="ghost"
-            onClick={handleBack}
             className="mb-4 -ml-2"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Kembali
+            <a href="#" onClick={(e) => { e.preventDefault(); handleBack(); }}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Kembali
+            </a>
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -30,17 +30,24 @@ export function HomePage() {
   }, []);
 
   const handleCarClick = (car: CarType) => {
-    window.location.href = `/cars/${car.slug}`;
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      window.location.href = `/cars/${car.slug}`;
+    };
   };
 
-  const handleBrowseAll = () => {
+  const handleBrowseAll = (e: React.MouseEvent) => {
+    e.preventDefault();
     window.location.href = '/cars';
   };
 
   const handleSearch = (query: string) => {
-    if (query.trim()) {
-      window.location.href = `/cars?search=${encodeURIComponent(query)}`;
-    }
+    return (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (query.trim()) {
+        window.location.href = `/cars?search=${encodeURIComponent(query)}`;
+      }
+    };
   };
 
   return (
@@ -69,12 +76,14 @@ export function HomePage() {
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <Button
+                asChild
                 size="lg"
-                onClick={handleBrowseAll}
                 className="text-base min-w-[200px] shadow-xl hover:shadow-2xl"
               >
-                Lihat Semua Mobil
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <a href="/cars" onClick={handleBrowseAll}>
+                  Lihat Semua Mobil
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </a>
               </Button>
               {tenant?.whatsappNumber && (
                 <Button
@@ -149,9 +158,11 @@ export function HomePage() {
                 Koleksi terbaik dari kendaraan kami
               </p>
             </div>
-            <Button variant="outline" size="lg" onClick={handleBrowseAll} className="shrink-0">
-              Lihat Semua
-              <ArrowRight className="ml-2 h-4 w-4" />
+            <Button asChild variant="outline" size="lg" className="shrink-0">
+              <a href="/cars" onClick={handleBrowseAll}>
+                Lihat Semua
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </a>
             </Button>
           </div>
 
@@ -174,7 +185,9 @@ export function HomePage() {
               </div>
               <h3 className="text-2xl font-bold mb-2">Belum Ada Mobil Pilihan</h3>
               <p className="text-muted-foreground mb-6">Segera hadir koleksi terbaru kami</p>
-              <Button onClick={handleBrowseAll}>Lihat Semua Mobil</Button>
+              <Button asChild>
+                <a href="/cars" onClick={handleBrowseAll}>Lihat Semua Mobil</a>
+              </Button>
             </div>
           )}
         </div>
@@ -190,12 +203,14 @@ export function HomePage() {
             Jelajahi koleksi lengkap kami atau hubungi kami untuk bantuan personal
           </p>
           <Button
+            asChild
             size="lg"
-            onClick={handleBrowseAll}
             className="shadow-xl hover:shadow-2xl text-base px-10"
           >
-            Lihat Semua Mobil
-            <ArrowRight className="ml-2 h-5 w-5" />
+            <a href="/cars" onClick={handleBrowseAll}>
+              Lihat Semua Mobil
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </a>
           </Button>
         </div>
 
