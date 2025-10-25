@@ -12,6 +12,7 @@ interface FooterProps {
 }
 
 export function Footer({ className }: FooterProps) {
+  // Footer component - rebuilt with fix
   const { tenant } = useTenantContext();
 
   const formatBusinessHours = (hours: Record<string, string> | null) => {
