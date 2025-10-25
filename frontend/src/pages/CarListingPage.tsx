@@ -78,9 +78,9 @@ export function CarListingPage() {
         <div className="container mx-auto px-4">
           {/* Page Header */}
           <div className="mb-8">
-            <h1 className="text-3xl md:text-4xl font-bold mb-2">Browse Cars</h1>
+            <h1 className="text-3xl md:text-4xl font-bold mb-2">Cari Mobil</h1>
             <p className="text-muted-foreground">
-              {data ? `${data.total} cars available` : 'Loading...'}
+              {data ? `${data.total} mobil tersedia` : 'Memuat...'}
             </p>
           </div>
 
@@ -126,10 +126,10 @@ export function CarListingPage() {
               {/* Error State */}
               {error && (
                 <EmptyState
-                  title="Something went wrong"
+                  title="Terjadi Kesalahan"
                   description={error}
                   icon="car"
-                  actionLabel="Try Again"
+                  actionLabel="Coba Lagi"
                   onAction={() => window.location.reload()}
                 />
               )}
@@ -152,10 +152,10 @@ export function CarListingPage() {
                     </>
                   ) : (
                     <EmptyState
-                      title="No cars found"
-                      description="Try adjusting your filters or search query"
+                      title="Tidak ada mobil ditemukan"
+                      description="Coba sesuaikan filter atau kata kunci pencarian Anda"
                       icon="search"
-                      actionLabel="Clear Filters"
+                      actionLabel="Hapus Filter"
                       onAction={handleClearFilters}
                     />
                   )}

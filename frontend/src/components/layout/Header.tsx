@@ -87,7 +87,7 @@ export function Header({
               asChild
               className="hover:bg-accent"
             >
-              <a href="/cars">Browse Cars</a>
+              <a href="/cars">Cari Mobil</a>
             </Button>
             {tenant?.phone && (
               <Button
@@ -134,7 +134,7 @@ export function Header({
               className="w-full justify-start"
               asChild
             >
-              <a href="/cars">Browse Cars</a>
+              <a href="/cars">Cari Mobil</a>
             </Button>
             {tenant?.phone && (
               <Button
@@ -144,7 +144,7 @@ export function Header({
               >
                 <a href={`tel:${tenant.phone}`}>
                   <Phone className="h-4 w-4 mr-2" />
-                  Call Us
+                  Telepon
                 </a>
               </Button>
             )}
@@ -160,7 +160,7 @@ export function Header({
                   rel="noopener noreferrer"
                 >
                   <MapPin className="h-4 w-4 mr-2" />
-                  Visit Showroom
+                  Kunjungi Showroom
                 </a>
               </Button>
             )}

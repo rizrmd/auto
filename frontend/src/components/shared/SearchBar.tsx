@@ -19,7 +19,7 @@ interface SearchBarProps {
 export function SearchBar({
   onSearch,
   onCarSelect,
-  placeholder = 'Search by brand, model, or code...',
+  placeholder = 'Cari merek, model, atau kode...',
   className,
 }: SearchBarProps) {
   const [query, setQuery] = useState('');
@@ -151,7 +151,7 @@ export function SearchBar({
 
       {isOpen && query && results.length === 0 && !loading && (
         <div className="absolute top-full mt-2 w-full bg-background border rounded-xl shadow-lg p-4 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-          <p className="text-sm text-muted-foreground text-center">No cars found</p>
+          <p className="text-sm text-muted-foreground text-center">Tidak ada mobil ditemukan</p>
         </div>
       )}
     </div>

@@ -57,12 +57,12 @@ export function CarCard({ car, onClick, className }: CarCardProps) {
         {/* Status Badge */}
         {car.status === 'sold' && (
           <div className="absolute top-3 left-3 bg-destructive text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm">
-            SOLD OUT
+            TERJUAL
           </div>
         )}
         {car.status === 'booking' && (
           <div className="absolute top-3 left-3 bg-amber-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg backdrop-blur-sm">
-            RESERVED
+            BOOKING
           </div>
         )}
 
@@ -122,7 +122,7 @@ export function CarCard({ car, onClick, className }: CarCardProps) {
             ))}
             {car.keyFeatures.length > 2 && (
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-muted text-muted-foreground border border-border">
-                +{car.keyFeatures.length - 2} more
+                +{car.keyFeatures.length - 2} lainnya
               </span>
             )}
           </div>

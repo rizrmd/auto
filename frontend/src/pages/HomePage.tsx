@@ -53,18 +53,18 @@ export function HomePage() {
           <div className="max-w-4xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
               <Car className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">Premium Used Cars</span>
+              <span className="text-sm font-semibold text-primary">Mobil Bekas Berkualitas</span>
             </div>
 
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-              Find Your Perfect{' '}
+              Temukan Mobil{' '}
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                Dream Car
+                Impian Anda
               </span>
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto font-light">
-              Browse our curated collection of premium used cars. Quality guaranteed, competitive prices, and exceptional service.
+              Jelajahi koleksi mobil bekas pilihan kami. Kualitas terjamin, harga terpercaya, dan pelayanan terbaik.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
@@ -73,7 +73,7 @@ export function HomePage() {
                 onClick={handleBrowseAll}
                 className="text-base min-w-[200px] shadow-xl hover:shadow-2xl"
               >
-                Browse All Cars
+                Lihat Semua Mobil
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               {tenant?.whatsappNumber && (
@@ -88,7 +88,7 @@ export function HomePage() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    Contact Us
+                    Hubungi Kami
                   </a>
                 </Button>
               )}
@@ -110,9 +110,9 @@ export function HomePage() {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
                 <Shield className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Quality Assured</h3>
+              <h3 className="text-2xl font-bold mb-3">Kualitas Terjamin</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Every car thoroughly inspected and verified for your peace of mind
+                Setiap mobil diperiksa secara menyeluruh untuk ketenangan pikiran Anda
               </p>
             </div>
 
@@ -120,9 +120,9 @@ export function HomePage() {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
                 <TrendingUp className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Best Prices</h3>
+              <h3 className="text-2xl font-bold mb-3">Harga Terbaik</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Competitive pricing with transparent costs and no hidden fees
+                Harga kompetitif dengan biaya transparan tanpa biaya tersembunyi
               </p>
             </div>
 
@@ -130,9 +130,9 @@ export function HomePage() {
               <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-500">
                 <Car className="h-10 w-10 text-primary" />
               </div>
-              <h3 className="text-2xl font-bold mb-3">Wide Selection</h3>
+              <h3 className="text-2xl font-bold mb-3">Pilihan Lengkap</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Diverse inventory of brands and models to match your needs
+                Beragam pilihan merek dan model untuk memenuhi kebutuhan Anda
               </p>
             </div>
           </div>
@@ -144,13 +144,13 @@ export function HomePage() {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-12 gap-4">
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Featured Cars</h2>
+              <h2 className="text-4xl md:text-5xl font-bold mb-3 tracking-tight">Mobil Pilihan</h2>
               <p className="text-lg text-muted-foreground">
-                Handpicked selection of our best vehicles
+                Koleksi terbaik dari kendaraan kami
               </p>
             </div>
             <Button variant="outline" size="lg" onClick={handleBrowseAll} className="shrink-0">
-              View All
+              Lihat Semua
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </div>
@@ -172,9 +172,9 @@ export function HomePage() {
               <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
                 <Car className="h-12 w-12 text-muted-foreground" />
               </div>
-              <h3 className="text-2xl font-bold mb-2">No Featured Cars Yet</h3>
-              <p className="text-muted-foreground mb-6">Check back soon for our latest arrivals</p>
-              <Button onClick={handleBrowseAll}>Browse All Cars</Button>
+              <h3 className="text-2xl font-bold mb-2">Belum Ada Mobil Pilihan</h3>
+              <p className="text-muted-foreground mb-6">Segera hadir koleksi terbaru kami</p>
+              <Button onClick={handleBrowseAll}>Lihat Semua Mobil</Button>
             </div>
           )}
         </div>
@@ -184,17 +184,17 @@ export function HomePage() {
       <section className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-background">
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-            Ready to Find Your Dream Car?
+            Siap Menemukan Mobil Impian Anda?
           </h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-            Browse our full inventory or contact us for personalized assistance
+            Jelajahi koleksi lengkap kami atau hubungi kami untuk bantuan personal
           </p>
           <Button
             size="lg"
             onClick={handleBrowseAll}
             className="shadow-xl hover:shadow-2xl text-base px-10"
           >
-            Browse All Cars
+            Lihat Semua Mobil
             <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
         </div>

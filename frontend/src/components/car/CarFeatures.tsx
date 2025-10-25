@@ -19,7 +19,7 @@ export function CarFeatures({ features, conditionNotes }: CarFeaturesProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Key Features</CardTitle>
+        <CardTitle>Fitur Utama</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Features Grid */}
@@ -43,7 +43,7 @@ export function CarFeatures({ features, conditionNotes }: CarFeaturesProps) {
         {conditionNotes && (
           <div className="pt-3 border-t">
             <h4 className="text-sm font-semibold mb-2 text-muted-foreground">
-              Condition Notes
+              Catatan Kondisi
             </h4>
             <p className="text-sm leading-relaxed whitespace-pre-line">
               {conditionNotes}

@@ -69,7 +69,7 @@ export function Pagination({
         size="icon"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        aria-label="Previous page"
+        aria-label="Halaman sebelumnya"
         className="h-9 w-9"
       >
         <ChevronLeft className="h-4 w-4" />
@@ -101,7 +101,7 @@ export function Pagination({
                 'h-9 w-9 transition-all duration-200',
                 isActive && 'shadow-sm'
               )}
-              aria-label={`Page ${pageNum}`}
+              aria-label={`Halaman ${pageNum}`}
               aria-current={isActive ? 'page' : undefined}
             >
               {pageNum}
@@ -115,7 +115,7 @@ export function Pagination({
         size="icon"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        aria-label="Next page"
+        aria-label="Halaman selanjutnya"
         className="h-9 w-9"
       >
         <ChevronRight className="h-4 w-4" />

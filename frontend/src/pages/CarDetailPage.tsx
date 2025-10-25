@@ -34,18 +34,18 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
 
   const handleShare = async () => {
     const url = window.location.href;
-    const text = car ? `Check out this ${car.publicName}` : 'Check out this car';
+    const text = car ? `Lihat ${car.publicName}` : 'Lihat mobil ini';
 
     if (navigator.share) {
       try {
         await navigator.share({ title: text, url });
       } catch (err) {
-        console.log('Share cancelled');
+        console.log('Bagikan dibatalkan');
       }
     } else {
       // Fallback: copy to clipboard
       await navigator.clipboard.writeText(url);
-      alert('Link copied to clipboard!');
+      alert('Link berhasil disalin!');
     }
   };
 
@@ -76,11 +76,11 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
         <Header showSearch={false} />
         <div className="flex-1 flex items-center justify-center py-20 px-4">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-2">Car Not Found</h1>
+            <h1 className="text-2xl font-bold mb-2">Mobil Tidak Ditemukan</h1>
             <p className="text-muted-foreground mb-6">
-              {error || 'The car you are looking for does not exist'}
+              {error || 'Mobil yang Anda cari tidak ada'}
             </p>
-            <Button onClick={handleBack}>Go Back</Button>
+            <Button onClick={handleBack}>Kembali</Button>
           </div>
         </div>
         <Footer />
@@ -101,7 +101,7 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
             className="mb-4 -ml-2"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
+            Kembali
           </Button>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -130,7 +130,7 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                     {/* Status Badge */}
                     {car.status === 'sold' && (
                       <span className="px-3 py-1 bg-destructive text-white text-sm font-semibold rounded-full">
-                        SOLD
+                        TERJUAL
                       </span>
                     )}
                     {car.status === 'booking' && (
@@ -140,7 +140,7 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                     )}
                     {car.status === 'available' && (
                       <span className="px-3 py-1 bg-green-500 text-white text-sm font-semibold rounded-full">
-                        AVAILABLE
+                        TERSEDIA
                       </span>
                     )}
                   </div>
@@ -156,17 +156,17 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                   <div className="grid grid-cols-3 gap-4 pt-4 border-t">
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <Calendar className="h-5 w-5 mx-auto mb-1 text-primary" />
-                      <p className="text-xs text-muted-foreground mb-0.5">Year</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">Tahun</p>
                       <p className="font-semibold">{car.year}</p>
                     </div>
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <Gauge className="h-5 w-5 mx-auto mb-1 text-primary" />
-                      <p className="text-xs text-muted-foreground mb-0.5">Mileage</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">Kilometer</p>
                       <p className="font-semibold">{car.km.toLocaleString('id-ID')} km</p>
                     </div>
                     <div className="text-center p-3 bg-muted/50 rounded-lg">
                       <Cog className="h-5 w-5 mx-auto mb-1 text-primary" />
-                      <p className="text-xs text-muted-foreground mb-0.5">Trans</p>
+                      <p className="text-xs text-muted-foreground mb-0.5">Transmisi</p>
                       <p className="font-semibold">{car.transmission}</p>
                     </div>
                   </div>
@@ -179,18 +179,18 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                       className="w-full"
                     >
                       <Share2 className="h-4 w-4 mr-2" />
-                      Share
+                      Bagikan
                     </Button>
                     <Button
                       variant="outline"
                       className="w-full"
                       onClick={() => {
                         // TODO: Implement save functionality
-                        alert('Save feature coming soon!');
+                        alert('Fitur simpan segera hadir!');
                       }}
                     >
                       <Heart className="h-4 w-4 mr-2" />
-                      Save
+                      Simpan
                     </Button>
                   </div>
                 </CardContent>
@@ -200,7 +200,7 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
               {car.description && (
                 <Card>
                   <CardContent className="p-6">
-                    <h2 className="text-xl font-semibold mb-4">Description</h2>
+                    <h2 className="text-xl font-semibold mb-4">Deskripsi</h2>
                     <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                       {car.description}
                     </p>
@@ -224,9 +224,9 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                 <Card>
                   <CardContent className="p-6 space-y-4">
                     <div>
-                      <h3 className="font-semibold text-lg mb-1">Interested?</h3>
+                      <h3 className="font-semibold text-lg mb-1">Tertarik?</h3>
                       <p className="text-sm text-muted-foreground">
-                        Contact us for more information or to schedule a viewing
+                        Hubungi kami untuk informasi lebih lanjut atau jadwalkan kunjungan
                       </p>
                     </div>
 
@@ -235,11 +235,11 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
                     <div className="pt-4 border-t space-y-2 text-sm text-muted-foreground">
                       <p className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-green-500" />
-                        Usually responds within minutes
+                        Biasanya merespons dalam hitungan menit
                       </p>
                       <p className="flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-blue-500" />
-                        Professional service guaranteed
+                        Pelayanan profesional terjamin
                       </p>
                     </div>
                   </CardContent>

@@ -80,7 +80,7 @@ Apakah masih tersedia?`;
           )}
         >
           <MessageCircle className="h-5 w-5 mr-2" />
-          Chat via WhatsApp
+          Hubungi via WhatsApp
         </Button>
       </div>
     );
@@ -97,7 +97,7 @@ Apakah masih tersedia?`;
       )}
     >
       <MessageCircle className="h-5 w-5 mr-2" />
-      Chat via WhatsApp
+      Hubungi via WhatsApp
     </Button>
   );
 }

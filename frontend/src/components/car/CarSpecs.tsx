@@ -15,40 +15,40 @@ export function CarSpecs({ car }: CarSpecsProps) {
   const specs = [
     {
       icon: Hash,
-      label: 'Display Code',
+      label: 'Kode',
       value: car.displayCode,
     },
     {
       icon: Calendar,
-      label: 'Year',
+      label: 'Tahun',
       value: car.year.toString(),
     },
     {
       icon: Gauge,
-      label: 'Mileage',
+      label: 'Kilometer',
       value: `${car.km.toLocaleString('id-ID')} km`,
     },
     {
       icon: Cog,
-      label: 'Transmission',
+      label: 'Transmisi',
       value: car.transmission,
     },
     {
       icon: Palette,
-      label: 'Color',
+      label: 'Warna',
       value: car.color,
     },
     {
       icon: Fuel,
-      label: 'Fuel Type',
-      value: car.fuelType || 'Not specified',
+      label: 'Bahan Bakar',
+      value: car.fuelType || 'Tidak disebutkan',
     },
   ];
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Specifications</CardTitle>
+        <CardTitle>Spesifikasi</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

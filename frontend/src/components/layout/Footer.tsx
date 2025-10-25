@@ -18,7 +18,7 @@ export function Footer({ className }: FooterProps) {
     if (!hours) return null;
 
     const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
-    const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const dayNames = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
 
     return days.map((day, index) => {
       const time = hours[day];
@@ -59,13 +59,13 @@ export function Footer({ className }: FooterProps) {
               <span className="font-bold text-lg">{tenant?.name || 'AutoLeads'}</span>
             </div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Your trusted partner for quality used cars. Find your dream car with competitive prices and excellent service.
+              Mitra terpercaya untuk mobil bekas berkualitas. Temukan mobil impian Anda dengan harga kompetitif dan pelayanan terbaik.
             </p>
           </div>
 
           {/* Contact */}
           <div>
-            <h3 className="font-semibold mb-4">Contact Us</h3>
+            <h3 className="font-semibold mb-4">Hubungi Kami</h3>
             <div className="space-y-3">
               {tenant?.phone && (
                 <a
@@ -102,7 +102,7 @@ export function Footer({ className }: FooterProps) {
           {/* Location */}
           {tenant?.address && (
             <div>
-              <h3 className="font-semibold mb-4">Location</h3>
+              <h3 className="font-semibold mb-4">Lokasi</h3>
               <div className="space-y-3">
                 <div className="flex items-start gap-2 text-sm text-muted-foreground">
                   <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
@@ -118,7 +118,7 @@ export function Footer({ className }: FooterProps) {
                     rel="noopener noreferrer"
                     className="inline-block text-sm text-primary hover:underline font-medium"
                   >
-                    View on Maps
+                    Lihat di Maps
                   </a>
                 )}
               </div>
@@ -128,7 +128,7 @@ export function Footer({ className }: FooterProps) {
           {/* Business Hours */}
           {tenant?.businessHours && (
             <div>
-              <h3 className="font-semibold mb-4">Business Hours</h3>
+              <h3 className="font-semibold mb-4">Jam Operasional</h3>
               <div className="space-y-1">
                 <div className="flex items-start gap-2 mb-2">
                   <Clock className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
@@ -144,10 +144,10 @@ export function Footer({ className }: FooterProps) {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
           <p>
-            {currentYear} {tenant?.name || 'AutoLeads'}. All rights reserved.
+            {currentYear} {tenant?.name || 'AutoLeads'}. Hak cipta dilindungi.
           </p>
           <p className="mt-1">
-            Powered by{' '}
+            Didukung oleh{' '}
             <a
               href="https://lumiku.com"
               target="_blank"
