@@ -191,7 +191,8 @@ app.get('/uploads/*', async (c) => {
 
   // Security: Prevent path traversal attacks
   const normalizedPath = path.normalize(filepath);
-  if (!normalizedPath.startsWith('./uploads/')) {
+  // path.normalize() removes the ./ prefix, so check for both ./uploads/ and uploads/
+  if (!normalizedPath.startsWith('./uploads/') && !normalizedPath.startsWith('uploads/')) {
     console.error('[SECURITY] Path traversal attempt blocked:', requestPath);
     return c.text('Forbidden', 403);
   }
