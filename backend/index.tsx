@@ -362,42 +362,22 @@ app.notFound(async (c) => {
 });
 
 /**
- * Start Server
- */
-const port = process.env.PORT ? parseInt(process.env.PORT) : (process.env.APP_PORT ? parseInt(process.env.APP_PORT) : 3000);
-
-console.log(`🚀 Starting server on port ${port}...`);
-
-const server = serve({
-  fetch: app.fetch,
-  port: port,
-  development: isDevelopment
-    ? {
-        // Enable hot module reloading in development
-        hmr: true,
-        console: true,
-      }
-    : undefined,
-});
-
-/**
- * Server startup message
+ * Server startup message (will be shown when Bun serves the app)
  */
 console.log('='.repeat(60));
 console.log('AutoLeads Backend Server');
 console.log('='.repeat(60));
 console.log(`Environment: ${env.NODE_ENV}`);
-console.log(`Server running at: ${server.url}`);
 console.log(`Database: ${env.DATABASE_URL.split('@')[1] || 'Connected'}`);
 console.log(`Storage: /uploads/* URLs served from ./data/ directory`);
 console.log('='.repeat(60));
 console.log('API Endpoints:');
-console.log(`  Health Check:    ${server.url}health`);
-console.log(`  Public Cars:     ${server.url}api/cars`);
-console.log(`  Admin Login:     ${server.url}api/admin/auth/login`);
-console.log(`  Admin Cars:      ${server.url}api/admin/cars`);
-console.log(`  Admin Leads:     ${server.url}api/admin/leads`);
-console.log(`  Fonnte Webhook:  ${server.url}webhook/fonnte`);
+console.log(`  Health Check:    /health`);
+console.log(`  Public Cars:     /api/cars`);
+console.log(`  Admin Login:     /api/admin/auth/login`);
+console.log(`  Admin Cars:      /api/admin/cars`);
+console.log(`  Admin Leads:     /api/admin/leads`);
+console.log(`  Fonnte Webhook:  /webhook/fonnte`);
 console.log('='.repeat(60));
 
 /**
@@ -426,10 +406,7 @@ process.on('unhandledRejection', (reason, promise) => {
  */
 process.on('uncaughtException', (error) => {
   console.error('Uncaught Exception:', error);
-  // In production, you might want to log this and restart the process
-  if (!isDevelopment) {
-    process.exit(1);
-  }
+  // Let Bun handle the error - don't manually exit
 });
 
 export default app;

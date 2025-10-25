@@ -69,4 +69,4 @@ echo "✓ Database: Connected"
 
 # Start application
 echo "✓ Starting AutoLeads application..."
-exec bun backend/index.tsx
+exec bun --port ${PORT:-3000} backend/index.tsx
