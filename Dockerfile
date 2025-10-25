@@ -2,9 +2,13 @@ FROM oven/bun:latest
 
 WORKDIR /app
 
-# Create uploads directory and declare as volume
+# Create uploads directory and declare as volume (legacy - for backward compatibility)
 RUN mkdir -p /app/uploads && chmod 755 /app/uploads
 VOLUME ["/app/uploads"]
+
+# Create data directory and declare as volume (primary storage location)
+RUN mkdir -p /app/data && chmod 755 /app/data
+VOLUME ["/app/data"]
 
 # Install PostgreSQL client and system dependencies
 RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
