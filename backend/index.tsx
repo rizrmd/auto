@@ -229,6 +229,9 @@ app.get('/uploads/*', async (c) => {
     // Read file content using Node.js fs
     const fileContent = await readFile(filepath);
     
+    // Debug logging
+    console.log('[IMAGE] File size:', fileContent.length, 'bytes for:', filepath);
+    
     // Return image with proper headers
     return new Response(fileContent, {
       headers: {
