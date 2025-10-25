@@ -226,10 +226,16 @@ Photos: ${Array.isArray(car.photos) ? car.photos.length : 0} available
    * Get car details
    */
   private async getCarDetails(args: any): Promise<string> {
+    // Normalize display code (handle both with/without hash)
+    let displayCode = args.displayCode.toUpperCase().trim();
+    if (!displayCode.startsWith('#')) {
+      displayCode = '#' + displayCode;
+    }
+
     const car = await this.context.prisma.car.findFirst({
       where: {
         tenantId: this.context.tenantId,
-        displayCode: args.displayCode.toUpperCase(),
+        displayCode: displayCode,
         status: 'available',
       },
       select: {
@@ -284,10 +290,16 @@ Available Photos: ${Array.isArray(car.photos) ? car.photos.length : 0}
    * Send car photos via WhatsApp
    */
   private async sendCarPhotos(args: any): Promise<string> {
+    // Normalize display code (handle both with/without hash)
+    let displayCode = args.displayCode.toUpperCase().trim();
+    if (!displayCode.startsWith('#')) {
+      displayCode = '#' + displayCode;
+    }
+
     const car = await this.context.prisma.car.findFirst({
       where: {
         tenantId: this.context.tenantId,
-        displayCode: args.displayCode.toUpperCase(),
+        displayCode: displayCode,
         status: 'available',
       },
       select: {
