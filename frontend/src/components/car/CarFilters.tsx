@@ -20,6 +20,7 @@ interface CarFiltersProps {
   filters: CarFiltersType;
   onFiltersChange: (filters: CarFiltersType) => void;
   brands: string[];
+  availableYears: number[];
   yearRange: { min: number; max: number };
   priceRange: { min: number; max: number };
   className?: string;
@@ -30,6 +31,7 @@ export function CarFilters({
   filters,
   onFiltersChange,
   brands,
+  availableYears,
   yearRange,
   priceRange,
   className,
@@ -141,10 +143,7 @@ export function CarFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Semua</SelectItem>
-              {Array.from(
-                { length: yearRange.max - yearRange.min + 1 },
-                (_, i) => yearRange.min + i
-              ).map((year) => (
+              {availableYears.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
                 </SelectItem>
@@ -166,10 +165,7 @@ export function CarFilters({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="any">Semua</SelectItem>
-              {Array.from(
-                { length: yearRange.max - yearRange.min + 1 },
-                (_, i) => yearRange.min + i
-              ).map((year) => (
+              {availableYears.map((year) => (
                 <SelectItem key={year} value={year.toString()}>
                   {year}
                 </SelectItem>

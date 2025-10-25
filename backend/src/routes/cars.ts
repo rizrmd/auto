@@ -83,20 +83,25 @@ export async function getCars(c: Context) {
       prisma.car.count({ where }),
     ]);
 
-    // Get filter metadata
-    const [brands, yearData, priceData] = await Promise.all([
+    // Get filter metadata based on current filters (excluding pagination)
+    const filterWhere = { ...where };
+    delete (filterWhere as any).skip;
+    delete (filterWhere as any).take;
+    
+    const [brands, availableYears, priceData] = await Promise.all([
       prisma.car.findMany({
-        where: { status: 'available' },
+        where: { ...filterWhere, status: 'available' },
         select: { brand: true },
         distinct: ['brand'],
       }),
-      prisma.car.aggregate({
-        where: { status: 'available' },
-        _min: { year: true },
-        _max: { year: true },
+      prisma.car.findMany({
+        where: { ...filterWhere, status: 'available' },
+        select: { year: true },
+        distinct: ['year'],
+        orderBy: { year: 'asc' },
       }),
       prisma.car.aggregate({
-        where: { status: 'available' },
+        where: { ...filterWhere, status: 'available' },
         _min: { price: true },
         _max: { price: true },
       }),
@@ -112,9 +117,10 @@ export async function getCars(c: Context) {
       page: pageNum,
       totalPages: Math.ceil(total / limitNum),
       brands: brands.map((b) => b.brand).sort(),
+      availableYears: availableYears.map(y => y.year),
       yearRange: {
-        min: yearData._min.year || new Date().getFullYear() - 20,
-        max: yearData._max.year || new Date().getFullYear(),
+        min: availableYears.length > 0 ? availableYears[0] : new Date().getFullYear() - 20,
+        max: availableYears.length > 0 ? availableYears[availableYears.length - 1] : new Date().getFullYear(),
       },
       priceRange: {
         min: Number(priceData._min.price || 0),

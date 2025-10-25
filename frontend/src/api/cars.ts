@@ -65,6 +65,7 @@ export interface CarsResponse {
   page: number;
   totalPages: number;
   brands: string[];
+  availableYears: number[];
   yearRange: { min: number; max: number };
   priceRange: { min: number; max: number };
 }
@@ -108,6 +109,7 @@ export async function getCars(filters: CarFilters = {}) {
         page: response.data.meta?.page || 1,
         totalPages: response.data.meta?.totalPages || 1,
         brands: brands,
+        availableYears: response.data.data.availableYears || years.sort((a, b) => a - b),
         yearRange: {
           min: years.length > 0 ? Math.min(...years) : 2000,
           max: years.length > 0 ? Math.max(...years) : new Date().getFullYear(),

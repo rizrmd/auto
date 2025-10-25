@@ -109,6 +109,7 @@ export function CarListingPage() {
                     filters={filters}
                     onFiltersChange={setFilters}
                     brands={data.brands}
+                    availableYears={data.availableYears}
                     yearRange={data.yearRange}
                     priceRange={data.priceRange}
                   />
@@ -125,6 +126,7 @@ export function CarListingPage() {
                     filters={filters}
                     onFiltersChange={setFilters}
                     brands={data.brands}
+                    availableYears={data.availableYears}
                     yearRange={data.yearRange}
                     priceRange={data.priceRange}
                     isMobile={true}
