@@ -35,6 +35,18 @@ export function CarListingPage() {
     if (params.get('sortBy')) {
       newFilters.sortBy = params.get('sortBy') as any;
     }
+    if (params.get('minYear')) {
+      newFilters.minYear = parseInt(params.get('minYear')!) || undefined;
+    }
+    if (params.get('maxYear')) {
+      newFilters.maxYear = parseInt(params.get('maxYear')!) || undefined;
+    }
+    if (params.get('minPrice')) {
+      newFilters.minPrice = parseInt(params.get('minPrice')!) || undefined;
+    }
+    if (params.get('maxPrice')) {
+      newFilters.maxPrice = parseInt(params.get('maxPrice')!) || undefined;
+    }
 
     setFilters(newFilters);
   }, []);
@@ -47,6 +59,10 @@ export function CarListingPage() {
     if (filters.brand) params.set('brand', filters.brand);
     if (filters.transmission) params.set('transmission', filters.transmission);
     if (filters.sortBy) params.set('sortBy', filters.sortBy);
+    if (filters.minYear) params.set('minYear', filters.minYear.toString());
+    if (filters.maxYear) params.set('maxYear', filters.maxYear.toString());
+    if (filters.minPrice) params.set('minPrice', filters.minPrice.toString());
+    if (filters.maxPrice) params.set('maxPrice', filters.maxPrice.toString());
     if (filters.page && filters.page > 1) params.set('page', filters.page.toString());
 
     const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ''}`;
