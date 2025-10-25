@@ -167,7 +167,7 @@ export function CarGallery({
           className="fixed inset-0 z-50 bg-black/95 animate-in fade-in duration-200"
           onClick={() => setIsFullscreen(false)}
         >
-          <div className="relative w-full h-full flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
+          <div className="relative w-full h-full flex items-center justify-center p-4" >
             {/* Close Button */}
             <Button
               variant="ghost"
