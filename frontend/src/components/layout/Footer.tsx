@@ -36,138 +36,138 @@ export function Footer({ className }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className={cn('bg-muted/30 border-t mt-auto', className)}>
-      <div className="container mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {/* About */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              {tenant?.logoUrl ? (
-                <img
-                  src={tenant.logoUrl}
-                  alt={tenant.name}
-                  className="h-8 w-auto object-contain"
-                />
-              ) : (
-                <div
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold"
-                  style={{ backgroundColor: tenant?.primaryColor || '#FF5722' }}
-                >
-                  {tenant?.name?.[0] || 'A'}
-                </div>
-              )}
-              <span className="font-bold text-lg">{tenant?.name || 'AutoLeads'}</span>
-            </div>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Mitra terpercaya untuk mobil bekas berkualitas. Temukan mobil impian Anda dengan harga kompetitif dan pelayanan terbaik.
-            </p>
-          </div>
-
-          {/* Contact */}
-          <div>
-            <h3 className="font-semibold mb-4">Hubungi Kami</h3>
-            <div className="space-y-3">
-              {tenant?.phone && (
-                <a
-                  href={`tel:${tenant.phone}`}
-                  className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Phone className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>{tenant.phone}</span>
-                </a>
-              )}
-              {tenant?.whatsappNumber && (
-                <a
-                  href={`https://wa.me/${tenant.whatsappNumber.replace(/[^0-9]/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <MessageCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>WhatsApp</span>
-                </a>
-              )}
-              {tenant?.email && (
-                <a
-                  href={`mailto:${tenant.email}`}
-                  className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
-                >
-                  <Mail className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <span>{tenant.email}</span>
-                </a>
-              )}
-            </div>
-          </div>
-
-          {/* Location */}
-          {tenant?.address && (
-            <div>
-              <h3 className="font-semibold mb-4">Lokasi</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                  <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p>{tenant.address}</p>
-                    {tenant.city && <p>{tenant.city}</p>}
-                  </div>
-                </div>
-                {tenant.mapsUrl && (
-                  <a
-                    href={tenant.mapsUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block text-sm text-primary hover:underline font-medium"
-                  >
-                    Lihat di Maps
-                  </a>
-                )}
-              </div>
+<footer className={cn('bg-muted/30 border-t mt-auto', className)}>
+  <div className="container mx-auto px-4 py-12">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+      {/* About */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          {tenant?.logoUrl ? (
+            <img
+              src={tenant.logoUrl}
+              alt={tenant.name}
+              className="h-8 w-auto object-contain"
+            />
+          ) : (
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold"
+              style={{ backgroundColor: tenant?.primaryColor || '#FF5722' }}
+            >
+              {tenant?.name?.[0] || 'A'}
             </div>
           )}
-
-          {/* Business Hours */}
-          {tenant?.businessHours && (
-            <div>
-              <h3 className="font-semibold mb-4">Jam Operasional</h3>
-              <div className="space-y-1">
-                <div className="flex items-start gap-2 mb-2">
-                  <Clock className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                  <div className="space-y-1">
-                    {formatBusinessHours(tenant.businessHours as Record<string, string>)}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+          <span className="font-bold text-lg">{tenant?.name || 'AutoLeads'}</span>
         </div>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Mitra terpercaya untuk mobil bekas berkualitas. Temukan mobil impian Anda dengan harga kompetitif dan pelayanan terbaik.
+        </p>
+      </div>
 
-        {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-          <div className="space-y-2">
-            <p className="font-medium">
-              © {currentYear} {tenant?.name || 'AutoLeads'}. All rights reserved.
-            </p>
-            <p className="text-xs">
-              Premium automotive marketplace platform powered by{' '}
-              <a
-                href="https://lumiku.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary hover:underline font-medium"
-              >
-                Lumiku AutoLeads
-              </a>
-            </p>
-            <div className="flex justify-center items-center gap-4 mt-3 text-xs">
-              <span>Trusted by thousands of buyers</span>
-              <span>•</span>
-              <span>Quality guaranteed</span>
-              <span>•</span>
-              <span>24/7 support</span>
-            </div>
-          </div>
+      {/* Contact */}
+      <div>
+        <h3 className="font-semibold mb-4">Hubungi Kami</h3>
+        <div className="space-y-3">
+          {tenant?.phone && (
+            <a
+              href={`tel:${tenant.phone}`}
+              className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Phone className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{tenant.phone}</span>
+            </a>
+          )}
+          {tenant?.whatsappNumber && (
+            <a
+              href={`https://wa.me/${tenant.whatsappNumber.replace(/[^0-9]/g, '')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <MessageCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>WhatsApp</span>
+            </a>
+          )}
+          {tenant?.email && (
+            <a
+              href={`mailto:${tenant.email}`}
+              className="flex items-start gap-2 text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              <Mail className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <span>{tenant.email}</span>
+            </a>
+          )}
         </div>
       </div>
-    </footer>
+
+      {/* Location */}
+      {tenant?.address && (
+        <div>
+          <h3 className="font-semibold mb-4">Lokasi</h3>
+          <div className="space-y-3">
+            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+              <MapPin className="h-4 w-4 mt-0.5 flex-shrink-0" />
+              <div>
+                <p>{tenant.address}</p>
+                {tenant.city && <p>{tenant.city}</p>
+              </div>
+            </div>
+            {tenant.mapsUrl && (
+              <a
+                href={tenant.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block text-sm text-primary hover:underline font-medium"
+              >
+                Lihat di Maps
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Business Hours */}
+      {tenant?.businessHours && (
+        <div>
+          <h3 className="font-semibold mb-4">Jam Operasional</h3>
+          <div className="space-y-1">
+            <div className="flex items-start gap-2 mb-2">
+              <Clock className="h-4 w-4 mt-0.5 flex-shrink-0 text-muted-foreground" />
+              <div className="space-y-1">
+                {formatBusinessHours(tenant.businessHours as Record<string, string>)}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+
+    {/* Bottom Bar - Combined Row */}
+    <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
+      <div className="space-y-2">
+        <p className="font-medium">
+          © {currentYear} {tenant?.name || 'AutoLeads'}. All rights reserved.
+        </p>
+        <p className="text-xs">
+          Premium automotive marketplace platform powered by{' '}
+          <a
+            href="https://lumiku.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:underline font-medium"
+          >
+            Lumiku AutoLeads
+          </a>
+        </p>
+        <div className="flex justify-center items-center gap-4 mt-3 text-xs">
+          <span>Trusted by thousands of buyers</span>
+          <span>•</span>
+          <span>Quality guaranteed</span>
+          <span>•</span>
+          <span>24/7 support</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
   );
 }
