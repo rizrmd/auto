@@ -7,7 +7,18 @@ RUN mkdir -p /app/data && chmod 755 /app/data
 VOLUME ["/app/data"]
 
 # Install PostgreSQL client and system dependencies
-RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client wget unzip && rm -rf /var/lib/apt/lists/*
+
+# Download and setup WhatsApp Web API
+RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.1.0/whatsapp-web-api-linux-amd64.zip \
+    && unzip whatsapp-web-api-linux-amd64.zip \
+    && chmod +x whatsapp-web-api-linux-amd64 \
+    && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
+    && rm whatsapp-web-api-linux-amd64.zip
+
+# Create WhatsApp API environment file
+RUN echo "PORT=8080" > /app/whatsapp-api.env \
+    && echo "# Add your DATABASE_URL here for WhatsApp API" >> /app/whatsapp-api.env
 
 # Copy package files first for better caching
 COPY package.json bunfig.toml ./
@@ -24,12 +35,35 @@ RUN bun run build:frontend
 # Make startup script executable
 RUN chmod +x start.sh
 
-# Expose port (use PORT environment variable or default to 3000)
-EXPOSE 3000
+# Expose ports (main app and WhatsApp API)
+EXPOSE 3000 8080
 
 # Set production environment
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Use startup script to handle Prisma setup
-CMD ["./start.sh"]
+# Create startup script for both services
+RUN echo '#!/bin/bash\n\
+set -e\n\
+\n\
+echo "🚀 Starting AutoLeads application..."\n\
+\n\
+# Start WhatsApp Web API in background\n\
+if [ -f "/app/whatsapp-api.env" ] && [ -n "$WA_DATABASE_URL" ]; then\n\
+    echo "📱 Starting WhatsApp Web API on port 8080..."\n\
+    DATABASE_URL="$WA_DATABASE_URL" /usr/local/bin/whatsapp-web-api &\n\
+    WHATSAPP_PID=$!\n\
+    echo "WhatsApp API started with PID: $WHATSAPP_PID"\n\
+else\n\
+    echo "⚠️  WhatsApp API not configured (missing WA_DATABASE_URL)"\n\
+fi\n\
+\n\
+# Start main application\n\
+echo "🌐 Starting main AutoLeads application on port 3000..."\n\
+exec ./start.sh' > /app/start-multi-services.sh
+
+# Make startup script executable
+RUN chmod +x /app/start-multi-services.sh
+
+# Use multi-service startup script
+CMD ["/app/start-multi-services.sh"]
