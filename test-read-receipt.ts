@@ -1,75 +1,80 @@
 #!/usr/bin/env bun
-
 /**
- * Test script for WhatsApp read receipt functionality
+ * Test WhatsApp Web API v1.1.0 Features
+ * Tests QR generation, health check, and read receipts
  */
 
 import { WhatsAppClient } from './backend/src/whatsapp/whatsapp-client';
 
-async function testReadReceipt() {
-  console.log('🧪 Testing WhatsApp Read Receipt Functionality');
+async function testWhatsAppAPI() {
+  console.log('🧪 Testing WhatsApp Web API v1.1.0 Features');
   console.log('='.repeat(50));
 
   const whatsapp = new WhatsAppClient();
-  
-  // Test 1: Check if WhatsApp client is configured
-  console.log('\n1. Checking WhatsApp client configuration...');
-  if (whatsapp.isConfigured()) {
-    console.log('✅ WhatsApp client is configured');
-  } else {
-    console.log('❌ WhatsApp client is not configured');
-    return;
-  }
 
-  // Test 2: Health check
-  console.log('\n2. Performing health check...');
+  // Test 1: Health Check
+  console.log('\n1️⃣ Testing Health Check...');
   try {
-    const isHealthy = await whatsapp.healthCheck();
-    if (isHealthy) {
-      console.log('✅ WhatsApp API is healthy');
-    } else {
-      console.log('❌ WhatsApp API health check failed');
-    }
+    const health = await whatsapp.healthCheck();
+    console.log('Health Result:', health);
   } catch (error) {
-    console.log('❌ Health check error:', error);
+    console.error('Health Check Failed:', error);
   }
 
-  // Test 3: Test read receipt functionality
-  console.log('\n3. Testing read receipt functionality...');
-  const testPhone = '6281234567890'; // Test phone number
-  const testMessageIds = ['test_msg_123', 'test_msg_456'];
-  
+  // Test 2: Version Detection
+  console.log('\n2️⃣ Testing Version Detection...');
   try {
-    const readResult = await whatsapp.markAsRead(testPhone, testMessageIds);
-    if (readResult.success) {
-      console.log('✅ Read receipt sent successfully');
-      console.log(`   Message: ${readResult.message}`);
-    } else {
-      console.log('❌ Read receipt failed');
-      console.log(`   Error: ${readResult.error}`);
-    }
+    const version = await whatsapp.getVersion();
+    console.log('Version Info:', version);
   } catch (error) {
-    console.log('❌ Read receipt error:', error);
+    console.error('Version Detection Failed:', error);
   }
 
-  // Test 4: Test read receipt without message IDs
-  console.log('\n4. Testing read receipt without specific message IDs...');
+  // Test 3: QR Code Generation (JSON)
+  console.log('\n3️⃣ Testing QR Code Generation (JSON)...');
   try {
-    const readResult = await whatsapp.markAsRead(testPhone);
-    if (readResult.success) {
-      console.log('✅ Read receipt (all messages) sent successfully');
-      console.log(`   Message: ${readResult.message}`);
-    } else {
-      console.log('❌ Read receipt (all messages) failed');
-      console.log(`   Error: ${readResult.error}`);
-    }
+    const qrJson = await whatsapp.generateQR('json');
+    console.log('QR JSON Result:', qrJson);
   } catch (error) {
-    console.log('❌ Read receipt (all messages) error:', error);
+    console.error('QR JSON Generation Failed:', error);
   }
 
-  console.log('\n' + '='.repeat(50));
-  console.log('🏁 Read receipt test completed');
+  // Test 4: QR Code Generation (Image)
+  console.log('\n4️⃣ Testing QR Code Generation (Image)...');
+  try {
+    const qrImage = await whatsapp.generateQR('image');
+    console.log('QR Image Result:', {
+      success: qrImage.success,
+      hasImageUrl: !!qrImage.data?.qr_image_url,
+      imageUrlLength: qrImage.data?.qr_image_url?.length || 0
+    });
+  } catch (error) {
+    console.error('QR Image Generation Failed:', error);
+  }
+
+  // Test 5: Read Receipts (with test number)
+  console.log('\n5️⃣ Testing Read Receipts...');
+  try {
+    const readResult = await whatsapp.markAsRead('628123456789', ['test-message-id']);
+    console.log('Read Receipt Result:', readResult);
+  } catch (error) {
+    console.error('Read Receipt Test Failed:', error);
+  }
+
+  // Test 6: Swagger URL
+  console.log('\n6️⃣ Getting Swagger Documentation URL...');
+  try {
+    const swaggerUrl = whatsapp.getSwaggerUrl();
+    console.log('Swagger URL:', swaggerUrl);
+  } catch (error) {
+    console.error('Swagger URL Failed:', error);
+  }
+
+  console.log('\n✅ WhatsApp Web API v1.1.0 Test Complete!');
+  console.log('='.repeat(50));
 }
 
-// Run the test
-testReadReceipt().catch(console.error);
+// Run tests
+if (import.meta.main) {
+  testWhatsAppAPI().catch(console.error);
+}

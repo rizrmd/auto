@@ -18,7 +18,8 @@ RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.1.0/wha
 
 # Create WhatsApp API environment file
 RUN echo "PORT=8080" > /app/whatsapp-api.env \
-    && echo "# Add your DATABASE_URL here for WhatsApp API" >> /app/whatsapp-api.env
+    && echo "# Add your DATABASE_URL here for WhatsApp API" >> /app/whatsapp-api.env \
+    && echo "# Webhook URL will be configured at runtime" >> /app/whatsapp-api.env
 
 # Copy package files first for better caching
 COPY package.json bunfig.toml ./
@@ -51,7 +52,15 @@ echo "🚀 Starting AutoLeads application..."\n\
 # Start WhatsApp Web API in background\n\
 if [ -f "/app/whatsapp-api.env" ] && [ -n "$DATABASE_URL" ]; then\n\
     echo "📱 Starting WhatsApp Web API on port 8080..."\n\
-    PORT=8080 DATABASE_URL="$DATABASE_URL" /usr/local/bin/whatsapp-web-api &\n\
+    \n\
+    # Configure webhook URL if APP_URL is available\n\
+    if [ -n "$APP_URL" ]; then\n\
+        WA_WEBHOOK_URL="$APP_URL/webhook/whatsapp"\n\
+        echo "🔗 Configuring webhook: $WA_WEBHOOK_URL"\n\
+    fi\n\
+    \n\
+    # Start WhatsApp Web API with environment variables\n\
+    PORT=8080 DATABASE_URL="$DATABASE_URL" ${WA_WEBHOOK_URL:+WA_WEBHOOK_URL="$WA_WEBHOOK_URL"} /usr/local/bin/whatsapp-web-api &\n\
     WHATSAPP_PID=$!\n\
     echo "WhatsApp API started with PID: $WHATSAPP_PID"\n\
 else\n\

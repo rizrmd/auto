@@ -1,6 +1,6 @@
 /**
- * Simple WhatsApp API Client
- * HTTP-based WhatsApp gateway integration
+ * WhatsApp Web API Client v1.1.0
+ * HTTP-based WhatsApp Web API integration with QR pairing, messaging, and read receipts
  */
 
 interface SendMessageParams {
@@ -15,6 +15,27 @@ interface WhatsAppSendResponse {
   message?: string;
   error?: string;
   data?: any;
+}
+
+interface PairResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    qr_code?: string;
+    qr_image_url?: string;
+    expires_in?: number;
+  };
+  error?: string;
+}
+
+interface HealthResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    paired?: boolean;
+    connected?: boolean;
+    webhook_configured?: boolean;
+  };
 }
 
 interface SendImageResult {
@@ -39,6 +60,8 @@ export class WhatsAppClient {
     if (!this.apiUrl) {
       console.warn('⚠️ WHATSAPP_API_URL not set. Using default: http://localhost:8080/send');
     }
+
+    console.log(`[WHATSAPP] Initialized with API URL: ${this.baseUrl}`);
   }
 
   /**
@@ -416,22 +439,49 @@ export class WhatsAppClient {
   }
 
   /**
-   * Health check
+   * Health check with detailed status
    */
-  async healthCheck(): Promise<boolean> {
+  async healthCheck(): Promise<HealthResponse> {
     if (!this.isConfigured()) {
-      return false;
+      return {
+        success: false,
+        message: 'WhatsApp API not configured'
+      };
     }
 
     try {
-      const response = await fetch(this.apiUrl.replace('/send', '/health'), {
+      const healthUrl = this.baseUrl + '/health';
+      const response = await fetch(healthUrl, {
         method: 'GET'
       });
-      return response.ok;
-    } catch {
-      // If health endpoint doesn't exist, assume API is working
-      return true;
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return {
+          success: false,
+          message: `HTTP ${response.status}: ${data.message || 'Health check failed'}`
+        };
+      }
+
+      console.log(`[WHATSAPP] Health check successful:`, data);
+      return data;
+
+    } catch (error) {
+      console.error('[WHATSAPP] Health check failed:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Health check failed'
+      };
     }
+  }
+
+  /**
+   * Check if API is configured and running (simplified version)
+   */
+  async isHealthy(): Promise<boolean> {
+    const health = await this.healthCheck();
+    return health.success;
   }
 
   /**
@@ -464,14 +514,70 @@ export class WhatsAppClient {
   }
 
   /**
-   * Mark messages as read
-   * Attempts to mark messages as read using the WhatsApp Web API
-   * Note: This requires the WhatsApp Web API to support the /read endpoint
+   * Generate QR code for pairing
+   * Supports both JSON and PNG image formats
+   */
+  async generateQR(format: 'json' | 'image' = 'json'): Promise<PairResponse> {
+    try {
+      const pairUrl = format === 'image' 
+        ? `${this.baseUrl}/pair?format=image`
+        : `${this.baseUrl}/pair`;
+
+      console.log(`[WHATSAPP] Generating QR code (${format} format)`);
+
+      const response = await fetch(pairUrl, {
+        method: 'GET'
+      });
+
+      if (format === 'image') {
+        // For image format, return the image URL
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: Failed to generate QR image`);
+        }
+
+        const imageUrl = `data:image/png;base64,${await response.text()}`;
+        
+        return {
+          success: true,
+          message: 'QR code image generated successfully',
+          data: {
+            qr_image_url: imageUrl,
+            expires_in: 60
+          }
+        };
+      } else {
+        // For JSON format, parse the response
+        const data = await response.json();
+
+        if (!response.ok) {
+          console.error('WhatsApp QR API error:', data);
+          return {
+            success: false,
+            error: `HTTP ${response.status}: ${data.message || 'Failed to generate QR code'}`
+          };
+        }
+
+        console.log(`[WHATSAPP] QR code generated successfully`);
+        return data;
+      }
+
+    } catch (error) {
+      console.error('Error generating QR code:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to generate QR code'
+      };
+    }
+  }
+
+  /**
+   * Mark messages as read (v1.1.0 enhanced)
+   * Uses the built-in read receipt functionality from WhatsApp Web API
    */
   async markAsRead(phone: string, messageIds?: string[]): Promise<WhatsAppSendResponse> {
     try {
-      // Try to use the /read endpoint if available
-      const readUrl = this.apiUrl.replace('/send', '/read');
+      // Use the /read endpoint from v1.1.0
+      const readUrl = this.baseUrl + '/read';
       
       const requestBody = {
         number: this.normalizePhoneNumber(phone),
@@ -495,37 +601,89 @@ export class WhatsAppClient {
         body: JSON.stringify(requestBody)
       });
 
-      // If the /read endpoint doesn't exist (404), we'll simulate success
-      if (response.status === 404) {
-        console.log(`[WHATSAPP] Read endpoint not available, simulating read receipt for ${phone}`);
-        return {
-          success: true,
-          message: 'Messages marked as read (simulated - endpoint not available)'
-        };
-      }
-
       const data = await response.json();
 
       if (!response.ok) {
+        // If read endpoint doesn't exist, it might be an older version
+        if (response.status === 404) {
+          console.log(`[WHATSAPP] Read endpoint not available - may be using older API version`);
+          return {
+            success: true,
+            message: 'Read receipts not supported in this version'
+          };
+        }
+
         console.error('WhatsApp read API error:', data);
         return {
           success: false,
-          error: `HTTP ${response.status}: ${data.message || 'Unknown error'}`
+          error: `HTTP ${response.status}: ${data.message || 'Failed to mark messages as read'}`
         };
       }
 
       console.log(`[WHATSAPP] Messages marked as read successfully for ${phone}`);
       return {
         success: true,
-        message: 'Messages marked as read successfully'
+        message: 'Messages marked as read successfully',
+        data
       };
 
     } catch (error) {
       console.error('Error marking messages as read:', error);
-      // Don't fail the entire process if read receipts don't work
       return {
-        success: true,
-        message: 'Read receipt attempted (may not be supported)'
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to mark messages as read'
+      };
+    }
+  }
+
+  /**
+   * Get API documentation URL
+   */
+  getSwaggerUrl(): string {
+    return `${this.baseUrl}/swagger`;
+  }
+
+  /**
+   * Get API version information
+   */
+  async getVersion(): Promise<{ version: string; features: string[] }> {
+    try {
+      const health = await this.healthCheck();
+      
+      // Based on the health response, determine available features
+      const features = ['send_message'];
+      
+      if (health.success && health.data?.paired !== undefined) {
+        features.push('qr_pairing', 'health_check');
+      }
+      
+      // Try to detect v1.1.0 features
+      try {
+        const response = await fetch(this.baseUrl + '/read', { method: 'POST', body: '{}' });
+        if (response.status !== 404) {
+          features.push('read_receipts');
+        }
+      } catch {
+        // Read endpoint not available
+      }
+
+      try {
+        const response = await fetch(this.baseUrl + '/pair?format=image');
+        if (response.ok) {
+          features.push('qr_images');
+        }
+      } catch {
+        // QR image endpoint not available
+      }
+
+      return {
+        version: features.includes('read_receipts') ? '1.1.0' : '1.0.0',
+        features
+      };
+    } catch {
+      return {
+        version: 'unknown',
+        features: []
       };
     }
   }

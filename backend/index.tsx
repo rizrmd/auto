@@ -20,9 +20,11 @@ import { env, isDevelopment } from './src/config/env';
 import healthRoutes from './src/routes/health';
 import publicCarsRoutes from './src/routes/public/cars';
 import fontteWebhookRoutes from './src/routes/webhook/fonnte';
+import whatsappWebhookRoutes from './src/routes/webhook/whatsapp';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
+import adminWhatsappRoutes from './src/routes/admin/whatsapp';
 import tenantRoutes from './src/routes/tenant';
 
 /**
@@ -151,11 +153,13 @@ app.route('/api/tenant', tenantRoutes);
 
 // Webhook routes
 app.route('/webhook/fonnte', fontteWebhookRoutes);
+app.route('/webhook/whatsapp', whatsappWebhookRoutes);
 
 // Admin API routes
 app.route('/api/admin/auth', adminAuthRoutes);
 app.route('/api/admin/cars', adminCarsRoutes);
 app.route('/api/admin/leads', adminLeadsRoutes);
+app.route('/api/admin/whatsapp', adminWhatsappRoutes);
 
 /**
  * Root route - API info
@@ -175,9 +179,11 @@ app.get('/api', (c) => {
         auth: '/api/admin/auth/login',
         cars: '/api/admin/cars',
         leads: '/api/admin/leads',
+        whatsapp: '/api/admin/whatsapp',
       },
       webhooks: {
         fonnte: '/webhook/fonnte',
+        whatsapp: '/webhook/whatsapp',
       },
     },
   });
@@ -379,7 +385,9 @@ console.log(`  Public Cars:     /api/cars`);
 console.log(`  Admin Login:     /api/admin/auth/login`);
 console.log(`  Admin Cars:      /api/admin/cars`);
 console.log(`  Admin Leads:     /api/admin/leads`);
+console.log(`  Admin WhatsApp:  /api/admin/whatsapp`);
 console.log(`  Fonnte Webhook:  /webhook/fonnte`);
+console.log(`  WhatsApp Webhook: /webhook/whatsapp`);
 console.log('='.repeat(60));
 
 /**
