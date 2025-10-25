@@ -29,11 +29,12 @@ if [ ! -d "./uploads" ]; then
     echo "  Directory created: ./uploads"
 fi
 
-# Generate Prisma client if not exists
-if [ ! -d "./generated/prisma" ]; then
-    echo "✓ Generating Prisma client..."
-    bunx prisma generate
-fi
+# Generate Prisma client (always generate at runtime to ensure it's up to date)
+echo "✓ Generating Prisma client..."
+bunx prisma generate || {
+    echo "❌ Prisma client generation failed!"
+    exit 1
+}
 
 # Create Prisma index file if not exists
 if [ ! -f "./generated/prisma/index.ts" ]; then

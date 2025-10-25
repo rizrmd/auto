@@ -22,10 +22,7 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
-# Generate Prisma client (production)
-RUN bunx prisma generate
-
-# Build frontend for production
+# Build frontend for production (doesn't need DATABASE_URL)
 RUN bun run build:frontend
 
 # Make startup script executable
