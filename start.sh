@@ -50,14 +50,12 @@ if [ "$NODE_ENV" = "production" ]; then
     }
 fi
 
-# Build frontend for production
-if [ "$NODE_ENV" = "production" ]; then
-    echo "✓ Building frontend..."
-    bun run build:frontend || {
-        echo "❌ Frontend build failed!"
-        exit 1
-    }
-fi
+# Build frontend (always - ensures fresh UI on every deployment)
+echo "✓ Building frontend..."
+bun run build:frontend || {
+    echo "❌ Frontend build failed!"
+    exit 1
+}
 
 # Health check
 echo "✓ Environment: ${NODE_ENV:-development}"
