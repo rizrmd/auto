@@ -31,6 +31,8 @@ async function main() {
       name: 'Showroom Mobil Surabaya',
       slug: 'showroom-surabaya',
       subdomain: 'showroom-surabaya.autoleads.id',
+      customDomain: 'auto.lumiku.com',
+      customDomainVerified: true,
       whatsappNumber: '628123456789',
       phone: '031-1234567',
       email: 'info@showroom-surabaya.com',
