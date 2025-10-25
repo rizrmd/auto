@@ -22,11 +22,20 @@ RUN bun install --frozen-lockfile
 # Copy source code
 COPY . .
 
+# Generate Prisma client (production)
+RUN bunx prisma generate
+
+# Build frontend for production
+RUN bun run build:frontend
+
 # Make startup script executable
 RUN chmod +x start.sh
 
-# Expose port
+# Expose port (use PORT environment variable or default to 3000)
 EXPOSE 3000
+
+# Set production environment
+ENV NODE_ENV=production
 
 # Use startup script to handle Prisma setup
 CMD ["./start.sh"]

@@ -7,7 +7,7 @@ import { Menu, X, Phone, MapPin } from 'lucide-react';
 import { Button } from '../ui/button';
 import { SearchBar } from '../shared/SearchBar';
 import { useTenantContext } from '../../context/TenantContext';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import type { Car } from '../../api/cars';
 
 interface HeaderProps {

@@ -4,7 +4,7 @@
 
 import React from 'react';
 import { CarCard } from './CarCard';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import type { Car } from '../../api/cars';
 
 interface CarGridProps {

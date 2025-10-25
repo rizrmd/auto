@@ -5,7 +5,7 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { Button } from '../ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import { useTenantContext } from '../../context/TenantContext';
 import type { Car } from '../../api/cars';
 

@@ -7,7 +7,7 @@ import { Search, X, Loader2 } from 'lucide-react';
 import { Input } from '../ui/input';
 import { useDebounce } from '../../hooks/useDebounce';
 import { searchCars, type Car } from '../../api/cars';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 interface SearchBarProps {
   onSearch?: (query: string) => void;

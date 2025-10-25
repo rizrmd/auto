@@ -50,16 +50,20 @@ if [ "$NODE_ENV" = "production" ]; then
     }
 fi
 
-# Build frontend (always - ensures fresh UI on every deployment)
-echo "✓ Building frontend..."
-bun run build:frontend || {
-    echo "❌ Frontend build failed!"
-    exit 1
-}
+# Build frontend only if not already built (for Docker optimization)
+if [ ! -d "./frontend/dist" ] || [ ! -f "./frontend/dist/index.html" ]; then
+    echo "✓ Building frontend..."
+    bun run build:frontend || {
+        echo "❌ Frontend build failed!"
+        exit 1
+    }
+else
+    echo "✓ Frontend already built, skipping build..."
+fi
 
 # Health check
 echo "✓ Environment: ${NODE_ENV:-development}"
-echo "✓ Port: ${APP_PORT:-3000}"
+echo "✓ Port: ${PORT:-${APP_PORT:-3000}}"
 echo "✓ Database: Connected"
 
 # Start application

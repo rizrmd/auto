@@ -19,13 +19,32 @@ const fontteWebhook = new Hono();
 fontteWebhook.post(
   '/',
   asyncHandler(async (c) => {
+    const startTime = Date.now();
+    const requestId = c.get('requestId');
+
+    // Log request details
+    console.log('='.repeat(50));
+    console.log(`[WEBHOOK] Fonnte webhook received - Request ID: ${requestId}`);
+    console.log(`[WEBHOOK] Timestamp: ${new Date().toISOString()}`);
+    console.log(`[WEBHOOK] Method: ${c.req.method}`);
+    console.log(`[WEBHOOK] URL: ${c.req.url}`);
+    console.log(`[WEBHOOK] User-Agent: ${c.req.header('user-agent') || 'Unknown'}`);
+    console.log(`[WEBHOOK] Content-Type: ${c.req.header('content-type') || 'Unknown'}`);
+    console.log(`[WEBHOOK] Content-Length: ${c.req.header('content-length') || 'Unknown'}`);
+
     const payload: FontteWebhookPayload = await c.req.json();
 
-    console.log('Fonnte webhook received:', {
-      sender: payload.sender,
-      message: payload.message,
-      type: payload.type,
-    });
+    console.log(`[WEBHOOK] Payload Details:`);
+    console.log(`[WEBHOOK]   - Sender: ${payload.sender}`);
+    console.log(`[WEBHOOK]   - Message: ${payload.message}`);
+    console.log(`[WEBHOOK]   - Type: ${payload.type}`);
+    console.log(`[WEBHOOK]   - Push Name: ${payload.pushname || 'Not provided'}`);
+    console.log(`[WEBHOOK]   - Member Name: ${payload.member?.name || 'Not provided'}`);
+    console.log(`[WEBHOOK]   - Device ID: ${payload.device || 'Not provided'}`);
+    console.log(`[WEBHOOK]   - Timestamp: ${payload.timestamp || 'Not provided'}`);
+    console.log(`[WEBHOOK]   - File: ${payload.file || 'No file'}`);
+    console.log(`[WEBHOOK]   - URL: ${payload.url || 'No URL'}`);
+    console.log(`[WEBHOOK]   - Location: ${payload.location || 'No location'}`);
 
     // Extract phone number (remove @s.whatsapp.net suffix if present)
     const customerPhone = payload.sender.replace('@s.whatsapp.net', '');

@@ -5,7 +5,7 @@
 import React from 'react';
 import { Phone, Mail, MapPin, Clock, MessageCircle } from 'lucide-react';
 import { useTenantContext } from '../../context/TenantContext';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 interface FooterProps {
   className?: string;

@@ -5,7 +5,7 @@
 import React from 'react';
 import { MapPin, Gauge, Calendar, Fuel, Cog } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 import type { Car } from '../../api/cars';
 
 interface CarCardProps {

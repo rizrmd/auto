@@ -5,7 +5,7 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../ui/button';
-import { cn } from '@/lib/utils';
+import { cn } from '../../lib/utils';
 
 interface PaginationProps {
   currentPage: number;

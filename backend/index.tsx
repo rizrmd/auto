@@ -259,7 +259,7 @@ app.get('*', async (c) => {
     // Determine MIME type based on file extension
     let contentType = 'application/octet-stream';
 
-    if (requestPath.endsWith('.js')) {
+    if (requestPath.endsWith('.js') || requestPath.endsWith('.tsx') || requestPath.endsWith('.jsx') || requestPath.endsWith('.ts')) {
       contentType = 'application/javascript; charset=utf-8';
     } else if (requestPath.endsWith('.css')) {
       contentType = 'text/css; charset=utf-8';
@@ -366,7 +366,7 @@ app.notFound(async (c) => {
  */
 const server = serve({
   fetch: app.fetch,
-  port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+  port: process.env.PORT ? parseInt(process.env.PORT) : (process.env.APP_PORT ? parseInt(process.env.APP_PORT) : 3000),
   development: isDevelopment
     ? {
         // Enable hot module reloading in development
