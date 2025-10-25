@@ -188,12 +188,12 @@ app.get('/api', (c) => {
 // Serve files from /app/uploads directory (persistent storage)
 app.get('/uploads/*', async (c) => {
   const requestPath = c.req.path.replace('/uploads/', '');
-  const filepath = `./app/uploads/${requestPath}`;
+  const filepath = `./uploads/${requestPath}`;
 
   // Security: Prevent path traversal attacks
   const normalizedPath = path.normalize(filepath);
-  // path.normalize() removes the ./ prefix, so check for both ./app/uploads/ and app/uploads/
-  if (!normalizedPath.startsWith('./app/uploads/') && !normalizedPath.startsWith('app/uploads/')) {
+  // path.normalize() removes the ./ prefix, so check for both ./uploads/ and uploads/
+  if (!normalizedPath.startsWith('./uploads/') && !normalizedPath.startsWith('uploads/')) {
     console.error('[SECURITY] Path traversal attempt blocked:', requestPath);
     return c.text('Forbidden', 403);
   }
@@ -366,7 +366,7 @@ console.log('AutoLeads Backend Server');
 console.log('='.repeat(60));
 console.log(`Environment: ${env.NODE_ENV}`);
 console.log(`Database: ${env.DATABASE_URL.split('@')[1] || 'Connected'}`);
-console.log(`Storage: /uploads/* URLs served from /app/uploads/ directory`);
+console.log(`Storage: /uploads/* URLs served from ./uploads/ directory`);
 console.log('='.repeat(60));
 console.log('API Endpoints:');
 console.log(`  Health Check:    /health`);
