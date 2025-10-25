@@ -9,6 +9,8 @@ import { LeadService } from '../../services/lead.service';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
 import { FonnteClient } from '../../whatsapp/fonnte-client';
+import { RAGEngine } from '../../bot/customer/rag-engine';
+import { IntentRecognizer } from '../../bot/customer/intent-recognizer';
 import type { FontteWebhookPayload, ApiResponse } from '../../types/context';
 
 const fontteWebhook = new Hono();
@@ -76,6 +78,8 @@ fontteWebhook.post(
     }
 
     const leadService = new LeadService();
+    const ragEngine = new RAGEngine(prisma);
+    const intentRecognizer = new IntentRecognizer();
 
     // Find or create lead
     const lead = await leadService.findOrCreateByPhone(tenant.id, customerPhone, {
@@ -100,28 +104,52 @@ fontteWebhook.post(
       },
     });
 
-    // Send "Hello World" reply
+    // Generate intelligent response using LLM
     try {
       const fonnte = new FonnteClient();
       
       if (fonnte.isConfigured()) {
+        console.log(`[WEBHOOK] Generating LLM response for message: "${payload.message}"`);
+        
+        // Recognize intent and extract entities
+        const intent = intentRecognizer.recognizeIntent(payload.message);
+        console.log(`[WEBHOOK] Intent: ${intent.type}, Confidence: ${intent.confidence}`);
+        console.log(`[WEBHOOK] Entities:`, intent.entities);
+        
+        // Determine query type for RAG engine
+        const queryType = intent.type === 'price' ? 'price' : 'general';
+        
+        // Generate response using RAG engine
+        const llmResponse = await ragEngine.generateResponse(
+          tenant,
+          payload.message,
+          intent.entities,
+          queryType
+        );
+        
+        console.log(`[WEBHOOK] LLM Response: "${llmResponse}"`);
+        
+        // Send LLM response
         await fonnte.sendMessage({
           target: customerPhone,
-          message: 'Hello World'
+          message: llmResponse
         });
         
-        console.log(`[WEBHOOK] Reply sent to ${customerPhone}: "Hello World"`);
+        console.log(`[WEBHOOK] LLM reply sent to ${customerPhone}`);
         
-        // Save reply to database
+        // Save LLM reply to database
         await prisma.message.create({
           data: {
             tenantId: tenant.id,
             leadId: lead.id,
             sender: 'bot',
-            message: 'Hello World',
+            message: llmResponse,
             metadata: {
               type: 'text',
               autoReply: true,
+              intent: intent.type,
+              confidence: intent.confidence,
+              entities: intent.entities,
             },
           },
         });
@@ -129,7 +157,36 @@ fontteWebhook.post(
         console.warn('[WEBHOOK] Fonnte not configured, skipping reply');
       }
     } catch (error) {
-      console.error('[WEBHOOK] Error sending reply:', error);
+      console.error('[WEBHOOK] Error generating/sending LLM reply:', error);
+      
+      // Fallback to simple error message
+      try {
+        const fonnte = new FonnteClient();
+        if (fonnte.isConfigured()) {
+          const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
+          await fonnte.sendMessage({
+            target: customerPhone,
+            message: fallbackMessage
+          });
+          
+          // Save fallback reply
+          await prisma.message.create({
+            data: {
+              tenantId: tenant.id,
+              leadId: lead.id,
+              sender: 'bot',
+              message: fallbackMessage,
+              metadata: {
+                type: 'text',
+                autoReply: true,
+                fallback: true,
+              },
+            },
+          });
+        }
+      } catch (fallbackError) {
+        console.error('[WEBHOOK] Error sending fallback reply:', fallbackError);
+      }
       // Continue anyway - we still want to acknowledge the webhook
     }
 
@@ -138,7 +195,7 @@ fontteWebhook.post(
       data: {
         leadId: lead.id,
         status: 'processed',
-        replySent: 'Hello World',
+        message: 'Webhook processed with LLM response',
       },
     };
 
