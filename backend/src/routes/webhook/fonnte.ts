@@ -330,8 +330,9 @@ Current customer message: "${message}"`,
                 message.toLowerCase().includes('pic')
               );
 
-              if (isFalsePhotoPromise && isPhotoRequest && iterations === 1) {
-                console.warn('⚠️ [WEBHOOK] DETECTED FALSE PHOTO PROMISE! Forcing retry with stricter instruction...');
+              if (isFalsePhotoPromise && isPhotoRequest) {
+                console.warn(`⚠️ [WEBHOOK] DETECTED FALSE PHOTO PROMISE at iteration ${iterations}! Forcing retry with stricter instruction...`);
+                console.warn(`[WEBHOOK] Problematic response: "${finalResponse.substring(0, 150)}..."`);
 
                 // Add a forcing message to make LLM call the tool
                 messages.push({
@@ -339,7 +340,7 @@ Current customer message: "${message}"`,
                   content: 'ERROR: You MUST call send_car_photos tool to actually send photos. DO NOT just promise to send. Call search_cars first if needed to find the car code, then call send_car_photos. Do it now.',
                 });
 
-                // Force retry
+                // Force retry (don't increment iteration counter)
                 iterations--; // Don't count this as an iteration
                 continue;
               }
