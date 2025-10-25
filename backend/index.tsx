@@ -185,14 +185,14 @@ app.get('/api', (c) => {
 // ========================================
 // IMAGE SERVING - Must be BEFORE wildcard
 // ========================================
-// Serve files from /app/uploads directory (persistent storage)
+// Serve files from /app/data directory (persistent storage)
 app.get('/uploads/*', async (c) => {
   const requestPath = c.req.path.replace(/^\/uploads\//, '');
-  const filepath = `/app/uploads/${requestPath}`;
+  const filepath = `/app/data/${requestPath}`;
 
   // Security: Prevent path traversal attacks
   const normalizedPath = path.normalize(filepath);
-  if (!normalizedPath.startsWith('/app/uploads/')) {
+  if (!normalizedPath.startsWith('/app/data/')) {
     console.error('[SECURITY] Path traversal attempt blocked:', requestPath);
     return c.text('Forbidden', 403);
   }
@@ -365,7 +365,7 @@ console.log('AutoLeads Backend Server');
 console.log('='.repeat(60));
 console.log(`Environment: ${env.NODE_ENV}`);
 console.log(`Database: ${env.DATABASE_URL.split('@')[1] || 'Connected'}`);
-console.log(`Storage: /uploads/* URLs served from /app/uploads/ directory`);
+console.log(`Storage: /uploads/* URLs served from /app/data/ directory`);
 console.log('='.repeat(60));
 console.log('API Endpoints:');
 console.log(`  Health Check:    /health`);
