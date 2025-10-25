@@ -58,7 +58,6 @@ export function Footer({ className }: FooterProps) {
           )}
           <span className="font-bold text-lg">{tenant?.name || 'AutoLeads'}</span>
         </div>
-
       </div>
 
       {/* Contact */}
