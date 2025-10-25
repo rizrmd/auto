@@ -35,24 +35,54 @@ whatsappWebhook.post(
     console.log(`[WEBHOOK] Content-Type: ${c.req.header('content-type') || 'Unknown'}`);
     console.log(`[WEBHOOK] Content-Length: ${c.req.header('content-length') || 'Unknown'}`);
 
-    const payload: FontteWebhookPayload = await c.req.json();
+    const payload = await c.req.json();
 
-    console.log(`[WEBHOOK] Payload Details:`);
-    console.log(`[WEBHOOK]   - Sender: ${payload.sender}`);
-    console.log(`[WEBHOOK]   - Message: ${payload.message}`);
-    console.log(`[WEBHOOK]   - Type: ${payload.type}`);
-    console.log(`[WEBHOOK]   - Push Name: ${payload.pushname || 'Not provided'}`);
-    console.log(`[WEBHOOK]   - Member Name: ${payload.member?.name || 'Not provided'}`);
-    console.log(`[WEBHOOK]   - Device ID: ${payload.device || 'Not provided'}`);
-    console.log(`[WEBHOOK]   - Timestamp: ${payload.timestamp || 'Not provided'}`);
-    console.log(`[WEBHOOK]   - File: ${payload.file || 'No file'}`);
-    console.log(`[WEBHOOK]   - URL: ${payload.url || 'No URL'}`);
-    console.log(`[WEBHOOK]   - Location: ${payload.location || 'No location'}`);
+    // Handle different payload formats
+    let customerPhone: string;
+    let customerName: string | undefined;
+    let message: string;
+    let messageType: string = 'text';
 
-    // Extract phone number from WhatsApp JID format
-    // Handle formats like: 6281298329132@s.whatsapp.net or 6281298329132:84@s.whatsapp.net
-    const customerPhone = payload.sender.split('@')[0].split(':')[0];
-    const customerName = payload.pushname || payload.member?.name;
+    // Check if it's the old Fonnte format or new format
+    if (payload.sender) {
+      // Fonnte format
+      console.log(`[WEBHOOK] Payload Details:`);
+      console.log(`[WEBHOOK]   - Sender: ${payload.sender}`);
+      console.log(`[WEBHOOK]   - Message: ${payload.message}`);
+      console.log(`[WEBHOOK]   - Type: ${payload.type}`);
+      console.log(`[WEBHOOK]   - Push Name: ${payload.pushname || 'Not provided'}`);
+      console.log(`[WEBHOOK]   - Member Name: ${payload.member?.name || 'Not provided'}`);
+      console.log(`[WEBHOOK]   - Device ID: ${payload.device || 'Not provided'}`);
+      console.log(`[WEBHOOK]   - Timestamp: ${payload.timestamp || 'Not provided'}`);
+      console.log(`[WEBHOOK]   - File: ${payload.file || 'No file'}`);
+      console.log(`[WEBHOOK]   - URL: ${payload.url || 'No URL'}`);
+      console.log(`[WEBHOOK]   - Location: ${payload.location || 'No location'}`);
+
+      // Extract phone number from WhatsApp JID format
+      customerPhone = payload.sender.split('@')[0].split(':')[0];
+      customerName = payload.pushname || payload.member?.name;
+      message = payload.message;
+      messageType = payload.type || 'text';
+    } else if (payload.phone) {
+      // Simple format for testing
+      console.log(`[WEBHOOK] Simple payload detected:`);
+      console.log(`[WEBHOOK]   - Phone: ${payload.phone}`);
+      console.log(`[WEBHOOK]   - Message: ${payload.message}`);
+
+      customerPhone = payload.phone;
+      customerName = undefined;
+      message = payload.message;
+    } else {
+      console.error('[WEBHOOK] Invalid payload format:', payload);
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: 'INVALID_PAYLOAD',
+          message: 'Invalid payload format',
+        },
+      };
+      return c.json(response, 400);
+    }
 
     // Determine tenant based on device/number
     // For now, we'll need to identify tenant from the device number
@@ -94,9 +124,9 @@ whatsappWebhook.post(
         tenantId: tenant.id,
         leadId: lead.id,
         sender: 'customer',
-        message: payload.message,
+        message: message,
         metadata: {
-          type: payload.type,
+          type: messageType,
           file: payload.file,
           url: payload.url,
           timestamp: payload.timestamp,
@@ -109,10 +139,10 @@ whatsappWebhook.post(
       const whatsapp = new WhatsAppClient();
       
       if (whatsapp.isConfigured()) {
-        console.log(`[WEBHOOK] Generating LLM response for message: "${payload.message}"`);
+        console.log(`[WEBHOOK] Generating LLM response for message: "${message}"`);
         
         // Recognize intent and extract entities
-        const intent = intentRecognizer.recognizeIntent(payload.message);
+        const intent = intentRecognizer.recognizeIntent(message);
         console.log(`[WEBHOOK] Intent: ${intent.type}, Confidence: ${intent.confidence}`);
         console.log(`[WEBHOOK] Entities:`, intent.entities);
         
@@ -122,7 +152,7 @@ whatsappWebhook.post(
         // Generate response using RAG engine
         const llmResponse = await ragEngine.generateResponse(
           tenant,
-          payload.message,
+          message,
           intent.entities,
           queryType
         );
@@ -196,39 +226,6 @@ whatsappWebhook.post(
         console.error('[WEBHOOK] Error sending fallback reply:', fallbackError);
       }
       // Continue anyway - we still want to acknowledge webhook
-    }
-    } catch (error) {
-      console.error('[WEBHOOK] Error generating/sending LLM reply:', error);
-      
-      // Fallback to simple error message
-      try {
-        const fonnte = new FonnteClient();
-        if (fonnte.isConfigured()) {
-          const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
-          await fonnte.sendMessage({
-            target: customerPhone,
-            message: fallbackMessage
-          });
-          
-          // Save fallback reply
-          await prisma.message.create({
-            data: {
-              tenantId: tenant.id,
-              leadId: lead.id,
-              sender: 'bot',
-              message: fallbackMessage,
-              metadata: {
-                type: 'text',
-                autoReply: true,
-                fallback: true,
-              },
-            },
-          });
-        }
-      } catch (fallbackError) {
-        console.error('[WEBHOOK] Error sending fallback reply:', fallbackError);
-      }
-      // Continue anyway - we still want to acknowledge the webhook
     }
 
     const response: ApiResponse = {
