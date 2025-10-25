@@ -4,18 +4,18 @@
  */
 
 import { PrismaClient } from '../../../../generated/prisma';
-import { GeminiClient } from '../../llm/gemini';
+import { ZaiClient } from '../../llm/zai';
 import { PromptBuilder } from '../../llm/prompt-builder';
 import { Intent } from './intent-recognizer';
 
 export class RAGEngine {
   private prisma: PrismaClient;
-  private gemini: GeminiClient;
+  private zai: ZaiClient;
   private promptBuilder: PromptBuilder;
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
-    this.gemini = new GeminiClient();
+    this.zai = new ZaiClient();
     this.promptBuilder = new PromptBuilder();
   }
 
@@ -45,7 +45,7 @@ export class RAGEngine {
       });
 
       // 4. Generation: Call LLM
-      const response = await this.gemini.generateResponse(prompt);
+      const response = await this.zai.generateResponse(prompt);
 
       return response;
 

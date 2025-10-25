@@ -202,10 +202,10 @@ await prisma.user.create({
 
 3. **Verify API keys:**
    ```typescript
-   // Test Gemini
-   const gemini = new GeminiClient();
-   const healthy = await gemini.healthCheck();
-   console.log('Gemini healthy:', healthy);
+   // Test ZAI
+   const zai = new ZaiClient();
+   const healthy = await zai.healthCheck();
+   console.log('ZAI healthy:', healthy);
 
    // Test Fonnte
    const fonnte = new FonnteClient();

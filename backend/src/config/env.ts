@@ -12,6 +12,9 @@ interface EnvConfig {
   JWT_EXPIRES_IN: string;
   FONNTE_API_KEY: string;
   FONNTE_WEBHOOK_SECRET: string;
+  ZAI_API_KEY: string;
+  ZAI_API_URL: string;
+  ZAI_MODEL: string;
   RATE_LIMIT_MAX_REQUESTS: number;
   RATE_LIMIT_WINDOW_MS: number;
   CACHE_TTL_SECONDS: number;
@@ -89,6 +92,11 @@ export const env: EnvConfig = {
   // Fonnte WhatsApp Integration
   FONNTE_API_KEY: getOptionalEnvVar('FONNTE_API_KEY', ''),
   FONNTE_WEBHOOK_SECRET: getOptionalEnvVar('FONNTE_WEBHOOK_SECRET', ''),
+
+  // ZAI LLM Integration
+  ZAI_API_KEY: getOptionalEnvVar('ZAI_API_KEY', ''),
+  ZAI_API_URL: getOptionalEnvVar('ZAI_API_URL', 'https://api.z.ai/api/coding/paas/v4'),
+  ZAI_MODEL: getOptionalEnvVar('ZAI_MODEL', 'glm-4.5v'),
 
   // Rate Limiting
   RATE_LIMIT_MAX_REQUESTS: getNumericEnvVar('RATE_LIMIT_MAX_REQUESTS', 100),

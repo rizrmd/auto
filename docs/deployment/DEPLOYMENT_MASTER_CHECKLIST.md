@@ -324,8 +324,12 @@ echo "=== Search ==="
 curl -s "$DOMAIN/api/cars/search?search=Toyota&limit=1" | jq .
 
 echo "=== Image Serving ==="
-# Upload test image first, then:
-curl -I $DOMAIN/uploads/tenant-1/test.jpg
+# Test image serving functionality
+curl -I $DOMAIN/uploads/tenant-1/cars/honda-brio-rs/1.webp
+
+echo "=== Image Placeholder Generation ==="
+# Ensure all car images have placeholders
+docker exec <container> bun run scripts/generate-placeholder-images.ts
 
 echo "=== Security Headers ==="
 curl -I $DOMAIN | grep -E "(X-Frame|CSP|Strict-Transport)"
@@ -335,6 +339,9 @@ curl -I $DOMAIN | grep -E "(X-Frame|CSP|Strict-Transport)"
 - [ ] Homepage loads without errors
 - [ ] Car listing page shows cars
 - [ ] Images display (not broken)
+- [ ] Car detail pages load all images correctly
+- [ ] Image gallery navigation works
+- [ ] All car photos show placeholders or actual images
 - [ ] Search autocomplete works
 - [ ] Car detail page loads
 - [ ] Tenant branding loads (logo, colors)

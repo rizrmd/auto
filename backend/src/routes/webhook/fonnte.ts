@@ -8,6 +8,7 @@ import { Hono } from 'hono';
 import { LeadService } from '../../services/lead.service';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
+import { FonnteClient } from '../../whatsapp/fonnte-client';
 import type { FontteWebhookPayload, ApiResponse } from '../../types/context';
 
 const fontteWebhook = new Hono();
@@ -98,14 +99,45 @@ fontteWebhook.post(
       },
     });
 
-    // Here you would implement bot logic or AI responses
-    // For now, we'll just acknowledge receipt
+    // Send "Hello World" reply
+    try {
+      const fonnte = new FonnteClient();
+      
+      if (fonnte.isConfigured()) {
+        await fonnte.sendMessage({
+          target: customerPhone,
+          message: 'Hello World'
+        });
+        
+        console.log(`[WEBHOOK] Reply sent to ${customerPhone}: "Hello World"`);
+        
+        // Save reply to database
+        await prisma.message.create({
+          data: {
+            tenantId: tenant.id,
+            leadId: lead.id,
+            sender: 'bot',
+            message: 'Hello World',
+            metadata: {
+              type: 'text',
+              autoReply: true,
+            },
+          },
+        });
+      } else {
+        console.warn('[WEBHOOK] Fonnte not configured, skipping reply');
+      }
+    } catch (error) {
+      console.error('[WEBHOOK] Error sending reply:', error);
+      // Continue anyway - we still want to acknowledge the webhook
+    }
 
     const response: ApiResponse = {
       success: true,
       data: {
         leadId: lead.id,
         status: 'processed',
+        replySent: 'Hello World',
       },
     };
 

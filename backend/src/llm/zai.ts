@@ -1,18 +1,20 @@
 /**
- * Gemini Pro API Client
- * Integration with Google Gemini Pro for natural language generation
+ * ZAI API Client (OpenAI Compatible)
+ * Integration with ZAI API for natural language generation
  */
 
-export class GeminiClient {
+export class ZaiClient {
   private apiKey: string;
-  private baseUrl: string = 'https://generativelanguage.googleapis.com/v1beta';
-  private model: string = 'gemini-pro';
+  private baseUrl: string;
+  private model: string;
 
   constructor() {
-    this.apiKey = process.env.GEMINI_API_KEY || '';
+    this.apiKey = process.env.ZAI_API_KEY || '';
+    this.baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/coding/paas/v4';
+    this.model = process.env.ZAI_MODEL || 'glm-4.5v';
 
     if (!this.apiKey) {
-      console.warn('⚠️ GEMINI_API_KEY not set. LLM features will not work.');
+      console.warn('⚠️ ZAI_API_KEY not set. LLM features will not work.');
     }
   }
 
@@ -21,71 +23,54 @@ export class GeminiClient {
    */
   async generateResponse(prompt: string): Promise<string> {
     if (!this.apiKey) {
-      throw new Error('Gemini API key not configured');
+      throw new Error('ZAI API key not configured');
     }
 
     try {
       const response = await fetch(
-        `${this.baseUrl}/models/${this.model}:generateContent?key=${this.apiKey}`,
+        `${this.baseUrl}/chat/completions`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${this.apiKey}`
           },
           body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.7,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 1024,
-            },
-            safetySettings: [
+            model: this.model,
+            messages: [
               {
-                category: 'HARM_CATEGORY_HARASSMENT',
-                threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-              },
-              {
-                category: 'HARM_CATEGORY_HATE_SPEECH',
-                threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-              },
-              {
-                category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT',
-                threshold: 'BLOCK_MEDIUM_AND_ABOVE'
-              },
-              {
-                category: 'HARM_CATEGORY_DANGEROUS_CONTENT',
-                threshold: 'BLOCK_MEDIUM_AND_ABOVE'
+                role: 'user',
+                content: prompt
               }
-            ]
+            ],
+            temperature: 0.7,
+            max_tokens: 1024,
+            top_p: 0.95,
+            stream: false
           })
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        console.error('Gemini API error:', errorData);
-        throw new Error(`Gemini API error: ${response.status}`);
+        console.error('ZAI API error:', errorData);
+        throw new Error(`ZAI API error: ${response.status}`);
       }
 
       const data = await response.json();
 
-      // Extract text from response
-      if (data.candidates && data.candidates.length > 0) {
-        const candidate = data.candidates[0];
-        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-          return candidate.content.parts[0].text;
+      // Extract text from OpenAI-compatible response
+      if (data.choices && data.choices.length > 0) {
+        const choice = data.choices[0];
+        if (choice.message && choice.message.content) {
+          return choice.message.content;
         }
       }
 
       throw new Error('No response generated');
 
     } catch (error) {
-      console.error('Error calling Gemini API:', error);
+      console.error('Error calling ZAI API:', error);
       throw error;
     }
   }
@@ -100,7 +85,7 @@ export class GeminiClient {
       try {
         return await this.generateResponse(prompt);
       } catch (error) {
-        console.error(`Gemini attempt ${i + 1} failed:`, error);
+        console.error(`ZAI attempt ${i + 1} failed:`, error);
         lastError = error instanceof Error ? error : new Error('Unknown error');
 
         if (i < maxRetries - 1) {
