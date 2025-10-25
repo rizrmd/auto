@@ -210,8 +210,7 @@ app.get('/uploads/*', async (c) => {
       console.log('[IMAGE] Serving:', filepath);
     }
 
-    // Read file content as bytes
-    const fileData = await file.bytes();
+    // Read file content
     const ext = filepath.split('.').pop()?.toLowerCase() || '';
 
     // Determine MIME type
@@ -226,8 +225,8 @@ app.get('/uploads/*', async (c) => {
 
     const contentType = mimeTypes[ext] || 'application/octet-stream';
 
-    // Return image with proper headers
-    return new Response(fileData, {
+    // Return image with proper headers using stream
+    return new Response(file.stream(), {
       headers: {
         'Content-Type': contentType,
         'Cache-Control': 'public, max-age=86400', // 24 hours
