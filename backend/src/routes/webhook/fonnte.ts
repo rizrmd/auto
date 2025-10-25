@@ -11,6 +11,9 @@ import { asyncHandler } from '../../middleware/error-handler';
 import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
 import { RAGEngine } from '../../bot/customer/rag-engine';
 import { IntentRecognizer } from '../../bot/customer/intent-recognizer';
+import { ZaiClient, type ChatMessage, type ToolCall } from '../../llm/zai';
+import { tools } from '../../llm/tools';
+import { ToolExecutor, type ToolResult } from '../../llm/tool-executor';
 import type { FontteWebhookPayload, ApiResponse } from '../../types/context';
 
 const whatsappWebhook = new Hono();
@@ -139,53 +142,205 @@ whatsappWebhook.post(
       },
     });
 
-    // Generate intelligent response using LLM
+    // Generate intelligent response using LLM with function calling
     try {
       const whatsapp = new WhatsAppClient();
-      
+
       if (whatsapp.isConfigured()) {
-        console.log(`[WEBHOOK] Generating LLM response for message: "${message}"`);
-        
-        // Recognize intent and extract entities
+        console.log(`[WEBHOOK] Processing message with function calling: "${message}"`);
+
+        // Recognize intent and extract entities (keep for analytics)
         const intent = intentRecognizer.recognizeIntent(message);
         console.log(`[WEBHOOK] Intent: ${intent.type}, Confidence: ${intent.confidence}`);
         console.log(`[WEBHOOK] Entities:`, intent.entities);
-        
-        // Determine query type for RAG engine
-        const queryType = intent.type === 'price' ? 'price' : 'general';
-        
-        // Generate response using RAG engine
-        const llmResponse = await ragEngine.generateResponse(
-          tenant,
-          message,
-          intent.entities,
-          queryType
-        );
-        
-        console.log(`[WEBHOOK] LLM Response: "${llmResponse}"`);
-        
-        // Send LLM response
+
+        // Initialize ZAI client and tool executor
+        const zaiClient = new ZaiClient();
+        const toolExecutor = new ToolExecutor({
+          tenantId: tenant.id,
+          leadId: lead.id,
+          customerPhone: customerPhone,
+          prisma: prisma,
+          whatsapp: whatsapp,
+        });
+
+        // Get conversation history for context
+        const history = await prisma.message.findMany({
+          where: {
+            tenantId: tenant.id,
+            leadId: lead.id,
+          },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+          select: {
+            sender: true,
+            message: true,
+          },
+        });
+
+        // Build conversation context
+        const conversationHistory: ChatMessage[] = [];
+
+        // Add system message with business context
+        conversationHistory.push({
+          role: 'system',
+          content: `You are an AI assistant for ${tenant.name}, a car dealership specializing in quality used cars.
+
+Your role is to help customers find their ideal car, answer questions about inventory, pricing, financing, and schedule test drives.
+
+Business Information:
+- Company: ${tenant.name}
+- WhatsApp: ${tenant.whatsappNumber}
+- Location: ${tenant.address || 'Contact us for showroom location'}
+
+Communication Guidelines:
+- Be friendly, professional, and helpful
+- Use Indonesian language naturally (mix Indonesian-English is okay for car terms)
+- Provide specific information when available from tools
+- If you need to send photos, use the send_car_photos tool
+- Always confirm important details like test drive appointments
+- For complex inquiries, offer to have a sales representative call them
+
+Available Tools:
+- search_cars: Find cars matching customer criteria
+- get_car_details: Get detailed info about a specific car
+- send_car_photos: Send photos of a car to customer
+- get_financing_info: Calculate financing/installments
+- schedule_test_drive: Book test drive appointments
+- check_trade_in: Check trade-in options
+
+Current customer message: "${message}"`,
+        });
+
+        // Add recent conversation history (reverse to get chronological order)
+        for (const msg of history.reverse()) {
+          if (conversationHistory.length >= 8) break; // Limit context size
+
+          conversationHistory.push({
+            role: msg.sender === 'customer' ? 'user' : 'assistant',
+            content: msg.message,
+          });
+        }
+
+        // Add current message
+        conversationHistory.push({
+          role: 'user',
+          content: message,
+        });
+
+        console.log(`[WEBHOOK] Starting function calling loop with ${tools.length} available tools`);
+        console.log(`[WEBHOOK] Tools: ${tools.map(t => t.function.name).join(', ')}`);
+
+        // Function calling loop (max 3 iterations)
+        let finalResponse = '';
+        let iterations = 0;
+        const maxIterations = 3;
+        const messages = [...conversationHistory];
+
+        while (iterations < maxIterations) {
+          iterations++;
+          console.log(`[WEBHOOK] Function calling iteration ${iterations}/${maxIterations}`);
+
+          try {
+            // Call LLM with tools
+            const response = await zaiClient.generateWithTools(
+              '', // No additional prompt needed, all context is in messages
+              tools,
+              messages
+            );
+
+            console.log(`[WEBHOOK] LLM finish_reason: ${response.finish_reason}`);
+
+            // Check if LLM wants to call tools
+            if (response.finish_reason === 'tool_calls' && response.tool_calls) {
+              console.log(`[WEBHOOK] LLM requested ${response.tool_calls.length} tool call(s)`);
+
+              // Add assistant message with tool calls to history
+              messages.push({
+                role: 'assistant',
+                content: response.message,
+                tool_calls: response.tool_calls,
+              });
+
+              // Execute all tool calls in parallel
+              const toolResults: ToolResult[] = await toolExecutor.executeToolCalls(
+                response.tool_calls
+              );
+
+              console.log(`[WEBHOOK] Executed ${toolResults.length} tool(s) successfully`);
+
+              // Add tool results to conversation
+              for (const result of toolResults) {
+                messages.push({
+                  role: 'tool',
+                  content: result.content,
+                  tool_call_id: result.tool_call_id,
+                  name: result.name,
+                });
+              }
+
+              // Continue loop to get LLM's final response
+              continue;
+            } else {
+              // No tool calls, this is the final response
+              finalResponse = response.message || 'Maaf, saya tidak bisa memproses permintaan Anda saat ini.';
+              console.log(`[WEBHOOK] Final response generated: "${finalResponse.substring(0, 100)}..."`);
+              break;
+            }
+          } catch (loopError) {
+            console.error(`[WEBHOOK] Error in function calling iteration ${iterations}:`, loopError);
+
+            // If first iteration fails, fall back to RAG engine
+            if (iterations === 1) {
+              console.log('[WEBHOOK] Falling back to RAG engine');
+              const queryType = intent.type === 'price' ? 'price' : 'general';
+              finalResponse = await ragEngine.generateResponse(
+                tenant,
+                message,
+                intent.entities,
+                queryType
+              );
+            } else {
+              // Use last known response or error message
+              finalResponse = 'Maaf, ada kendala teknis. Bisa hubungi kami langsung ya 😊';
+            }
+            break;
+          }
+        }
+
+        // Check if max iterations reached without final response
+        if (iterations >= maxIterations && !finalResponse) {
+          console.warn('[WEBHOOK] Max iterations reached, using fallback response');
+          finalResponse = 'Maaf, permintaan Anda cukup kompleks. Bisa hubungi tim kami langsung di ' +
+                         tenant.whatsappNumber + ' untuk bantuan lebih lanjut 😊';
+        }
+
+        console.log(`[WEBHOOK] Sending final response to customer`);
+
+        // Send final response to customer
         const sendResult = await whatsapp.sendMessage({
           target: customerPhone,
-          message: llmResponse
+          message: finalResponse
         });
-        
+
         if (sendResult.success) {
-          console.log(`[WEBHOOK] LLM reply sent to ${customerPhone}`);
-          
-          // Save LLM reply to database
+          console.log(`[WEBHOOK] Response sent successfully to ${customerPhone}`);
+
+          // Save bot response to database
           await prisma.message.create({
             data: {
               tenantId: tenant.id,
               leadId: lead.id,
               sender: 'bot',
-              message: llmResponse,
+              message: finalResponse,
               metadata: {
                 type: 'text',
                 autoReply: true,
                 intent: intent.type,
                 confidence: intent.confidence,
                 entities: intent.entities,
+                functionCalling: true,
+                iterations: iterations,
               },
             },
           });
@@ -203,13 +358,13 @@ whatsappWebhook.post(
             console.warn('[WEBHOOK] Error marking message as read:', readError);
           }
         } else {
-          console.error('[WEBHOOK] Failed to send LLM reply:', sendResult.error);
+          console.error('[WEBHOOK] Failed to send response:', sendResult.error);
         }
       } else {
         console.warn('[WEBHOOK] WhatsApp API not configured, skipping reply');
       }
     } catch (error) {
-      console.error('[WEBHOOK] Error generating/sending LLM reply:', error);
+      console.error('[WEBHOOK] Error in function calling workflow:', error);
       
       // Fallback to simple error message
       try {
