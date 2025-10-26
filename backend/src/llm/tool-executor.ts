@@ -4,7 +4,7 @@
  */
 
 import { PrismaClient } from '../../../generated/prisma';
-import { WhatsAppClient } from '../whatsapp/whatsapp-client';
+import { FonnteClient } from '../whatsapp/fonnte-client';
 import { validateToolArguments, getToolByName } from './tools';
 
 export interface ToolCall {
@@ -28,7 +28,7 @@ export interface ToolExecutionContext {
   leadId: number;
   customerPhone: string;
   prisma: PrismaClient;
-  whatsapp: WhatsAppClient;
+  whatsapp: FonnteClient;
 }
 
 export class ToolExecutor {
@@ -341,14 +341,14 @@ Available Photos: ${Array.isArray(car.photos) ? car.photos.length : 0}
         caption
       );
 
-      if (result.success) {
+      if (result.status) {
         successCount++;
         // Small delay between photos to avoid rate limiting
         if (i < photosToSend.length - 1) {
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
       } else {
-        console.error(`Failed to send photo ${i + 1}:`, result.error);
+        console.error(`Failed to send photo ${i + 1}:`, result.detail || result.message);
       }
     }
 

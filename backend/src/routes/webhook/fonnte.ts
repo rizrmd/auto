@@ -8,7 +8,7 @@ import { Hono } from 'hono';
 import { LeadService } from '../../services/lead.service';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
-import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
+import { FonnteClient } from '../../whatsapp/fonnte-client';
 import { RAGEngine } from '../../bot/customer/rag-engine';
 import { IntentRecognizer } from '../../bot/customer/intent-recognizer';
 import { ZaiClient, type ChatMessage, type ToolCall } from '../../llm/zai';
@@ -144,7 +144,7 @@ whatsappWebhook.post(
 
     // Generate intelligent response using LLM with function calling
     try {
-      const whatsapp = new WhatsAppClient();
+      const whatsapp = new FonnteClient();
 
       if (whatsapp.isConfigured()) {
         console.log(`[WEBHOOK] Processing message with function calling: "${message}"`);
@@ -257,6 +257,7 @@ Current customer message: "${message}"`,
         let iterations = 0;
         const maxIterations = 3;
         const messages = [...conversationHistory];
+        const executedTools: Set<string> = new Set(); // Track tools that have been executed
 
         while (iterations < maxIterations) {
           iterations++;
@@ -290,8 +291,9 @@ Current customer message: "${message}"`,
 
               console.log(`[WEBHOOK] Executed ${toolResults.length} tool(s) successfully`);
 
-              // Add tool results to conversation
+              // Add tool results to conversation and track executed tools
               for (const result of toolResults) {
+                executedTools.add(result.name); // Track this tool as executed
                 messages.push({
                   role: 'tool',
                   content: result.content,
@@ -321,7 +323,11 @@ Current customer message: "${message}"`,
                 (responseText.includes('foto') && responseText.includes('dikirim'))  // passive: "foto dikirimkan"
               );
 
-              const isFalsePhotoPromise = hasFalsePhotoPromise;
+              // Check if send_car_photos has already been executed
+              const photoToolAlreadyExecuted = executedTools.has('send_car_photos');
+
+              // Only consider it a false promise if tool was NOT executed
+              const isFalsePhotoPromise = hasFalsePhotoPromise && !photoToolAlreadyExecuted;
 
               const isPhotoRequest = (
                 message.toLowerCase().includes('foto') ||
@@ -428,7 +434,7 @@ Current customer message: "${message}"`,
       
       // Fallback to simple error message
       try {
-        const whatsapp = new WhatsAppClient();
+        const whatsapp = new FonnteClient();
         if (whatsapp.isConfigured()) {
           const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
           const sendResult = await whatsapp.sendMessage({
