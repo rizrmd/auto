@@ -8,7 +8,7 @@ import { Hono } from 'hono';
 import { LeadService } from '../../services/lead.service';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
-import { FonnteClient } from '../../whatsapp/fonnte-client';
+import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
 import { RAGEngine } from '../../bot/customer/rag-engine';
 import { IntentRecognizer } from '../../bot/customer/intent-recognizer';
 import { ZaiClient, type ChatMessage, type ToolCall } from '../../llm/zai';
@@ -144,7 +144,7 @@ whatsappWebhook.post(
 
     // Generate intelligent response using LLM with function calling
     try {
-      const whatsapp = new FonnteClient();
+      const whatsapp = new WhatsAppClient();
 
       if (whatsapp.isConfigured()) {
         console.log(`[WEBHOOK] Processing message with function calling: "${message}"`);
