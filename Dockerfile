@@ -16,8 +16,11 @@ WORKDIR /build
 # Clone the specific version tag
 RUN git clone --depth 1 --branch ${WHATSAPP_VERSION} ${REPO_URL} .
 
-# Download Go module dependencies
-RUN go mod download && go mod verify
+# Download Go module dependencies and fix go.sum
+# - go mod tidy: Updates go.mod and go.sum with all required dependencies
+# - go mod download: Downloads modules to local cache
+# - go mod verify: Verifies checksums match go.sum
+RUN go mod tidy && go mod download && go mod verify
 
 # Build statically-linked binary with production optimizations
 # - CGO_ENABLED=0: Static linking, no C dependencies
