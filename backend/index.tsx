@@ -229,6 +229,30 @@ app.get('/pairing.html', async (c) => {
 });
 
 // ========================================
+// SIMPLE QR PAIRING ENDPOINT (NO AUTH)
+// ========================================
+/**
+ * Simple QR code endpoint - direct proxy to WhatsApp API
+ * No authentication required - for quick pairing only
+ */
+app.get('/pair', async (c) => {
+  try {
+    const response = await fetch('http://localhost:8080/pair');
+    const qrHtml = await response.text();
+
+    return new Response(qrHtml, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache',
+      },
+    });
+  } catch (error) {
+    console.error('[PAIR] Error proxying to WhatsApp API:', error);
+    return c.text('Failed to generate QR code. Please check if WhatsApp API is running.', 500);
+  }
+});
+
+// ========================================
 // IMAGE SERVING - Must be BEFORE wildcard
 // ========================================
 // Serve files from /app/data directory (persistent storage)
