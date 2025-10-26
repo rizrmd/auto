@@ -61,10 +61,15 @@ if [ -f "/app/whatsapp-api.env" ] && [ -n "$DATABASE_URL" ]; then\n\
         echo "🔗 Configuring webhook: $WA_WEBHOOK_URL"\n\
     fi\n\
     \n\
-    # Start WhatsApp Web API with environment variables\n\
-    PORT=8080 DATABASE_URL="$DATABASE_URL" ${WA_WEBHOOK_URL:+WA_WEBHOOK_URL="$WA_WEBHOOK_URL"} /usr/local/bin/whatsapp-web-api &\n\
+    # Start WhatsApp Web API with environment variables (fixed syntax)\n\
+    if [ -n "$WA_WEBHOOK_URL" ]; then\n\
+        PORT=8080 DATABASE_URL="$DATABASE_URL" WA_WEBHOOK_URL="$WA_WEBHOOK_URL" /usr/local/bin/whatsapp-web-api > /tmp/wa-service.log 2>&1 &\n\
+    else\n\
+        PORT=8080 DATABASE_URL="$DATABASE_URL" /usr/local/bin/whatsapp-web-api > /tmp/wa-service.log 2>&1 &\n\
+    fi\n\
     WHATSAPP_PID=$!\n\
     echo "WhatsApp API started with PID: $WHATSAPP_PID"\n\
+    echo "WhatsApp API logs: /tmp/wa-service.log"\n\
 else\n\
     echo "⚠️  WhatsApp API not configured (missing DATABASE_URL)"\n\
 fi\n\
