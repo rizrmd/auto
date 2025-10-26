@@ -237,6 +237,22 @@ app.get('/pairing.html', async (c) => {
  */
 app.get('/pair', async (c) => {
   try {
+    const format = c.req.query('format');
+
+    // If format=image, return PNG image directly from WhatsApp API
+    if (format === 'image') {
+      const imageResponse = await fetch('http://localhost:8080/pair?format=image');
+
+      // Return the response directly with proper headers
+      return new Response(imageResponse.body, {
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'no-cache',
+        },
+      });
+    }
+
+    // Otherwise, generate HTML page with QR code
     const response = await fetch('http://localhost:8080/pair');
     const data = await response.json();
 
@@ -244,8 +260,8 @@ app.get('/pair', async (c) => {
       throw new Error(data.message || 'Failed to generate QR code');
     }
 
-    // Generate HTML page with QR code
-    const qrImageUrl = data.data.qr_image_url;
+    // Use our own endpoint for the image (more reliable than external service)
+    const qrImageUrl = '/pair?format=image';
     const html = `
 <!DOCTYPE html>
 <html lang="id">
