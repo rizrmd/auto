@@ -180,6 +180,7 @@ app.get('/api', (c) => {
         cars: '/api/admin/cars',
         leads: '/api/admin/leads',
         whatsapp: '/api/admin/whatsapp',
+        pairingPage: '/pairing.html',
       },
       webhooks: {
         fonnte: '/webhook/fonnte',
@@ -187,6 +188,44 @@ app.get('/api', (c) => {
       },
     },
   });
+});
+
+// ========================================
+// WHATSAPP PAIRING PAGE
+// ========================================
+/**
+ * Serve WhatsApp pairing page
+ * This page provides an automatic QR code generation interface for WhatsApp pairing
+ * CSP is relaxed for this page to allow inline scripts
+ */
+app.get('/pairing.html', async (c) => {
+  try {
+    const html = await readFile('/app/public/pairing.html', 'utf-8');
+
+    // Override CSP for this specific route to allow inline scripts
+    // This is necessary for the auto-login and QR generation functionality
+    return new Response(html, {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-cache',
+        // Relaxed CSP for pairing page only (allows inline scripts)
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline'",
+          "style-src 'self' 'unsafe-inline'",
+          "img-src 'self' https://auto.lumiku.com data:",
+          "connect-src 'self' https://auto.lumiku.com",
+          "font-src 'self'",
+          "object-src 'none'",
+          "media-src 'self'",
+          "frame-src 'none'",
+        ].join('; '),
+      },
+    });
+  } catch (error) {
+    console.error('[PAIRING] Error serving pairing page:', error);
+    return c.text('Pairing page not found. Please contact administrator.', 404);
+  }
 });
 
 // ========================================
