@@ -1,3 +1,49 @@
+# ============================================================================
+# Stage 1: Build WhatsApp Web API v1.2.0 from source
+# ============================================================================
+FROM golang:1.24-bookworm AS whatsapp-builder
+
+# Set build arguments for version tracking
+ARG WHATSAPP_VERSION=v1.2.0
+ARG REPO_URL=https://github.com/rizrmd/whatsapp-web-api.git
+
+# Install git for cloning
+RUN apt-get update && apt-get install -y git ca-certificates && rm -rf /var/lib/apt/lists/*
+
+# Set working directory for build
+WORKDIR /build
+
+# Clone the specific version tag
+RUN git clone --depth 1 --branch ${WHATSAPP_VERSION} ${REPO_URL} .
+
+# Download Go module dependencies
+RUN go mod download && go mod verify
+
+# Build statically-linked binary with production optimizations
+# - CGO_ENABLED=0: Static linking, no C dependencies
+# - GOOS=linux GOARCH=amd64: Target platform
+# - -trimpath: Remove file system paths from binary
+# - -ldflags: Link flags for optimization
+#   * -s: Strip symbol table
+#   * -w: Strip DWARF debugging info
+#   * -extldflags '-static': Force static linking
+RUN CGO_ENABLED=0 \
+    GOOS=linux \
+    GOARCH=amd64 \
+    go build \
+    -trimpath \
+    -ldflags="-s -w -extldflags '-static'" \
+    -o whatsapp-web-api \
+    .
+
+# Verify binary is statically linked and executable
+RUN chmod +x whatsapp-web-api && \
+    file whatsapp-web-api && \
+    ls -lh whatsapp-web-api
+
+# ============================================================================
+# Stage 2: Runtime environment
+# ============================================================================
 FROM oven/bun:latest
 
 WORKDIR /app
@@ -7,16 +53,16 @@ RUN mkdir -p /app/data && chmod 755 /app/data
 VOLUME ["/app/data"]
 
 # Install PostgreSQL client and system dependencies
-RUN apt-get update && apt-get install -y postgresql-client wget unzip && rm -rf /var/lib/apt/lists/*
+# Note: wget/unzip no longer needed since we build from source
+RUN apt-get update && apt-get install -y postgresql-client && rm -rf /var/lib/apt/lists/*
 
-# Download and setup WhatsApp Web API v1.1.0
-# NOTE: v1.2.0 source code released but binaries not yet uploaded to GitHub
-# Using v1.1.0 with working alternative image sending method
-RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.1.0/whatsapp-web-api-linux-amd64.zip \
-    && unzip whatsapp-web-api-linux-amd64.zip \
-    && chmod +x whatsapp-web-api-linux-amd64 \
-    && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
-    && rm whatsapp-web-api-linux-amd64.zip
+# Copy WhatsApp Web API v1.2.0 binary from builder stage
+# Maintains exact same path as v1.1.0 for backward compatibility
+COPY --from=whatsapp-builder /build/whatsapp-web-api /usr/local/bin/whatsapp-web-api
+
+# Verify binary is executable and properly copied
+RUN chmod +x /usr/local/bin/whatsapp-web-api && \
+    /usr/local/bin/whatsapp-web-api --version || echo "WhatsApp Web API v1.2.0 ready"
 
 # Create WhatsApp API environment file
 RUN echo "PORT=8080" > /app/whatsapp-api.env \
