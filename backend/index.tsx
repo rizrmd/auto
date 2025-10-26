@@ -19,7 +19,7 @@ import { env, isDevelopment } from './src/config/env';
 // Import routes
 import healthRoutes from './src/routes/health';
 import publicCarsRoutes from './src/routes/public/cars';
-import fontteWebhookRoutes from './src/routes/webhook/fonnte';
+
 import whatsappWebhookRoutes from './src/routes/webhook/whatsapp';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
@@ -153,7 +153,6 @@ app.route('/api/cars', publicCarsRoutes);
 app.route('/api/tenant', tenantRoutes);
 
 // Webhook routes
-app.route('/webhook/fonnte', fontteWebhookRoutes);
 app.route('/webhook/whatsapp', whatsappWebhookRoutes);
 
 // Admin API routes
@@ -191,7 +190,6 @@ app.get('/api', (c) => {
         health: '/api/wa/health',
       },
       webhooks: {
-        fonnte: '/webhook/fonnte',
         whatsapp: '/webhook/whatsapp',
       },
     },
@@ -435,7 +433,7 @@ console.log(`  Admin Leads:     /api/admin/leads`);
 console.log(`  Admin WhatsApp:  /api/admin/whatsapp`);
 console.log(`  WhatsApp API:     /api/wa/pair`);
 console.log(`  WhatsApp Health:  /api/wa/health`);
-console.log(`  Fonnte Webhook:  /webhook/fonnte`);
+
 console.log(`  WhatsApp Webhook: /webhook/whatsapp`);
 console.log('='.repeat(60));
 

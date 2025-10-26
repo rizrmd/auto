@@ -199,9 +199,9 @@ export interface UpdateLeadRequest extends Partial<CreateLeadRequest> {
 }
 
 /**
- * Fonnte Webhook Payload
+ * WhatsApp Webhook Payload
  */
-export interface FontteWebhookPayload {
+export interface WhatsAppWebhookPayload {
   device: string;
   sender: string;
   message: string;

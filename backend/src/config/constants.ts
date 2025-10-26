@@ -157,7 +157,7 @@ export const CACHE_KEYS = {
  * Webhook Sources
  */
 export const WEBHOOK_SOURCES = {
-  FONNTE: 'fonnte',
+  WHATSAPP: 'whatsapp',
 } as const;
 
 /**

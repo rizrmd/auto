@@ -10,8 +10,6 @@ interface EnvConfig {
   DATABASE_URL: string;
   JWT_SECRET: string;
   JWT_EXPIRES_IN: string;
-  FONNTE_API_KEY: string;
-  FONNTE_WEBHOOK_SECRET: string;
   ZAI_API_KEY: string;
   ZAI_API_URL: string;
   ZAI_MODEL: string;
@@ -89,9 +87,7 @@ export const env: EnvConfig = {
   JWT_SECRET: getOptionalEnvVar('JWT_SECRET', generateSecureJWTSecret()),
   JWT_EXPIRES_IN: getOptionalEnvVar('JWT_EXPIRES_IN', '7d'),
 
-  // Fonnte WhatsApp Integration
-  FONNTE_API_KEY: getOptionalEnvVar('FONNTE_API_KEY', ''),
-  FONNTE_WEBHOOK_SECRET: getOptionalEnvVar('FONNTE_WEBHOOK_SECRET', ''),
+
 
   // ZAI LLM Integration
   ZAI_API_KEY: getOptionalEnvVar('ZAI_API_KEY', ''),

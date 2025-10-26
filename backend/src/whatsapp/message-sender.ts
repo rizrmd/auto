@@ -3,14 +3,11 @@
  * High-level interface for sending WhatsApp messages
  */
 
-import { FonnteClient } from './fonnte-client';
-
 export class MessageSender {
-  private fonnte: FonnteClient;
   private readonly MAX_MESSAGE_LENGTH = 4096; // WhatsApp limit
 
   constructor() {
-    this.fonnte = new FonnteClient();
+    // WhatsApp client will be initialized when needed
   }
 
   /**
@@ -21,28 +18,8 @@ export class MessageSender {
     to: string,
     message: string
   ): Promise<boolean> {
-    try {
-      // Split long messages if needed
-      const chunks = this.splitMessage(message);
-
-      for (const chunk of chunks) {
-        await this.fonnte.sendMessage({
-          target: to,
-          message: chunk
-        });
-
-        // Add small delay between chunks
-        if (chunks.length > 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-      }
-
-      return true;
-
-    } catch (error) {
-      console.error('Error sending message:', error);
-      return false;
-    }
+    console.warn('⚠️ WhatsApp messaging not configured - Fonnte client removed');
+    return false;
   }
 
   /**
@@ -54,13 +31,8 @@ export class MessageSender {
     message: string,
     imageUrl: string
   ): Promise<boolean> {
-    try {
-      await this.fonnte.sendImage(to, imageUrl, message);
-      return true;
-    } catch (error) {
-      console.error('Error sending message with image:', error);
-      return false;
-    }
+    console.warn('⚠️ WhatsApp messaging not configured - Fonnte client removed');
+    return false;
   }
 
   /**
@@ -73,13 +45,8 @@ export class MessageSender {
     documentUrl: string,
     filename?: string
   ): Promise<boolean> {
-    try {
-      await this.fonnte.sendDocument(to, documentUrl, message, filename);
-      return true;
-    } catch (error) {
-      console.error('Error sending message with document:', error);
-      return false;
-    }
+    console.warn('⚠️ WhatsApp messaging not configured - Fonnte client removed');
+    return false;
   }
 
   /**
@@ -241,6 +208,6 @@ export class MessageSender {
    * Check if sender is configured
    */
   isConfigured(): boolean {
-    return this.fonnte.isConfigured();
+    return false; // Fonnte client removed
   }
 }
