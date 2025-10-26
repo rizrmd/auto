@@ -39,9 +39,8 @@ RUN CGO_ENABLED=0 \
     -o whatsapp-web-api \
     .
 
-# Verify binary is statically linked and executable
+# Verify binary is executable and show size
 RUN chmod +x whatsapp-web-api && \
-    file whatsapp-web-api && \
     ls -lh whatsapp-web-api
 
 # ============================================================================
