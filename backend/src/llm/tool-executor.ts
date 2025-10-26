@@ -335,20 +335,25 @@ Available Photos: ${Array.isArray(car.photos) ? car.photos.length : 0}
         ? `Foto ${carName} (${car.displayCode}) - ${i + 1}/${photosToSend.length}`
         : `Foto ${i + 1}/${photosToSend.length}`;
 
-      const result = await this.context.whatsapp.sendImage(
-        this.context.customerPhone,
-        photo,
-        caption
-      );
+      try {
+        const result = await this.context.whatsapp.sendImage(
+          this.context.customerPhone,
+          photo,
+          caption
+        );
 
-      if (result.status) {
-        successCount++;
-        // Small delay between photos to avoid rate limiting
-        if (i < photosToSend.length - 1) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+        if (result.status) {
+          successCount++;
+          // Small delay between photos to avoid rate limiting
+          if (i < photosToSend.length - 1) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+        } else {
+          console.error(`Failed to send photo ${i + 1}:`, result.detail || result.message);
         }
-      } else {
-        console.error(`Failed to send photo ${i + 1}:`, result.detail || result.message);
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        console.error(`Exception sending photo ${i + 1}:`, errorMsg);
       }
     }
 
