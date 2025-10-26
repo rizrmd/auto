@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # ============================================================================
-# WhatsApp Web API v1.2.0 Build Verification Script
+# WhatsApp Web API v1.3.0 Build Verification Script
 # ============================================================================
 # This script verifies that the WhatsApp Web API binary was built correctly
 # and is ready for production deployment.
@@ -212,7 +212,7 @@ echo ""
 
 if [ "$CHECKS_FAILED" -eq 0 ]; then
     echo -e "${GREEN}✓ All critical checks passed!${NC}"
-    echo -e "${GREEN}The WhatsApp Web API v1.2.0 binary is ready for production.${NC}"
+    echo -e "${GREEN}The WhatsApp Web API v1.3.0 binary is ready for production.${NC}"
     exit 0
 else
     echo -e "${RED}✗ Some checks failed.${NC}"

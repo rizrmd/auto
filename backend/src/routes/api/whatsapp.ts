@@ -35,7 +35,7 @@ app.get('/pair', logger(), async (c) => {
           'Pragma': 'no-cache',
           'Expires': '0',
           'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
-          'X-API-Version': 'v1.2.0-direct-png',
+          'X-API-Version': 'v1.3.0-direct-png',
         },
       });
     } else {
@@ -63,7 +63,7 @@ app.get('/pair', logger(), async (c) => {
           'Pragma': 'no-cache',
           'Expires': '0',
           'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
-          'X-API-Version': 'v1.2.0-json-fallback',
+          'X-API-Version': 'v1.3.0-json-fallback',
         },
       });
     }

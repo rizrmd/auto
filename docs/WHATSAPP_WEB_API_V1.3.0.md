@@ -1,16 +1,18 @@
-# WhatsApp Web API v1.2.0 Integration Guide
+# WhatsApp Web API v1.3.0 Integration Guide
 
 ## Overview
 
-This document describes the integration of WhatsApp Web API v1.2.0 into the AutoLeads platform. The new binary provides enhanced features including message read receipts, QR code image support, and comprehensive attachment support for images, documents, audio, and video files.
+This document describes the integration of WhatsApp Web API v1.3.0 into the AutoLeads platform. The latest binary provides enhanced features including combined message sending (text + image with caption), improved image handling, and simplified QR code generation.
 
 ## Features
 
-### ✅ New in v1.1.0
+### ✅ New in v1.3.0
 
-- **Message Read Receipts**: Automatically mark received messages as read (blue checkmarks)
-- **QR Code Image Support**: Generate QR codes as PNG images directly from `/pair` endpoint
-- **Enhanced Message Handling**: Improved message processing with proper read receipt functionality
+- **Combined Messages**: Text + single image now sends as one message with caption
+- **Fixed Image Display**: Resolved image rendering issues with proper DirectPath handling
+- **URL-Only Attachments**: Simplified to require HTTP/HTTPS URLs only (removed base64 support)
+- **Simplified QR Code**: Endpoint now returns PNG image directly
+- **Version Info**: Added version display to health endpoint
 
 ### 🔧 Existing Features
 
@@ -26,7 +28,7 @@ This document describes the integration of WhatsApp Web API v1.2.0 into the Auto
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
 │   Frontend     │    │   Backend       │    │  WhatsApp Web  │
-│   (React)      │◄──►│   (Hono/Bun)   │◄──►│  API v1.1.0    │
+│   (React)      │◄──►│   (Hono/Bun)   │◄──►│  API v1.3.0    │
 │                │    │                  │    │                 │
 │ - Admin Panel  │    │ - Webhook Routes │    │ - QR Pairing   │
 │ - Car Catalog  │    │ - Message Logic  │    │ - Send API     │
@@ -52,12 +54,12 @@ This document describes the integration of WhatsApp Web API v1.2.0 into the Auto
 The WhatsApp Web API binary is automatically downloaded and configured in Docker:
 
 ```dockerfile
-# Download and setup WhatsApp Web API v1.2.0
-RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.2.0/whatsapp-web-api-linux-amd64.zip \
-    && unzip whatsapp-web-api-linux-amd64.zip \
+# Download and setup WhatsApp Web API v1.3.0
+RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.3.0/whatsapp-web-api-linux-amd64.tar.gz \
+    && tar -xzf whatsapp-web-api-linux-amd64.tar.gz \
     && chmod +x whatsapp-web-api-linux-amd64 \
     && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
-    && rm whatsapp-web-api-linux-amd64.zip
+    && rm whatsapp-web-api-linux-amd64.tar.gz
 ```
 
 ### 2. Environment Configuration
@@ -97,8 +99,7 @@ bun backend/index.tsx
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/health` | Check service status and pairing state |
-| GET | `/pair` | Generate QR code for pairing (JSON format) |
-| GET | `/pair?format=image` | Generate QR code as PNG image |
+| GET | `/pair` | Generate QR code as PNG image (simplified) |
 | POST | `/send` | Send text message to WhatsApp number |
 | POST | `/read` | Mark messages as read (v1.1.0 feature) |
 | GET | `/swagger` | API documentation (Swagger UI) |
@@ -323,7 +324,7 @@ grep "webhook" /app/logs/app.log
 
 ### Key Differences
 
-| Feature | Fonnte | WhatsApp Web API v1.1.0 |
+| Feature | Fonnte | WhatsApp Web API v1.3.0 |
 |---------|---------|------------------------|
 | Authentication | API Key | Direct WhatsApp Web |
 | Pairing | Not required | QR Code pairing |
@@ -450,9 +451,9 @@ Monitor these metrics:
 
 ### 🔮 Roadmap
 
-1. **v1.2.0**: Media message support
-2. **v1.3.0**: Group messaging capabilities
-3. **v1.4.0**: Advanced analytics
+1. **v1.3.0**: Enhanced image sending and combined messages
+2. **v1.4.0**: Group messaging capabilities
+3. **v1.5.0**: Advanced analytics
 4. **v2.0.0**: Multi-device management
 
 ## Support
@@ -480,5 +481,5 @@ For issues specific to AutoLeads integration:
 ---
 
 **Last Updated**: October 26, 2025
-**Version**: WhatsApp Web API v1.1.0
+**Version**: WhatsApp Web API v1.3.0
 **AutoLeads Version**: 1.0.0
