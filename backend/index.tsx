@@ -26,6 +26,7 @@ import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
 import adminWhatsappRoutes from './src/routes/admin/whatsapp';
 import tenantRoutes from './src/routes/tenant';
+import whatsappApiRoutes from './src/routes/api/whatsapp';
 
 /**
  * Create Hono application
@@ -161,6 +162,9 @@ app.route('/api/admin/cars', adminCarsRoutes);
 app.route('/api/admin/leads', adminLeadsRoutes);
 app.route('/api/admin/whatsapp', adminWhatsappRoutes);
 
+// WhatsApp API proxy routes
+app.route('/api/wa', whatsappApiRoutes);
+
 /**
  * Root route - API info
  */
@@ -181,6 +185,11 @@ app.get('/api', (c) => {
         leads: '/api/admin/leads',
         whatsapp: '/api/admin/whatsapp',
         pairingPage: '/pairing.html',
+      },
+      whatsapp: {
+        proxy: '/api/wa/pair',
+        health: '/api/wa/health',
+        pairing: '/pair',
       },
       webhooks: {
         fonnte: '/webhook/fonnte',
@@ -620,6 +629,8 @@ console.log(`  Admin Login:     /api/admin/auth/login`);
 console.log(`  Admin Cars:      /api/admin/cars`);
 console.log(`  Admin Leads:     /api/admin/leads`);
 console.log(`  Admin WhatsApp:  /api/admin/whatsapp`);
+console.log(`  WhatsApp API:     /api/wa/pair`);
+console.log(`  WhatsApp Health:  /api/wa/health`);
 console.log(`  Fonnte Webhook:  /webhook/fonnte`);
 console.log(`  WhatsApp Webhook: /webhook/whatsapp`);
 console.log('='.repeat(60));

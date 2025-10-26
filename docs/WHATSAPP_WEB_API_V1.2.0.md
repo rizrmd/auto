@@ -1,8 +1,8 @@
-# WhatsApp Web API v1.1.0 Integration Guide
+# WhatsApp Web API v1.2.0 Integration Guide
 
 ## Overview
 
-This document describes the integration of WhatsApp Web API v1.1.0 into the AutoLeads platform. The new binary provides enhanced features including message read receipts and QR code image support.
+This document describes the integration of WhatsApp Web API v1.2.0 into the AutoLeads platform. The new binary provides enhanced features including message read receipts, QR code image support, and comprehensive attachment support for images, documents, audio, and video files.
 
 ## Features
 
@@ -52,8 +52,8 @@ This document describes the integration of WhatsApp Web API v1.1.0 into the Auto
 The WhatsApp Web API binary is automatically downloaded and configured in Docker:
 
 ```dockerfile
-# Download and setup WhatsApp Web API v1.1.0
-RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.1.0/whatsapp-web-api-linux-amd64.zip \
+# Download and setup WhatsApp Web API v1.2.0
+RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.2.0/whatsapp-web-api-linux-amd64.zip \
     && unzip whatsapp-web-api-linux-amd64.zip \
     && chmod +x whatsapp-web-api-linux-amd64 \
     && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
