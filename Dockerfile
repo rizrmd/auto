@@ -14,11 +14,11 @@ VOLUME ["/app/data"]
 RUN apt-get update && apt-get install -y postgresql-client ca-certificates wget unzip && rm -rf /var/lib/apt/lists/*
 
 # Download and setup WhatsApp Web API v1.3.0 from GitHub releases (force fresh download)
-RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.3.0/whatsapp-web-api-linux-amd64.tar.gz \
-    && tar -xzf whatsapp-web-api-linux-amd64.tar.gz \
+RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.3.0/whatsapp-web-api-linux-amd64.zip \
+    && unzip whatsapp-web-api-linux-amd64.zip \
     && chmod +x whatsapp-web-api-linux-amd64 \
     && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
-    && rm whatsapp-web-api-linux-amd64.tar.gz
+    && rm whatsapp-web-api-linux-amd64.zip
 
 # Verify binary is executable and properly copied
 RUN chmod +x /usr/local/bin/whatsapp-web-api && \
