@@ -9,8 +9,10 @@ VOLUME ["/app/data"]
 # Install PostgreSQL client and system dependencies
 RUN apt-get update && apt-get install -y postgresql-client wget unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and setup WhatsApp Web API v1.2.0 (with image/attachment support)
-RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.2.0/whatsapp-web-api-linux-amd64.zip \
+# Download and setup WhatsApp Web API v1.1.0
+# Note: v1.2.0 released but binaries not yet available (Oct 26, 2025)
+# v1.1.0 works perfectly with alternative image sending method
+RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.1.0/whatsapp-web-api-linux-amd64.zip \
     && unzip whatsapp-web-api-linux-amd64.zip \
     && chmod +x whatsapp-web-api-linux-amd64 \
     && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
