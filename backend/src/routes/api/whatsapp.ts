@@ -5,8 +5,7 @@ const app = new Hono();
 
 /**
  * Proxy endpoint for WhatsApp pairing
- * Proxies requests to http://localhost:8080/pair
- * Returns raw response (could be JSON or image)
+ * Returns QR code image directly by fetching from qr_image_url
  */
 app.get('/pair', logger(), async (c) => {
   try {
@@ -21,18 +20,29 @@ app.get('/pair', logger(), async (c) => {
       throw new Error(`WhatsApp API responded with status: ${response.status}`);
     }
 
-    // Get content type from the original response
-    const contentType = response.headers.get('content-type') || 'application/octet-stream';
+    const data = await response.json();
     
-    // Get response data as array buffer (works for both JSON and images)
-    const data = await response.arrayBuffer();
+    if (!data.success || !data.data?.qr_image_url) {
+      throw new Error('Invalid response from WhatsApp API');
+    }
+
+    // Fetch the QR code image from the provided URL
+    const imageResponse = await fetch(data.data.qr_image_url);
     
-    // Return raw response with proper content type
-    return new Response(data, {
-      status: response.status,
+    if (!imageResponse.ok) {
+      throw new Error(`Failed to fetch QR image: ${imageResponse.status}`);
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+    
+    // Return the QR code image directly
+    return new Response(imageBuffer, {
+      status: 200,
       headers: {
-        'Content-Type': contentType,
-        'Cache-Control': 'no-cache',
+        'Content-Type': 'image/png',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
         'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
       },
     });
@@ -43,7 +53,7 @@ app.get('/pair', logger(), async (c) => {
       success: false,
       error: {
         code: 'PROXY_ERROR',
-        message: 'Failed to connect to WhatsApp API service',
+        message: 'Failed to generate QR code',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 503); // Service Unavailable
@@ -85,6 +95,50 @@ app.get('/health', async (c) => {
       error: {
         code: 'HEALTH_CHECK_FAILED',
         message: 'WhatsApp API service is not responding',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+    }, 503);
+  }
+});
+
+/**
+ * Version check for WhatsApp API service
+ */
+app.get('/version', async (c) => {
+  try {
+    // Try to get version from WhatsApp API
+    const response = await fetch('http://localhost:8080/', {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'AutoLeads-Proxy/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`WhatsApp API version check failed: ${response.status}`);
+    }
+
+    const text = await response.text();
+    
+    return c.json({
+      success: true,
+      data: {
+        version: 'Unknown (check manually)',
+        response_preview: text.substring(0, 200),
+      },
+      proxy: {
+        timestamp: new Date().toISOString(),
+        note: 'WhatsApp API does not expose version endpoint',
+      },
+    });
+  } catch (error) {
+    console.error('[WHATSAPP PROXY] Version check failed:', error);
+    
+    return c.json({
+      success: false,
+      error: {
+        code: 'VERSION_CHECK_FAILED',
+        message: 'Failed to check WhatsApp API version',
         details: error instanceof Error ? error.message : 'Unknown error',
       },
     }, 503);
