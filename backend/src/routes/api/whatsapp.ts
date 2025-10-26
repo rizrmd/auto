@@ -123,6 +123,50 @@ app.get('/health', async (c) => {
 });
 
 /**
+ * Send message with attachments (images, documents, audio, video)
+ */
+app.post('/send', logger(), async (c) => {
+  try {
+    const body = await c.req.json();
+    
+    const response = await fetch('http://localhost:8080/send', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'AutoLeads-Proxy/1.0',
+      },
+      body: JSON.stringify(body),
+    });
+
+    if (!response.ok) {
+      throw new Error(`WhatsApp API responded with status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    return c.json({
+      success: true,
+      data: data,
+      proxy: {
+        timestamp: new Date().toISOString(),
+        status: 'connected',
+      },
+    });
+  } catch (error) {
+    console.error('[WHATSAPP PROXY] Error sending message:', error);
+    
+    return c.json({
+      success: false,
+      error: {
+        code: 'SEND_ERROR',
+        message: 'Failed to send message',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+    }, 503);
+  }
+});
+
+/**
  * Version check for WhatsApp API service
  */
 app.get('/version', async (c) => {
