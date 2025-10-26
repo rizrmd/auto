@@ -20,32 +20,53 @@ app.get('/pair', logger(), async (c) => {
       throw new Error(`WhatsApp API responded with status: ${response.status}`);
     }
 
-    const data = await response.json();
+    // Check if response is PNG image (new version) or JSON (old version)
+    const contentType = response.headers.get('content-type') || '';
     
-    if (!data.success || !data.data?.qr_image_url) {
-      throw new Error('Invalid response from WhatsApp API');
-    }
+    if (contentType.includes('image/png')) {
+      // New version: Direct PNG response
+      const imageBuffer = await response.arrayBuffer();
+      
+      return new Response(imageBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
+          'X-API-Version': 'v1.2.0-direct-png',
+        },
+      });
+    } else {
+      // Old version: JSON response with qr_image_url
+      const data = await response.json();
+      
+      if (!data.success || !data.data?.qr_image_url) {
+        throw new Error('Invalid response from WhatsApp API');
+      }
 
-    // Fetch the QR code image from the provided URL
-    const imageResponse = await fetch(data.data.qr_image_url);
-    
-    if (!imageResponse.ok) {
-      throw new Error(`Failed to fetch QR image: ${imageResponse.status}`);
-    }
+      // Fetch the QR code image from the provided URL
+      const imageResponse = await fetch(data.data.qr_image_url);
+      
+      if (!imageResponse.ok) {
+        throw new Error(`Failed to fetch QR image: ${imageResponse.status}`);
+      }
 
-    const imageBuffer = await imageResponse.arrayBuffer();
-    
-    // Return the QR code image directly
-    return new Response(imageBuffer, {
-      status: 200,
-      headers: {
-        'Content-Type': 'image/png',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-        'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
-      },
-    });
+      const imageBuffer = await imageResponse.arrayBuffer();
+      
+      return new Response(imageBuffer, {
+        status: 200,
+        headers: {
+          'Content-Type': 'image/png',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+          'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
+          'X-API-Version': 'v1.2.0-json-fallback',
+        },
+      });
+    }
   } catch (error) {
     console.error('[WHATSAPP PROXY] Error proxying to /pair:', error);
     

@@ -13,9 +13,9 @@ VOLUME ["/app/data"]
 # ca-certificates is CRITICAL for WhatsApp Web API to verify SSL/TLS connections
 RUN apt-get update && apt-get install -y postgresql-client ca-certificates wget unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and setup WhatsApp Web API v1.2.0 from GitHub releases
-RUN wget https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.2.0/whatsapp-web-api-linux-amd64.zip \
-    && unzip whatsapp-web-api-linux-amd64.zip \
+# Download and setup WhatsApp Web API v1.2.0 from GitHub releases (force fresh download)
+RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.2.0/whatsapp-web-api-linux-amd64.zip \
+    && unzip -o whatsapp-web-api-linux-amd64.zip \
     && chmod +x whatsapp-web-api-linux-amd64 \
     && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
     && rm whatsapp-web-api-linux-amd64.zip
