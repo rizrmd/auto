@@ -1,5 +1,5 @@
 /**
- * WhatsApp Web API Client v1.1.0
+ * WhatsApp Web API Client v1.5.0
  * HTTP-based WhatsApp Web API integration with QR pairing, messaging, and read receipts
  */
 
@@ -225,7 +225,7 @@ export class WhatsAppClient {
      imageUrl: string,
      caption?: string
    ): Promise<WhatsAppSendResponse> {
-     // Use v1.4.0 API format with attachments array
+     // Use v1.5.0 API format with attachments array
      try {
        const response = await this.sendToEndpoint(this.baseUrl + '/send', {
          number: this.normalizePhoneNumber(target),
@@ -240,7 +240,7 @@ export class WhatsAppClient {
          return response;
        }
      } catch (error) {
-       console.error('[WHATSAPP] Failed to send image via v1.4.0 API:', error);
+       console.error('[WHATSAPP] Failed to send image via v1.5.0 API:', error);
      }
 
      // Fallback: Send image URL as text message
@@ -675,10 +675,10 @@ export class WhatsAppClient {
         // QR image endpoint not available
       }
 
-      return {
-        version: features.includes('read_receipts') ? '1.1.0' : '1.0.0',
-        features
-      };
+       return {
+         version: '1.5.0',
+         features
+       };
     } catch {
       return {
         version: 'unknown',
