@@ -189,7 +189,6 @@ app.get('/api', (c) => {
       whatsapp: {
         proxy: '/api/wa/pair',
         health: '/api/wa/health',
-        pairing: '/pair',
       },
       webhooks: {
         fonnte: '/webhook/fonnte',
@@ -237,35 +236,7 @@ app.get('/pairing.html', async (c) => {
   }
 });
 
-// ========================================
-// SIMPLE QR PAIRING ENDPOINT (NO AUTH)
-// ========================================
-/**
- * Simple QR code endpoint - direct proxy to WhatsApp API
- * No authentication required - for quick pairing only
- *
- * SECURITY: Temporarily disabled to prevent unauthorized pairing
- * To enable: Remove the early return below
- */
-app.get('/pair', async (c) => {
-  // DISABLED: Endpoint temporarily disabled for security
-  return c.text('Pairing endpoint is temporarily disabled', 404);
 
-  /* ORIGINAL CODE - COMMENTED OUT FOR SECURITY
-  try {
-    const format = c.req.query('format');
-
-    // If format=image, return PNG image directly from WhatsApp API
-    if (format === 'image') {
-      const imageResponse = await fetch('http://localhost:8080/pair?format=image');
-
-      // Return the response directly with proper headers
-      return new Response(imageResponse.body, {
-        headers: {
-          'Content-Type': 'image/png',
-          'Cache-Control': 'no-cache',
-        },
-      });
     }
 
     // Otherwise, generate HTML page with QR code

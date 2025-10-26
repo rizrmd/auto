@@ -6,13 +6,13 @@ const app = new Hono();
 /**
  * Proxy endpoint for WhatsApp pairing
  * Proxies requests to http://localhost:8080/pair
+ * Returns raw response (could be JSON or image)
  */
 app.get('/pair', logger(), async (c) => {
   try {
     const response = await fetch('http://localhost:8080/pair', {
       method: 'GET',
       headers: {
-        'Content-Type': 'application/json',
         'User-Agent': 'AutoLeads-Proxy/1.0',
       },
     });
@@ -21,15 +21,19 @@ app.get('/pair', logger(), async (c) => {
       throw new Error(`WhatsApp API responded with status: ${response.status}`);
     }
 
-    const data = await response.json();
+    // Get content type from the original response
+    const contentType = response.headers.get('content-type') || 'application/octet-stream';
     
-    return c.json({
-      success: true,
-      data: data,
-      proxy: {
-        timestamp: new Date().toISOString(),
-        source: 'localhost:8080',
-        target: '/api/wa/pair',
+    // Get response data as array buffer (works for both JSON and images)
+    const data = await response.arrayBuffer();
+    
+    // Return raw response with proper content type
+    return new Response(data, {
+      status: response.status,
+      headers: {
+        'Content-Type': contentType,
+        'Cache-Control': 'no-cache',
+        'X-Proxy-By': 'AutoLeads-WhatsApp-Proxy',
       },
     });
   } catch (error) {
