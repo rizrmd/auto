@@ -336,18 +336,35 @@ Current customer message: "${message}"`,
                 message.toLowerCase().includes('pic')
               );
 
-              if (isFalsePhotoPromise && isPhotoRequest) {
+              if (isFalsePhotoPromise && isPhotoRequest && iterations < maxIterations) {
                 console.warn(`⚠️ [WEBHOOK] DETECTED FALSE PHOTO PROMISE at iteration ${iterations}! Forcing retry with stricter instruction...`);
                 console.warn(`[WEBHOOK] Problematic response: "${finalResponse.substring(0, 150)}..."`);
 
-                // Add a forcing message to make LLM call the tool
+                // CRITICAL FIX: Add the assistant's bad response to context so it sees its mistake
                 messages.push({
-                  role: 'user',
-                  content: 'ERROR: You MUST call send_car_photos tool to actually send photos. DO NOT just promise to send. Call search_cars first if needed to find the car code, then call send_car_photos. Do it now.',
+                  role: 'assistant',
+                  content: finalResponse,
                 });
 
-                // Force retry (don't increment iteration counter)
-                iterations--; // Don't count this as an iteration
+                // Add a VERY STRONG forcing message to make LLM call the tool
+                messages.push({
+                  role: 'user',
+                  content: `🚨 CRITICAL ERROR: Your response contained a FALSE PROMISE!
+
+You said you would send photos, but you did NOT call the send_car_photos tool.
+
+IMMEDIATE ACTION REQUIRED:
+1. Call search_cars tool NOW to find the car (if you don't have the displayCode)
+2. Call send_car_photos tool IMMEDIATELY with the displayCode
+3. DO NOT respond with text until AFTER you call the tool
+
+This is iteration ${iterations}/${maxIterations}. Call the tool NOW or this request will fail.`,
+                });
+
+                // Force retry (don't increment iteration counter for first 2 retries)
+                if (iterations <= 2) {
+                  iterations--; // Don't count this as an iteration for first 2 tries
+                }
                 continue;
               }
 
