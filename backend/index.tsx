@@ -243,8 +243,15 @@ app.get('/pairing.html', async (c) => {
 /**
  * Simple QR code endpoint - direct proxy to WhatsApp API
  * No authentication required - for quick pairing only
+ *
+ * SECURITY: Temporarily disabled to prevent unauthorized pairing
+ * To enable: Remove the early return below
  */
 app.get('/pair', async (c) => {
+  // DISABLED: Endpoint temporarily disabled for security
+  return c.text('Pairing endpoint is temporarily disabled', 404);
+
+  /* ORIGINAL CODE - COMMENTED OUT FOR SECURITY
   try {
     const format = c.req.query('format');
 
@@ -430,6 +437,8 @@ app.get('/pair', async (c) => {
       status: 500,
     });
   }
+  */
+  // END OF COMMENTED CODE
 });
 
 // ========================================
