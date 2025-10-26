@@ -221,37 +221,36 @@ export class WhatsAppClient {
    * @private
    */
   private async trySendImageViaAPI(
-    target: string,
-    imageUrl: string,
-    caption?: string
-  ): Promise<WhatsAppSendResponse> {
-    // Method 1: Try dedicated /send-image endpoint
-    try {
-      const imageEndpoint = this.baseUrl + '/send-image';
-      const response = await this.sendToEndpoint(imageEndpoint, {
-        number: this.normalizePhoneNumber(target),
-        image: imageUrl,
-        caption: caption || ''
-      });
+     target: string,
+     imageUrl: string,
+     caption?: string
+   ): Promise<WhatsAppSendResponse> {
+     // Use v1.4.0 API format with attachments array
+     try {
+       const response = await this.sendToEndpoint(this.baseUrl + '/send', {
+         number: this.normalizePhoneNumber(target),
+         message: caption || '',
+         attachments: [{
+           type: 'image',
+           url: imageUrl
+         }]
+       });
 
-      if (response.success) {
-        return response;
-      }
-    } catch (error) {
-      console.log('[WHATSAPP] /send-image endpoint not available, trying alternative method');
-    }
+       if (response.success) {
+         return response;
+       }
+     } catch (error) {
+       console.error('[WHATSAPP] Failed to send image via v1.4.0 API:', error);
+     }
 
-    // Method 2: Use standard /send endpoint with url parameter
-    const filename = this.extractFilename(imageUrl);
-    const result = await this.sendMessage({
-      target,
-      message: caption || '',
-      url: imageUrl,
-      filename
-    });
-
-    return result;
-  }
+     // Fallback: Send image URL as text message
+     console.warn(`[WHATSAPP] Media send failed, falling back to text URL`);
+     const message = caption ? `${caption}\n\n${imageUrl}` : imageUrl;
+     return await this.sendMessage({
+       target,
+       message
+     });
+   }
 
   /**
    * Send to specific endpoint
