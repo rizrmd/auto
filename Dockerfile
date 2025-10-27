@@ -9,9 +9,9 @@ WORKDIR /app
 RUN mkdir -p /app/data && chmod 755 /app/data
 VOLUME ["/app/data"]
 
-# Install PostgreSQL client, CA certificates, wget, and unzip for WhatsApp API
+# Install PostgreSQL client, CA certificates, wget, curl, and unzip for WhatsApp API
 # ca-certificates is CRITICAL for WhatsApp Web API to verify SSL/TLS connections
-RUN apt-get update && apt-get install -y postgresql-client ca-certificates wget unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client ca-certificates wget curl unzip && rm -rf /var/lib/apt/lists/*
 
 # Download and setup WhatsApp Web API v1.5.0 from GitHub releases (force fresh download)
 RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.5.0/whatsapp-web-api-linux-amd64.zip \
