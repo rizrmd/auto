@@ -178,27 +178,34 @@ whatsappWebhook.post('/', async (c) => {
 
     console.log(`[WEBHOOK] Response: "${responseMessage}"`);
 
-    // Send response via WhatsApp
+    // Send response via WhatsApp using internal proxy API
     let whatsappSendResult = null;
     try {
-      const whatsapp = new WhatsAppClient();
+      console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone} via proxy`);
       
-      if (whatsapp.isConfigured()) {
-        console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone}`);
-        whatsappSendResult = await whatsapp.sendMessage({
-          target: customerPhone,
+      const sendResponse = await fetch('http://localhost:8080/send', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          number: customerPhone.replace(/[^0-9]/g, ''), // Clean phone number
           message: responseMessage
-        });
-        
-        if (whatsappSendResult.success) {
-          console.log(`[WEBHOOK] WhatsApp message sent successfully to ${customerPhone}`);
-        } else {
-          console.error(`[WEBHOOK] Failed to send WhatsApp message:`, whatsappSendResult.error);
-        }
+        })
+      });
+
+      const sendData = await sendResponse.json();
+      
+      if (sendResponse.ok && sendData.success) {
+        whatsappSendResult = { success: true, message: 'Message sent via proxy' };
+        console.log(`[WEBHOOK] WhatsApp message sent successfully to ${customerPhone}`);
       } else {
-        console.warn(`[WEBHOOK] WhatsApp client not configured - skipping send`);
+        whatsappSendResult = { success: false, error: sendData.message || 'Failed to send' };
+        console.error(`[WEBHOOK] Failed to send WhatsApp message:`, sendData);
       }
+      
     } catch (error) {
+      whatsappSendResult = { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
       console.error(`[WEBHOOK] Error sending WhatsApp message:`, error);
     }
 
