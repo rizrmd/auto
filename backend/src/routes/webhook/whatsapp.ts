@@ -20,7 +20,7 @@ import { UserType } from '../../../generated/prisma';
 import { ServiceContainer } from '../../services/service-container';
 import { RequestDeduplicator } from '../../middleware/request-deduplicator';
 import { TimeoutHandler } from '../../middleware/timeout-handler';
-import { ResponseCache } from '../../cache/response-cache';
+import { responseCache } from '../../cache/response-cache';
 
 const whatsappWebhook = new Hono();
 
@@ -28,7 +28,6 @@ const whatsappWebhook = new Hono();
 const serviceContainer = ServiceContainer.getInstance();
 const requestDeduplicator = new RequestDeduplicator();
 const timeoutHandler = new TimeoutHandler();
-const responseCache = ResponseCache.getInstance();
 
 // Initialize StateManager and AdminBotHandler through service container
 const stateManager = serviceContainer.getStateManager();
