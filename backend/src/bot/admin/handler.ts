@@ -5,7 +5,7 @@
 
 import { PrismaClient, UserType } from '../../../../generated/prisma';
 import { StateManager } from '../state-manager';
-import { UploadFlow } from './upload-flow';
+import { UploadFlowV2 } from './upload-flow-v2';
 import { StatusCommand } from './commands/status';
 import { ListCommand } from './commands/list';
 import { UploadCommand } from './commands/upload';
@@ -13,7 +13,7 @@ import { UploadCommand } from './commands/upload';
 export class AdminBotHandler {
   private prisma: PrismaClient;
   private stateManager: StateManager;
-  private uploadFlow: UploadFlow;
+  private uploadFlowV2: UploadFlowV2;
   private statusCommand: StatusCommand;
   private listCommand: ListCommand;
   private uploadCommand: UploadCommand;
@@ -21,10 +21,10 @@ export class AdminBotHandler {
   constructor(prisma: PrismaClient, stateManager: StateManager) {
     this.prisma = prisma;
     this.stateManager = stateManager;
-    this.uploadFlow = new UploadFlow(prisma, stateManager);
+    this.uploadFlowV2 = new UploadFlowV2(prisma, stateManager);
     this.statusCommand = new StatusCommand(prisma);
     this.listCommand = new ListCommand(prisma);
-    this.uploadCommand = new UploadCommand(prisma, stateManager, this.uploadFlow);
+    this.uploadCommand = new UploadCommand(prisma, stateManager, this.uploadFlowV2);
   }
 
   /**
@@ -44,8 +44,8 @@ export class AdminBotHandler {
       if (isInFlow) {
         const currentFlow = await this.stateManager.getCurrentFlow(tenant.id, userPhone);
 
-        if (currentFlow === 'upload_car') {
-          return await this.uploadFlow.processStep(tenant, userPhone, message, media);
+        if (currentFlow === 'upload_car_v2') {
+          return await this.uploadFlowV2.processStep(tenant, userPhone, message, media);
         }
       }
 
@@ -55,7 +55,7 @@ export class AdminBotHandler {
       // Handle commands
       switch (command.name) {
         case 'upload':
-          return await this.uploadCommand.execute(tenant, userPhone, command.args);
+          return await this.uploadCommand.execute(tenant, userPhone, message);
 
         case 'status':
           return await this.statusCommand.execute(tenant, command.args);
@@ -106,25 +106,36 @@ export class AdminBotHandler {
   private buildHelpResponse(userType: UserType): string {
     let response = `🤖 *Admin Bot Commands*\n\n`;
 
-    response += `📋 *Manajemen Mobil:*\n`;
-    response += `/upload - Upload mobil baru via WA\n`;
+    response += `📋 *Upload Mobil (Single Message):*\n`;
+    response += `/upload [brand] [model] [tahun] harga [harga] km [km] [fitur]\n\n`;
+
+    response += `*Contoh:*\n`;
+    response += `• /upload Toyota Avanza 2020 harga 185jt km 45000 velg racing\n`;
+    response += `• /upload Honda Jazz 2019 hitam matic harga 187jt km 88000 tangan pertama\n`;
+    response += `• /upload Mercedes C300 2015 silver harga 350jt sunroof\n\n`;
+
+    response += `🤖 *AI akan otomatis:*\n`;
+    response += `✨ Generate copywriting menarik\n`;
+    response += `✨ Buat deskripsi produk profesional\n`;
+    response += `✨ Enhancement kondisi notes\n\n`;
+
+    response += `📸 *Setelah data diparsing:*\n`;
+    response += `Bot akan minta foto (1-10 foto)\n`;
+    response += `Ketik "selesai" untuk lanjut konfirmasi\n\n`;
+
+    response += `📋 *Command Lain:*\n`;
     response += `/status [plat] [status] - Update status mobil\n`;
     response += `/list [status] - Lihat daftar mobil\n`;
     response += `/cancel - Batalkan proses\n\n`;
 
-    response += `💡 *Contoh:*\n`;
-    response += `• /upload\n`;
-    response += `• /status B1234XYZ sold\n`;
-    response += `• /list available\n\n`;
-
     if (userType === 'admin') {
       response += `👑 *Admin Only:*\n`;
       response += `• Semua perintah di atas\n`;
-      response += `• Edit dan hapus mobil\n`;
-      response += `• Lihat analytics\n\n`;
+      response += `• AI-powered copywriting\n`;
+      response += `• Instant catalog upload\n\n`;
     }
 
-    response += `❓ Butuh bantuan? Ketik /help`;
+    response += `❓ Ketik /help untuk lihat menu ini`;
 
     return response;
   }
