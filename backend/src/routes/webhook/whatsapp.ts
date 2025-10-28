@@ -101,6 +101,8 @@ whatsappWebhook.post(
 
       // 📸 MEDIA PARSING: Support multiple WhatsApp webhook formats
       // Format 1: { attachment: { url: "...", type: "image" } }
+      // v1.6.0+ sends relative URLs like: /images/ABC123.jpg
+      // v1.5.0 and earlier send full URLs (if URL is included at all)
       if (payload.attachment?.url && payload.attachment?.type) {
         media = {
           url: payload.attachment.url,
@@ -145,8 +147,9 @@ whatsappWebhook.post(
         console.log(`[WEBHOOK] 📸 Media detected (format 4 - type/url):`, media);
       }
       // Format 5: { attachment: { type: "image", ... } } - WITHOUT URL
-      // WhatsApp Web API may send attachment metadata without URL
-      // We detect it but can't download without URL - inform user
+      // v1.5.0 and earlier send attachment metadata WITHOUT URL
+      // v1.6.0+ should always include URL in attachment
+      // Kept for backward compatibility with older API versions
       else if (payload.attachment?.type && !payload.attachment.url) {
         messageType = payload.attachment.type;
         console.log(`[WEBHOOK] 📸 Media detected BUT NO URL (format 5 - attachment without URL):`, {

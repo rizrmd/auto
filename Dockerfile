@@ -1,5 +1,5 @@
 # ============================================================================
-# Runtime environment with WhatsApp Web API v1.5.0 (Downloaded from GitHub)
+# Runtime environment with WhatsApp Web API v1.6.0 (Downloaded from GitHub)
 # ============================================================================
 FROM oven/bun:latest
 
@@ -13,8 +13,8 @@ VOLUME ["/app/data"]
 # ca-certificates is CRITICAL for WhatsApp Web API to verify SSL/TLS connections
 RUN apt-get update && apt-get install -y postgresql-client ca-certificates wget curl unzip && rm -rf /var/lib/apt/lists/*
 
-# Download and setup WhatsApp Web API v1.5.0 from GitHub releases (force fresh download)
-RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.5.0/whatsapp-web-api-linux-amd64.zip \
+# Download and setup WhatsApp Web API v1.6.0 from GitHub releases (force fresh download)
+RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.6.0/whatsapp-web-api-linux-amd64.zip \
     && unzip whatsapp-web-api-linux-amd64.zip \
     && chmod +x whatsapp-web-api-linux-amd64 \
     && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
@@ -22,7 +22,7 @@ RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download
 
 # Verify binary is executable and properly copied
 RUN chmod +x /usr/local/bin/whatsapp-web-api && \
-    /usr/local/bin/whatsapp-web-api --version || echo "WhatsApp Web API v1.5.0 ready"
+    /usr/local/bin/whatsapp-web-api --version || echo "WhatsApp Web API v1.6.0 ready"
 
 # Create WhatsApp API environment file
 RUN echo "PORT=8080" > /app/whatsapp-api.env \

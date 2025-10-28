@@ -11,6 +11,21 @@ export class MediaDownloader {
   // /data directory will be mounted as persistent volume
   private readonly UPLOAD_DIR = process.env.UPLOAD_DIR || './data';
   private readonly MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+  private readonly WHATSAPP_API_URL = process.env.WHATSAPP_API_URL || 'http://localhost:8080';
+
+  /**
+   * Resolve URL - convert relative URLs to absolute URLs
+   * v1.6.0 sends relative URLs like /images/ABC123.jpg
+   */
+  private resolveUrl(url: string): string {
+    // If URL is relative (starts with /), prepend WhatsApp API base URL
+    if (url.startsWith('/')) {
+      const baseUrl = this.WHATSAPP_API_URL.replace(/\/send.*$/, ''); // Remove /send if present
+      return `${baseUrl}${url}`;
+    }
+    // Return full URL as-is
+    return url;
+  }
 
   /**
    * Download and save media file
@@ -25,8 +40,12 @@ export class MediaDownloader {
       const tenantDir = join(this.UPLOAD_DIR, `tenant-${tenantId}`);
       await mkdir(tenantDir, { recursive: true });
 
+      // Resolve URL (handle v1.6.0 relative URLs)
+      const fullUrl = this.resolveUrl(url);
+      console.log(`[MEDIA] Downloading from: ${fullUrl}`);
+
       // Download file
-      const response = await fetch(url);
+      const response = await fetch(fullUrl);
 
       if (!response.ok) {
         throw new Error(`Failed to download: ${response.status}`);
