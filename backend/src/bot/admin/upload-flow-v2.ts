@@ -150,44 +150,9 @@ Minimal: brand/model, tahun, harga`;
   ): Promise<string> {
     const existingPhotos = context.carData?.photos || [];
 
-    // ⚠️ WORKAROUND: Handle "Image received" message from WhatsApp webhook
-    // Some WhatsApp API configurations send "Image received" text without media URL
-    // We acknowledge silently to avoid spam, actual photos will be added manually or via web dashboard
-    if (message.trim() === 'Image received') {
-      console.log('[UPLOAD V2] Received "Image received" notification (no media URL in webhook)');
-      // Silent acknowledgment - return empty string to avoid spam
-      return '';
-    }
-
-    // Handle skip
-    if (message.toLowerCase().trim() === 'skip' || message.toLowerCase().trim() === '-') {
-      await this.stateManager.nextStep(tenant.id, userPhone, {
-        carData: {
-          ...context.carData,
-          photos: []
-        }
-      });
-
-      return await this.buildConfirmation(tenant, { ...context.carData, photos: [] });
-    }
-
-    // Handle "selesai"
-    if (message.toLowerCase().trim() === 'selesai') {
-      // Allow "selesai" without photos - treat as skip
-      // User can upload photos later via web dashboard
-      await this.stateManager.nextStep(tenant.id, userPhone, {
-        carData: {
-          ...context.carData,
-          photos: existingPhotos
-        }
-      });
-
-      if (existingPhotos.length === 0) {
-        console.log('[UPLOAD V2] User typed "selesai" without photos, proceeding without photos');
-      }
-
-      return await this.buildConfirmation(tenant, { ...context.carData, photos: existingPhotos });
-    }
+    // ✅ IMPORTANT: Check media FIRST before checking message text
+    // Webhook may send both: message="Image received" AND media object
+    // We need to handle media first, not the text message
 
     // Handle photo
     if (media && media.type === 'image') {
@@ -269,6 +234,44 @@ Kirim foto lagi atau ketik *"selesai"* untuk lanjut.`;
         console.error('[UPLOAD V2] Error downloading photo:', error);
         return `⚠️ Gagal mengunduh foto. Silakan coba kirim lagi atau ketik *"skip"* untuk lanjut tanpa foto.`;
       }
+    }
+
+    // ⚠️ FALLBACK: Handle "Image received" text message without media object
+    // This happens when webhook sends text but no media object at all
+    if (message.trim() === 'Image received') {
+      console.log('[UPLOAD V2] Received "Image received" text without media object (old webhook behavior)');
+      // Silent acknowledgment - return empty string to avoid spam
+      return '';
+    }
+
+    // Handle skip
+    if (message.toLowerCase().trim() === 'skip' || message.toLowerCase().trim() === '-') {
+      await this.stateManager.nextStep(tenant.id, userPhone, {
+        carData: {
+          ...context.carData,
+          photos: []
+        }
+      });
+
+      return await this.buildConfirmation(tenant, { ...context.carData, photos: [] });
+    }
+
+    // Handle "selesai"
+    if (message.toLowerCase().trim() === 'selesai') {
+      // Allow "selesai" without photos - treat as skip
+      // User can upload photos later via web dashboard
+      await this.stateManager.nextStep(tenant.id, userPhone, {
+        carData: {
+          ...context.carData,
+          photos: existingPhotos
+        }
+      });
+
+      if (existingPhotos.length === 0) {
+        console.log('[UPLOAD V2] User typed "selesai" without photos, proceeding without photos');
+      }
+
+      return await this.buildConfirmation(tenant, { ...context.carData, photos: existingPhotos });
     }
 
     return '❌ Kirim foto atau ketik *"selesai"* untuk lanjut, atau *"skip"* untuk lewati.';
