@@ -9,6 +9,7 @@ import { UploadFlowV2 } from './upload-flow-v2';
 import { StatusCommand } from './commands/status';
 import { ListCommand } from './commands/list';
 import { UploadCommand } from './commands/upload';
+import { DeleteCommand } from './commands/delete';
 
 export class AdminBotHandler {
   private prisma: PrismaClient;
@@ -17,6 +18,7 @@ export class AdminBotHandler {
   private statusCommand: StatusCommand;
   private listCommand: ListCommand;
   private uploadCommand: UploadCommand;
+  private deleteCommand: DeleteCommand;
 
   constructor(prisma: PrismaClient, stateManager: StateManager) {
     this.prisma = prisma;
@@ -25,6 +27,7 @@ export class AdminBotHandler {
     this.statusCommand = new StatusCommand(prisma);
     this.listCommand = new ListCommand(prisma);
     this.uploadCommand = new UploadCommand(prisma, stateManager, this.uploadFlowV2);
+    this.deleteCommand = new DeleteCommand(prisma, stateManager);
   }
 
   /**
@@ -47,7 +50,7 @@ export class AdminBotHandler {
         return '❌ Proses dibatalkan. Ketik /help untuk lihat perintah lain.';
       }
 
-      // Check if user is in upload flow
+      // Check if user is in flow
       const isInFlow = await this.stateManager.isInFlow(tenant.id, userPhone);
 
       if (isInFlow) {
@@ -63,6 +66,17 @@ export class AdminBotHandler {
           // Continue with current flow
           return await this.uploadFlowV2.processStep(tenant, userPhone, message, media);
         }
+
+        if (currentFlow === 'delete_confirmation') {
+          // Handle delete confirmation
+          const state = await this.stateManager.getState(tenant.id, userPhone);
+          return await this.deleteCommand.processConfirmation(
+            tenant,
+            userPhone,
+            message,
+            state?.context || {}
+          );
+        }
       }
 
       // Handle commands
@@ -75,6 +89,10 @@ export class AdminBotHandler {
 
         case 'list':
           return await this.listCommand.execute(tenant, command.args);
+
+        case 'delete':
+        case 'hapus':
+          return await this.deleteCommand.execute(tenant, userPhone, command.args);
 
         case 'help':
           return this.buildHelpResponse(userType);
@@ -139,6 +157,7 @@ export class AdminBotHandler {
     response += `📋 *Command Lain:*\n`;
     response += `/status [plat] [status] - Update status mobil\n`;
     response += `/list [status] - Lihat daftar mobil\n`;
+    response += `/delete #H01, #H02 - Hapus katalog (multiple)\n`;
     response += `/cancel - Batalkan proses\n\n`;
 
     if (userType === 'admin') {

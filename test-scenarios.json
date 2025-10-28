@@ -1,0 +1,44 @@
+{
+  "test1_get_car_details": {
+    "sender": "628111111111@s.whatsapp.net",
+    "message": "Info lengkap mobil kode A01 dong",
+    "type": "text",
+    "pushname": "Test Car Details"
+  },
+  "test2_send_photos": {
+    "sender": "628222222222@s.whatsapp.net",
+    "message": "Kirim foto Honda Jazz RS yang 2017",
+    "type": "text",
+    "pushname": "Test Photo Request"
+  },
+  "test3_location": {
+    "sender": "628333333333@s.whatsapp.net",
+    "message": "Dimana lokasi showroom kalian? Jam berapa buka?",
+    "type": "text",
+    "pushname": "Test Location"
+  },
+  "test4_price_quote": {
+    "sender": "628444444444@s.whatsapp.net",
+    "message": "Berapa harga Honda Jazz RS 2017? Bisa kredit?",
+    "type": "text",
+    "pushname": "Test Price Quote"
+  },
+  "test5_financing": {
+    "sender": "628555555555@s.whatsapp.net",
+    "message": "Kalau DP 50 juta, cicilan 3 tahun untuk Jazz RS berapa per bulan?",
+    "type": "text",
+    "pushname": "Test Financing"
+  },
+  "test6_test_drive": {
+    "sender": "628666666666@s.whatsapp.net",
+    "message": "Mau test drive Honda Jazz RS besok jam 2 siang bisa?",
+    "type": "text",
+    "pushname": "Test Drive Booking"
+  },
+  "test7_trade_in": {
+    "sender": "628777777777@s.whatsapp.net",
+    "message": "Bisa tukar tambah mobil lama saya Toyota Avanza 2015?",
+    "type": "text",
+    "pushname": "Test Trade In"
+  }
+}

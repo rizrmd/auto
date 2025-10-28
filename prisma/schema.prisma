@@ -137,6 +137,7 @@ model Car {
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   soldAt    DateTime? @map("sold_at")
+  deletedAt DateTime? @map("deleted_at")
 
   // SEO
   slug String @db.VarChar(200) // "avanza-2020-hitam-a01"
@@ -163,6 +164,7 @@ enum CarStatus {
   sold
   booking
   draft
+  deleted
 }
 
 // ============================================

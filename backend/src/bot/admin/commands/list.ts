@@ -30,8 +30,11 @@ export class ListCommand {
         }
       }
 
-      // Build query
-      const where: any = { tenantId: tenant.id };
+      // Build query - exclude deleted cars
+      const where: any = {
+        tenantId: tenant.id,
+        status: { not: 'deleted' as any }
+      };
       if (statusFilter) {
         where.status = statusFilter;
       }
@@ -102,6 +105,7 @@ export class ListCommand {
     booking: number;
     draft: number;
   }> {
+    // Exclude deleted cars from stats
     const [available, sold, booking, draft] = await Promise.all([
       this.prisma.car.count({ where: { tenantId, status: 'available' } }),
       this.prisma.car.count({ where: { tenantId, status: 'sold' } }),
