@@ -162,8 +162,8 @@ app.route('/api/cars', publicCarsRoutes);
 // Tenant routes (public)
 app.route('/api/tenant', tenantRoutes);
 
-// Webhook routes
-app.route('/webhook/whatsapp', whatsappWebhookRoutes);
+// Webhook routes - temporarily disabled for debugging
+// app.route('/webhook/whatsapp', whatsappWebhookRoutes);
 
 // Admin API routes
 app.route('/api/admin/auth', adminAuthRoutes);
