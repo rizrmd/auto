@@ -186,8 +186,9 @@ whatsappWebhook.post('/', async (c) => {
       const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
       console.log(`[WEBHOOK] Cleaned phone: ${cleanPhone}, Message: "${responseMessage}"`);
       
-      // Use proxy API since we know it works
-      const sendResponse = await fetch('/api/wa/send', {
+      // Use proxy API with full URL
+      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
+      const sendResponse = await fetch(`${baseUrl}/api/wa/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
