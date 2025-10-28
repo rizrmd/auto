@@ -183,42 +183,68 @@ whatsappWebhook.post('/', async (c) => {
     try {
       console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone} via proxy`);
       
+      const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
+      console.log(`[WEBHOOK] Cleaned phone number: ${cleanPhone}`);
+      console.log(`[WEBHOOK] Message to send: "${responseMessage}"`);
+      
       // Use internal service directly, fallback to proxy if needed
       let sendResponse;
+      let connectionMethod = 'unknown';
+      
       try {
         // Try direct internal service first
+        console.log(`[WEBHOOK] Trying direct connection to localhost:8080...`);
         sendResponse = await fetch('http://localhost:8080/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            number: customerPhone.replace(/[^0-9]/g, ''), // Clean phone number
+            number: cleanPhone,
             message: responseMessage
           })
         });
+        connectionMethod = 'direct';
+        console.log(`[WEBHOOK] Direct response status: ${sendResponse.status}`);
       } catch (directError) {
         console.warn(`[WEBHOOK] Direct service failed, trying proxy:`, directError);
         // Fallback to proxy endpoint
+        console.log(`[WEBHOOK] Trying proxy connection to /api/wa/send...`);
         sendResponse = await fetch('/api/wa/send', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            number: customerPhone.replace(/[^0-9]/g, ''), // Clean phone number
+            number: cleanPhone,
             message: responseMessage
           })
         });
+        connectionMethod = 'proxy';
+        console.log(`[WEBHOOK] Proxy response status: ${sendResponse.status}`);
       }
 
       const sendData = await sendResponse.json();
+      console.log(`[WEBHOOK] Send response data:`, JSON.stringify(sendData, null, 2));
       
       if (sendResponse.ok && sendData.success) {
-        whatsappSendResult = { success: true, message: 'Message sent via proxy' };
-        console.log(`[WEBHOOK] WhatsApp message sent successfully to ${customerPhone}`);
+        whatsappSendResult = { 
+          success: true, 
+          message: `Message sent via ${connectionMethod}`,
+          method: connectionMethod,
+          phone: cleanPhone,
+          response: sendData
+        };
+        console.log(`[WEBHOOK] WhatsApp message sent successfully to ${customerPhone} via ${connectionMethod}`);
       } else {
-        whatsappSendResult = { success: false, error: sendData.message || 'Failed to send' };
+        whatsappSendResult = { 
+          success: false, 
+          error: sendData.message || 'Failed to send',
+          method: connectionMethod,
+          phone: cleanPhone,
+          status: sendResponse.status,
+          response: sendData
+        };
         console.error(`[WEBHOOK] Failed to send WhatsApp message:`, sendData);
       }
       
