@@ -78,222 +78,31 @@ async function identifyUserType(tenantId: number, senderPhone: string): Promise<
  */
 whatsappWebhook.post(
   '/',
-  asyncHandler(async (c) => {
-    const payload = await c.req.json();
-    console.log(`[WEBHOOK] Payload received:`, payload);
-    
-    // Temporary minimal response for testing
-    return c.json({ 
-      success: true, 
-      data: { 
-        status: 'received',
-        message: 'Webhook is working' 
-      } 
-    });
-
-    // Extract message details from WhatsApp Web API format
-    let customerPhone: string;
-    let customerName: string | undefined;
-    let message: string;
-    let messageType: string = 'text';
-    let messageId: string | undefined;
-    let media: { url: string; type: string } | undefined;
-
-    if (payload.event === 'message' && payload.sender) {
-      // WhatsApp Web API format
-      customerPhone = payload.sender.split('@')[0]; // Extract phone from JID
-      message = payload.message || payload.caption || '';
-      messageId = payload.id || undefined;
-
-      console.log(`[WEBHOOK] Message from ${customerPhone}: "${message}"`);
-      console.log(`[WEBHOOK] Chat: ${payload.chat || 'private'}`);
-      console.log(`[WEBHOOK] Time: ${payload.time || 'unknown'}`);
-
-      // 📸 MEDIA PARSING: Support multiple WhatsApp webhook formats
-      // Format 1: { attachment: { url: "...", type: "image" } }
-      // v1.6.0+ sends relative URLs like: /images/ABC123.jpg
-      // v1.5.0 and earlier send full URLs (if URL is included at all)
-      if (payload.attachment?.url && payload.attachment?.type) {
-        media = {
-          url: payload.attachment.url,
-          type: payload.attachment.type
-        };
-        messageType = payload.attachment.type;
-        console.log(`[WEBHOOK] 📸 Media detected (format 1 - attachment):`, media);
-      }
-      // Format 2: { media_url: "...", media_type: "image" }
-      else if (payload.media_url && payload.media_type) {
-        media = {
-          url: payload.media_url,
-          type: payload.media_type
-        };
-        messageType = payload.media_type;
-        console.log(`[WEBHOOK] 📸 Media detected (format 2 - media_url):`, media);
-      }
-      // Format 3: { image_url: "..." } or { video_url: "..." }
-      else if (payload.image_url) {
-        media = {
-          url: payload.image_url,
-          type: 'image'
-        };
-        messageType = 'image';
-        console.log(`[WEBHOOK] 📸 Media detected (format 3 - image_url):`, media);
-      }
-      else if (payload.video_url) {
-        media = {
-          url: payload.video_url,
-          type: 'video'
-        };
-        messageType = 'video';
-        console.log(`[WEBHOOK] 📸 Media detected (format 3 - video_url):`, media);
-      }
-      // Format 4: { type: "image", url: "..." }
-      else if (payload.type && payload.url) {
-        media = {
-          url: payload.url,
-          type: payload.type
-        };
-        messageType = payload.type;
-        console.log(`[WEBHOOK] 📸 Media detected (format 4 - type/url):`, media);
-      }
-      // Format 5: { attachment: { type: "image", ... } } - WITHOUT URL
-      // v1.5.0 and earlier send attachment metadata WITHOUT URL
-      // v1.6.0+ should always include URL in attachment
-      // Kept for backward compatibility with older API versions
-      else if (payload.attachment?.type && !payload.attachment.url) {
-        messageType = payload.attachment.type;
-        console.log(`[WEBHOOK] 📸 Media detected BUT NO URL (format 5 - attachment without URL):`, {
-          type: payload.attachment.type,
-          mimetype: payload.attachment.mimetype,
-          file_length: payload.attachment.file_length
-        });
-        // Set media with special marker to indicate no URL available
-        media = {
-          url: '__NO_URL__',
-          type: payload.attachment.type,
-          metadata: {
-            mimetype: payload.attachment.mimetype,
-            file_length: payload.attachment.file_length,
-            caption: payload.attachment.caption || ''
-          }
-        };
-      }
-
-      // Log full payload if no media detected (for debugging)
-      if (!media && !message) {
-        console.warn('[WEBHOOK] ⚠️  No message or media detected. Full payload:', JSON.stringify(payload, null, 2));
-      }
-    } else {
-      console.error('[WEBHOOK] Invalid WhatsApp Web API payload format:', payload);
-      const response: ApiResponse = {
-        success: false,
-        error: {
-          code: 'INVALID_PAYLOAD',
-          message: 'Invalid WhatsApp Web API payload format',
-        },
-      };
-      return c.json(response, 400);
-    }
-
-    // Determine tenant based on device/number
-    // For now, we'll use the first active tenant with WhatsApp bot enabled
-    const tenant = await prisma.tenant.findFirst({
-      where: {
-        status: 'active',
-        whatsappBotEnabled: true,
-      },
-    });
-
-    if (!tenant) {
-      console.warn('No active tenant found for webhook');
-      const response: ApiResponse = {
-        success: false,
-        error: {
-          code: 'NO_TENANT',
-          message: 'No active tenant configured',
-        },
-      };
-      return c.json(response, 400);
-    }
-
-    // Use fallback services when container not initialized
-    const leadService = serviceContainer.leadService || new LeadService();
-    const ragEngine = serviceContainer.ragEngine || new RAGEngine(prisma);
-    const intentRecognizer = serviceContainer.intentRecognizer || new IntentRecognizer();
-
-    // Find or create lead
-    const lead = await leadService.findOrCreateByPhone(tenant.id, customerPhone, {
-      customerName,
-      source: 'wa',
-      status: 'new',
-    });
-
-    // Simple deduplication - check if message already exists
-    if (messageId) {
-      const existingMessage = await prisma.message.findFirst({
-        where: {
-          messageId: messageId,
-          tenantId: tenant.id
-        }
+  async (c) => {
+    try {
+      const payload = await c.req.json();
+      console.log(`[WEBHOOK] Payload received:`, payload);
+      
+      // Temporary minimal response for testing
+      return c.json({ 
+        success: true, 
+        data: { 
+          status: 'received',
+          message: 'Webhook is working' 
+        } 
       });
-
-      if (existingMessage) {
-        console.log(`[WEBHOOK] Duplicate message detected: ${messageId}`);
-        const response: ApiResponse = {
-          success: true,
-          data: {
-            status: 'duplicate',
-            message: 'Message already processed',
-          },
-        };
-        return c.json(response);
-      }
+    } catch (error) {
+      console.error('[WEBHOOK] Error:', error);
+      return c.json({ 
+        success: false, 
+        error: { 
+          code: 'WEBHOOK_ERROR', 
+          message: error.message 
+        } 
+      }, 500);
     }
-
-    // Save message to database (with media metadata)
-    await prisma.message.create({
-      data: {
-        tenantId: tenant.id,
-        leadId: lead.id,
-        sender: 'customer',
-        message: message,
-        metadata: {
-          type: messageType,
-          chat: payload.chat,
-          time: payload.time,
-          messageId: messageId,
-          webhookFormat: 'whatsapp-web-api',
-          media: media ? {
-            url: media.url,
-            type: media.type
-          } : undefined,
-        },
-      },
-    });
-
-    // 🔀 ROUTING: Identify user type and route to appropriate bot
-    const userType = await identifyUserType(tenant.id, customerPhone);
-
-    console.log(`[WEBHOOK] User type identified: ${userType}`);
-
-    // 🤖 ADMIN/SALES BOT: Handle admin commands
-    if (userType === 'admin' || userType === 'sales') {
-      console.log(`[WEBHOOK] Routing to Admin Bot for ${userType}`);
-
-      try {
-        const whatsapp = new WhatsAppClient();
-
-        if (whatsapp.isConfigured()) {
-          // Handle message with admin bot (with media support!)
-          console.log(`[WEBHOOK] Calling admin bot with media:`, media ? `${media.type} - ${media.url.substring(0, 50)}...` : 'none');
-
-          const adminResponse = await adminBotHandler.handleMessage(
-            tenant,
-            customerPhone,
-            userType,
-            message,
-            media // ✅ Pass media to admin bot
-          );
+  }
+);
 
           console.log(`[WEBHOOK] Admin bot response: "${adminResponse.substring(0, 100)}..."`);
 
