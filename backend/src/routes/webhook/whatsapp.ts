@@ -6,6 +6,7 @@
 import { Hono } from 'hono';
 import { prisma } from '../../db';
 import type { ApiResponse } from '../../types/context';
+import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
 
 const whatsappWebhook = new Hono();
 
@@ -177,6 +178,30 @@ whatsappWebhook.post('/', async (c) => {
 
     console.log(`[WEBHOOK] Response: "${responseMessage}"`);
 
+    // Send response via WhatsApp
+    let whatsappSendResult = null;
+    try {
+      const whatsapp = new WhatsAppClient();
+      
+      if (whatsapp.isConfigured()) {
+        console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone}`);
+        whatsappSendResult = await whatsapp.sendMessage({
+          target: customerPhone,
+          message: responseMessage
+        });
+        
+        if (whatsappSendResult.success) {
+          console.log(`[WEBHOOK] WhatsApp message sent successfully to ${customerPhone}`);
+        } else {
+          console.error(`[WEBHOOK] Failed to send WhatsApp message:`, whatsappSendResult.error);
+        }
+      } else {
+        console.warn(`[WEBHOOK] WhatsApp client not configured - skipping send`);
+      }
+    } catch (error) {
+      console.error(`[WEBHOOK] Error sending WhatsApp message:`, error);
+    }
+
     const response: ApiResponse = {
       success: true,
       data: {
@@ -185,6 +210,8 @@ whatsappWebhook.post('/', async (c) => {
         message: 'WhatsApp Web API webhook processed successfully',
         response: responseMessage,
         userType: userType,
+        whatsappSent: whatsappSendResult?.success || false,
+        whatsappError: whatsappSendResult?.error || null,
       },
     };
 
