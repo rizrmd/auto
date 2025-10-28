@@ -7,15 +7,15 @@
 
 import { PrismaClient } from '../../../../generated/prisma';
 import { StateManager, ConversationContext } from '../state-manager';
-import { CarParser } from './parser';
 import { DisplayCodeGenerator } from './display-code-generator';
 import { MediaDownloader } from '../../whatsapp/media-downloader';
 import { ZaiClient } from '../../llm/zai';
+import { NaturalLanguageExtractor } from './natural-language-extractor';
 
 export class UploadFlowV2 {
   private prisma: PrismaClient;
   private stateManager: StateManager;
-  private parser: CarParser;
+  private nlExtractor: NaturalLanguageExtractor;
   private codeGenerator: DisplayCodeGenerator;
   private mediaDownloader: MediaDownloader;
   private zaiClient: ZaiClient;
@@ -28,34 +28,45 @@ export class UploadFlowV2 {
   constructor(prisma: PrismaClient, stateManager: StateManager) {
     this.prisma = prisma;
     this.stateManager = stateManager;
-    this.parser = new CarParser();
+    this.nlExtractor = new NaturalLanguageExtractor();
     this.codeGenerator = new DisplayCodeGenerator(prisma);
     this.mediaDownloader = new MediaDownloader();
     this.zaiClient = new ZaiClient();
   }
 
   /**
-   * Start upload flow with data parsing
-   * Example: "/upload mobil jazz 2020 type R harga 187jt km 88000 velg racing tangan pertama"
+   * Start upload flow with natural language parsing
+   * Example: "upload freed matic 2012 harga 145jt kondisi bagus"
+   * Example: "tambah mobil honda freed tahun 2012 km 145rb dijual 145 juta"
    */
   async start(tenant: any, userPhone: string, message: string): Promise<string> {
-    // Parse all car data from message
-    const carData = this.parser.parseAllInOne(message);
+    console.log('[UPLOAD V2] Processing natural language input:', message);
 
-    console.log('[UPLOAD V2] Parsed car data:', carData);
+    // Extract car data using natural language processing
+    const extraction = await this.nlExtractor.extract(message);
 
-    // Validate required fields
-    if (!carData.brand || !carData.year || !carData.price) {
-      return `❌ Data tidak lengkap. Format yang benar:
+    console.log('[UPLOAD V2] Extraction result:', {
+      success: extraction.success,
+      method: extraction.method,
+      confidence: extraction.confidence
+    });
 
-/upload [brand] [model] [tahun] harga [harga] km [km] [fitur]
+    // Validate extraction success
+    if (!extraction.success) {
+      const errors = extraction.errors || ['Unknown error'];
+      return `❌ Tidak bisa memahami data mobil. Silakan coba lagi dengan format yang lebih jelas.
 
-Contoh:
-/upload Toyota Avanza 2020 harga 185jt km 45000 velg racing tangan pertama
-/upload Honda Jazz 2019 type R harga 187jt km 88000 service record
+${errors.join('\n')}
 
-Minimal harus ada: brand, tahun, dan harga.`;
+Contoh yang benar:
+• upload freed matic 2012 harga 145jt km 145rb
+• tambah mobil honda jazz 2019 hitam harga 187jt
+• avanza 2020 dijual 185 juta km 45 ribu
+
+Minimal: brand/model, tahun, harga`;
     }
+
+    const carData = extraction.data;
 
     // Start flow with parsed data
     await this.stateManager.startFlow(tenant.id, userPhone, 'upload_car_v2', {
@@ -63,7 +74,12 @@ Minimal harus ada: brand, tahun, dan harga.`;
     });
 
     // Show parsed data and ask for photos
-    let response = `✅ *Data Mobil Berhasil Diparsing!*\n\n`;
+    const methodIcon = extraction.method === 'llm' ? '🤖' : '📝';
+    const confidenceIcon = extraction.confidence === 'high' ? '✨' : extraction.confidence === 'medium' ? '⭐' : '🔸';
+
+    let response = `✅ *Data Mobil Berhasil Diproses!*\n`;
+    response += `${methodIcon} ${extraction.method === 'llm' ? 'AI Natural Language' : 'Pattern Matching'} ${confidenceIcon}\n\n`;
+
     response += `📋 *Informasi Mobil:*\n`;
     response += `• Brand: ${carData.brand}\n`;
     response += `• Model: ${carData.model || '-'}\n`;
@@ -71,7 +87,7 @@ Minimal harus ada: brand, tahun, dan harga.`;
     response += `• Warna: ${carData.color || 'Silver'}\n`;
     response += `• Transmisi: ${carData.transmission || 'Manual'}\n`;
 
-    if (carData.km) {
+    if (carData.km && carData.km > 0) {
       response += `• KM: ${carData.km.toLocaleString()}\n`;
     }
     response += `• Harga: Rp ${(carData.price! / 1000000).toFixed(0)} juta\n`;

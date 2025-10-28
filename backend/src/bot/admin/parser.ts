@@ -193,31 +193,103 @@ export class CarParser {
     const normalized = text.trim();
     const result: any = {};
 
-    // Extract brand & model (first part before year)
-    const brands = ['Toyota', 'Honda', 'Daihatsu', 'Mitsubishi', 'Suzuki', 'Nissan', 'Mazda', 'Isuzu', 'Ford', 'Chevrolet', 'Hyundai', 'Kia', 'BMW', 'Mercedes-Benz', 'Mercy', 'Audi', 'Volkswagen', 'VW'];
+    // Brand-Model inference map (model -> brand)
+    const modelToBrand: { [key: string]: string } = {
+      // Honda
+      'freed': 'Honda', 'jazz': 'Honda', 'city': 'Honda', 'civic': 'Honda',
+      'crv': 'Honda', 'cr-v': 'Honda', 'hrv': 'Honda', 'hr-v': 'Honda',
+      'brio': 'Honda', 'mobilio': 'Honda', 'accord': 'Honda', 'odyssey': 'Honda',
 
-    for (const brand of brands) {
-      const regex = new RegExp(`(${brand})\\s+([^\\d]+)`, 'i');
-      const match = normalized.match(regex);
-      if (match) {
-        result.brand = this.normalizeBrand(match[1]);
+      // Toyota
+      'avanza': 'Toyota', 'innova': 'Toyota', 'fortuner': 'Toyota',
+      'rush': 'Toyota', 'calya': 'Toyota', 'yaris': 'Toyota',
+      'vios': 'Toyota', 'camry': 'Toyota', 'alphard': 'Toyota',
+      'vellfire': 'Toyota', 'corolla': 'Toyota', 'hilux': 'Toyota',
 
-        // Model is everything between brand and year (or other keywords)
-        let modelText = match[2].trim();
-        // Remove "mobil" if exists
-        modelText = modelText.replace(/^mobil\s+/i, '');
-        // Extract until year or price keywords
-        const modelMatch = modelText.match(/^([^\d]+?)(?=\s+(20\d{2}|harga|km|matic|manual))/i);
-        if (modelMatch) {
-          result.model = modelMatch[1].trim();
-        } else {
-          result.model = modelText.split(/\s+(harga|km|matic|manual)/i)[0].trim();
+      // Daihatsu
+      'xenia': 'Daihatsu', 'terios': 'Daihatsu', 'ayla': 'Daihatsu',
+      'sigra': 'Daihatsu', 'granmax': 'Daihatsu', 'gran max': 'Daihatsu',
+      'luxio': 'Daihatsu', 'sirion': 'Daihatsu',
+
+      // Mitsubishi
+      'pajero': 'Mitsubishi', 'xpander': 'Mitsubishi', 'l300': 'Mitsubishi',
+      'triton': 'Mitsubishi', 'outlander': 'Mitsubishi', 'mirage': 'Mitsubishi',
+
+      // Suzuki
+      'ertiga': 'Suzuki', 'baleno': 'Suzuki', 'swift': 'Suzuki',
+      'wagon r': 'Suzuki', 'karimun': 'Suzuki', 'ignis': 'Suzuki',
+      'xl7': 'Suzuki', 'xl-7': 'Suzuki',
+
+      // Nissan
+      'livina': 'Nissan', 'grand livina': 'Nissan', 'march': 'Nissan',
+      'serena': 'Nissan', 'x-trail': 'Nissan', 'xtrail': 'Nissan',
+      'juke': 'Nissan', 'kicks': 'Nissan',
+
+      // Mazda
+      'cx-5': 'Mazda', 'cx5': 'Mazda', 'cx-3': 'Mazda', 'cx3': 'Mazda',
+      'mazda2': 'Mazda', 'mazda3': 'Mazda', 'mazda6': 'Mazda',
+
+      // Mercedes-Benz
+      'c-class': 'Mercedes-Benz', 'c200': 'Mercedes-Benz', 'c250': 'Mercedes-Benz',
+      'c300': 'Mercedes-Benz', 'e-class': 'Mercedes-Benz', 'e200': 'Mercedes-Benz',
+      'e250': 'Mercedes-Benz', 'e300': 'Mercedes-Benz', 's-class': 'Mercedes-Benz',
+      'gla': 'Mercedes-Benz', 'glc': 'Mercedes-Benz', 'gle': 'Mercedes-Benz',
+
+      // BMW
+      '320i': 'BMW', '320d': 'BMW', '330i': 'BMW', '520i': 'BMW', '530i': 'BMW',
+      'x1': 'BMW', 'x3': 'BMW', 'x5': 'BMW', 'x7': 'BMW',
+
+      // Luxury brands
+      'a4': 'Audi', 'a6': 'Audi', 'q5': 'Audi', 'q7': 'Audi',
+      'santafe': 'Hyundai', 'santa fe': 'Hyundai', 'tucson': 'Hyundai',
+      'sportage': 'Kia', 'seltos': 'Kia', 'sorento': 'Kia'
+    };
+
+    // Try to infer brand from model name first
+    const lowerText = normalized.toLowerCase();
+    for (const [modelName, brandName] of Object.entries(modelToBrand)) {
+      const modelRegex = new RegExp(`\\b${modelName}\\b`, 'i');
+      if (modelRegex.test(lowerText)) {
+        result.brand = brandName;
+        result.model = this.capitalizeWords(modelName);
+
+        // Try to extract additional model info (e.g., "freed psd", "jazz rs")
+        const extendedModelRegex = new RegExp(`${modelName}\\s+([a-z0-9\\s-]+?)(?=\\s+(20\\d{2}|tahun|harga|km|matic|manual|hitam|putih|silver|$))`, 'i');
+        const extendedMatch = lowerText.match(extendedModelRegex);
+        if (extendedMatch && extendedMatch[1].trim()) {
+          result.model = this.capitalizeWords(modelName + ' ' + extendedMatch[1].trim());
         }
         break;
       }
     }
 
-    // If no brand found, try to extract model after "mobil"
+    // If not found by model inference, try explicit brand matching
+    if (!result.brand) {
+      const brands = ['Toyota', 'Honda', 'Daihatsu', 'Mitsubishi', 'Suzuki', 'Nissan', 'Mazda', 'Isuzu', 'Ford', 'Chevrolet', 'Hyundai', 'Kia', 'BMW', 'Mercedes-Benz', 'Mercy', 'Audi', 'Volkswagen', 'VW'];
+
+      for (const brand of brands) {
+        const regex = new RegExp(`(${brand})\\s+([^\\d]+)`, 'i');
+        const match = normalized.match(regex);
+        if (match) {
+          result.brand = this.normalizeBrand(match[1]);
+
+          // Model is everything between brand and year (or other keywords)
+          let modelText = match[2].trim();
+          // Remove "mobil" if exists
+          modelText = modelText.replace(/^mobil\s+/i, '');
+          // Extract until year or price keywords
+          const modelMatch = modelText.match(/^([^\d]+?)(?=\s+(20\d{2}|harga|km|matic|manual))/i);
+          if (modelMatch) {
+            result.model = modelMatch[1].trim();
+          } else {
+            result.model = modelText.split(/\s+(harga|km|matic|manual)/i)[0].trim();
+          }
+          break;
+        }
+      }
+    }
+
+    // If still no brand found, try to extract model after "mobil"
     if (!result.brand) {
       const mobilMatch = normalized.match(/mobil\s+([a-z]+)/i);
       if (mobilMatch) {
@@ -260,10 +332,15 @@ export class CarParser {
       result.transmission = 'Manual'; // Default
     }
 
-    // Extract KM
-    const kmMatch = normalized.match(/km\s*(\d+)/i);
-    if (kmMatch) {
-      result.km = parseInt(kmMatch[1]);
+    // Extract KM (supports "145rb", "145k", "145000")
+    const kmMatchRb = normalized.match(/km\s*(\d+)\s*(rb|ribu|k)/i);
+    if (kmMatchRb) {
+      result.km = parseInt(kmMatchRb[1]) * 1000;
+    } else {
+      const kmMatch = normalized.match(/km\s*(\d+)/i);
+      if (kmMatch) {
+        result.km = parseInt(kmMatch[1]);
+      }
     }
 
     // Extract price
