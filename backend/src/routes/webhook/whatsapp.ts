@@ -32,12 +32,11 @@ const whatsappWebhook = new Hono();
 
 // Initialize optimized service container
 const serviceContainer = ServiceContainer.getInstance();
+
+// Note: Services will be initialized when serviceContainer.initialize() is called in main app
+// These are lazy-loaded properties that will be available after initialization
 const requestDeduplicator = new RequestDeduplicator();
 const timeoutHandler = new TimeoutHandler();
-
-// Initialize StateManager and AdminBotHandler through service container
-const stateManager = serviceContainer.getStateManager();
-const adminBotHandler = serviceContainer.getAdminBotHandler();
 
 interface WhatsAppWebhookPayload {
   event: string;
@@ -224,9 +223,9 @@ whatsappWebhook.post(
     }
 
     // Get optimized services from container
-    const leadService = serviceContainer.getLeadService();
-    const ragEngine = serviceContainer.getRAGEngine();
-    const intentRecognizer = serviceContainer.getIntentRecognizer();
+    const leadService = serviceContainer.leadService;
+    const ragEngine = serviceContainer.ragEngine;
+    const intentRecognizer = serviceContainer.intentRecognizer;
 
     // Find or create lead
     const lead = await leadService.findOrCreateByPhone(tenant.id, customerPhone, {
@@ -347,7 +346,7 @@ whatsappWebhook.post(
 
         // Send fallback message
       try {
-        const whatsapp = serviceContainer.getWhatsAppClient();
+        const whatsapp = serviceContainer.whatsappClient;
           if (whatsapp.isConfigured()) {
             const fallbackMessage = `Maaf, ada kendala teknis. Ketik /help untuk melihat perintah yang tersedia.`;
             await whatsapp.sendMessage({
@@ -389,7 +388,7 @@ whatsappWebhook.post(
         console.log(`[WEBHOOK] Entities:`, intent.entities);
 
         // Get optimized ZAI client and tool executor from container
-        const zaiClient = serviceContainer.getZaiClient();
+        const zaiClient = serviceContainer.zaiClient;
         const toolExecutor = serviceContainer.getToolExecutor({
           tenantId: tenant.id,
           leadId: lead.id,
@@ -696,7 +695,7 @@ Current customer message: "${message}"`,
       
        // Fallback to simple error message
        try {
-         const whatsapp = serviceContainer.getWhatsAppClient();
+         const whatsapp = serviceContainer.whatsappClient;
         if (whatsapp.isConfigured()) {
           const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
            const sendResult = await timeoutHandler.withTimeout(
@@ -767,12 +766,12 @@ Current customer message: "${message}"`,
 whatsappWebhook.get(
   '/health',
   asyncHandler(async (c) => {
-    const healthStatus = await serviceContainer.getHealthChecker().checkAll();
+    const healthStatus = await serviceContainer.healthChecker.checkHealth();
     
     const response: ApiResponse = {
-      success: healthStatus.healthy,
+      success: healthStatus.status === 'healthy',
       data: {
-        status: healthStatus.healthy ? 'healthy' : 'unhealthy',
+        status: healthStatus.status,
         services: healthStatus.services,
         uptime: process.uptime(),
         memory: process.memoryUsage(),
@@ -780,7 +779,7 @@ whatsappWebhook.get(
       },
     };
 
-    return c.json(response, healthStatus.healthy ? 200 : 503);
+    return c.json(response, healthStatus.status === 'healthy' ? 200 : 503);
   })
 );
 
