@@ -356,7 +356,7 @@ Kirim foto lagi atau ketik *"selesai"* untuk lanjut.`;
   }
 
   /**
-   * Generate AI-enhanced copywriting
+   * Generate AI-enhanced copywriting with vision analysis and dynamic variation
    */
   private async generateEnhancedCopy(carData: any): Promise<{
     publicName: string;
@@ -364,45 +364,24 @@ Kirim foto lagi atau ketik *"selesai"* untuk lanjut.`;
     conditionNotes?: string;
   }> {
     try {
-      const prompt = `Kamu adalah copywriter profesional untuk showroom mobil bekas berkualitas.
+      console.log('[UPLOAD V2] Starting enhanced copywriting with vision analysis...');
 
-Data mobil:
-- Brand: ${carData.brand}
-- Model: ${carData.model || ''}
-- Tahun: ${carData.year}
-- Warna: ${carData.color || 'Silver'}
-- Transmisi: ${carData.transmission || 'Manual'}
-- KM: ${carData.km ? carData.km.toLocaleString() : 'N/A'}
-- Harga: Rp ${carData.price ? (Number(carData.price) / 1000000).toFixed(0) : 0} juta
-- Fitur: ${carData.keyFeatures ? carData.keyFeatures.join(', ') : 'Standard'}
-- Catatan: ${carData.notes || 'N/A'}
-
-Buatkan:
-1. Public name (format: Brand Model Tahun Warna + kode akan ditambah otomatis)
-2. Description (2-3 kalimat menarik, highlight value proposition, target buyer yang tepat)
-3. Condition notes (1-2 kalimat tentang kondisi, kelengkapan, keunggulan kondisi mobil)
-
-Format response JSON:
-{
-  "publicName": "...",
-  "description": "...",
-  "conditionNotes": "..."
-}
-
-Gunakan bahasa Indonesia yang natural dan menarik. Fokus pada benefit untuk pembeli.`;
-
-      const response = await this.zaiClient.generate(prompt);
-
-      // Try to parse JSON response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const enhancedData = JSON.parse(jsonMatch[0]);
-        console.log('[UPLOAD V2] AI-enhanced data:', enhancedData);
-        return enhancedData;
+      // Step 1: Vision analysis (if photos available)
+      let visionData: any = null;
+      if (carData.photos && carData.photos.length > 0) {
+        console.log('[UPLOAD V2] Analyzing first photo with GLM-4V...');
+        visionData = await this.analyzeCarPhoto(carData.photos[0], carData);
       }
 
-      // Fallback if no JSON found
-      throw new Error('No JSON found in AI response');
+      // Step 2: Get variation style based on car data (deterministic hash)
+      const variation = this.selectVariation(carData);
+      console.log('[UPLOAD V2] Selected variation:', variation);
+
+      // Step 3: Generate copywriting with vision data + variation
+      const enhancedData = await this.generateDynamicCopywriting(carData, visionData, variation);
+
+      console.log('[UPLOAD V2] AI-enhanced data generated successfully');
+      return enhancedData;
 
     } catch (error) {
       console.error('[UPLOAD V2] Error generating AI copy:', error);
@@ -418,6 +397,265 @@ Gunakan bahasa Indonesia yang natural dan menarik. Fokus pada benefit untuk pemb
         conditionNotes
       };
     }
+  }
+
+  /**
+   * Analyze car photo using GLM-4V vision model
+   */
+  private async analyzeCarPhoto(photoUrl: string, carData: any): Promise<any> {
+    try {
+      // Build vision analysis prompt
+      const visionPrompt = `Analisis detail mobil dalam foto ini:
+
+User menyebutkan:
+- Brand: ${carData.brand}
+- Model: ${carData.model || 'tidak disebutkan'}
+- Tahun: ${carData.year}
+- Warna: ${carData.color || 'tidak disebutkan'}
+
+Tugas kamu:
+1. Validasi warna asli dari foto (apakah sesuai dengan yang disebutkan user?)
+2. Identifikasi varian/tipe mobil dari badge, grill, atau ciri khas
+3. Identifikasi kondisi cat (mulus, ada baret, repaint, dll)
+4. Identifikasi modifikasi visual (velg, bodykit, spoiler, stiker, dll)
+5. Identifikasi fitur visual unggulan (fog lamp, sunroof, roof rack, dll)
+6. Kondisi eksterior secara keseluruhan (excellent, good, fair)
+
+Format response JSON:
+{
+  "actualColor": "warna sebenarnya dari foto",
+  "colorMatch": true/false,
+  "variant": "varian/tipe mobil (misal: E, S, RS, Sport)",
+  "paintCondition": "kondisi cat",
+  "modifications": ["modifikasi 1", "modifikasi 2"],
+  "visualFeatures": ["fitur 1", "fitur 2"],
+  "overallCondition": "excellent/good/fair",
+  "appealingPoints": ["poin menarik 1", "poin menarik 2"]
+}
+
+Berikan response dalam Bahasa Indonesia.`;
+
+      // Call GLM-4V with multimodal content
+      const response = await this.callZaiVisionApi(photoUrl, visionPrompt);
+
+      // Parse JSON from response
+      const jsonMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const visionData = JSON.parse(jsonMatch[0]);
+        console.log('[UPLOAD V2] Vision analysis result:', visionData);
+        return visionData;
+      }
+
+      console.warn('[UPLOAD V2] No JSON found in vision response, using null');
+      return null;
+
+    } catch (error) {
+      console.error('[UPLOAD V2] Error in vision analysis:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Call Z.AI Vision API with multimodal content (GLM-4V)
+   */
+  private async callZaiVisionApi(imageUrl: string, textPrompt: string): Promise<string> {
+    const apiKey = process.env.ZAI_API_KEY || '';
+    const baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/coding/paas/v4';
+    const model = 'glm-4v-plus'; // Vision model
+
+    if (!apiKey) {
+      throw new Error('ZAI API key not configured');
+    }
+
+    // Build multimodal message (OpenAI-compatible format)
+    const payload = {
+      model: model,
+      messages: [
+        {
+          role: 'user',
+          content: [
+            { type: 'text', text: textPrompt },
+            { type: 'image_url', image_url: { url: imageUrl } }
+          ]
+        }
+      ],
+      temperature: 0.7,
+      max_tokens: 1024
+    };
+
+    console.log('[UPLOAD V2] Calling GLM-4V vision API...');
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      console.error('[UPLOAD V2] Vision API error:', errorData);
+      throw new Error(`Vision API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.choices && data.choices.length > 0) {
+      return data.choices[0].message.content || '';
+    }
+
+    throw new Error('No response from vision API');
+  }
+
+  /**
+   * Select copywriting variation based on car data (deterministic hash)
+   * 4 styles × 5 angles = 20 unique variations
+   */
+  private selectVariation(carData: any): { style: string; angle: string } {
+    // Create hash from car data for deterministic selection
+    const hashString = `${carData.brand}-${carData.model}-${carData.year}-${carData.price}`;
+    const hash = this.simpleHash(hashString);
+
+    // 4 copywriting styles
+    const styles = ['storytelling', 'benefit-first', 'aspirational', 'value-focused'];
+    const styleIndex = hash % styles.length;
+    const style = styles[styleIndex];
+
+    // 5 benefit angles
+    const angles = ['investment', 'lifestyle', 'family', 'performance', 'practicality'];
+    const angleIndex = Math.floor(hash / styles.length) % angles.length;
+    const angle = angles[angleIndex];
+
+    return { style, angle };
+  }
+
+  /**
+   * Simple hash function for deterministic variation selection
+   */
+  private simpleHash(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return Math.abs(hash);
+  }
+
+  /**
+   * Generate dynamic copywriting with vision data and variation style
+   */
+  private async generateDynamicCopywriting(
+    carData: any,
+    visionData: any,
+    variation: { style: string; angle: string }
+  ): Promise<{
+    publicName: string;
+    description: string;
+    conditionNotes?: string;
+  }> {
+    // Build style-specific instruction
+    const styleInstructions = {
+      'storytelling': 'Gunakan pendekatan storytelling yang mengajak pembaca membayangkan pengalaman berkendara. Mulai dengan hook emosional.',
+      'benefit-first': 'Langsung highlight 2-3 benefit utama di kalimat pertama. Fokus pada hasil yang didapat pembeli.',
+      'aspirational': 'Gambarkan lifestyle upgrade dan status sosial. Buat pembeli merasa ini adalah mobil impian yang terjangkau.',
+      'value-focused': 'Tekankan value for money, efisiensi, dan investasi cerdas. Gunakan data konkret (harga, tahun, kondisi).'
+    };
+
+    const angleInstructions = {
+      'investment': 'Frame sebagai investasi cerdas. Highlight: harga resale value bagus, demand tinggi, biaya maintenance rendah.',
+      'lifestyle': 'Frame sebagai lifestyle upgrade. Highlight: gaya hidup modern, mobilitas premium, kenyamanan sehari-hari.',
+      'family': 'Frame sebagai mobil keluarga ideal. Highlight: keamanan, kenyamanan keluarga, ruang luas, fitur family-friendly.',
+      'performance': 'Frame sebagai performa optimal. Highlight: mesin responsif, handling bagus, akselerasi, efisiensi bahan bakar.',
+      'practicality': 'Frame sebagai pilihan praktis. Highlight: irit, perawatan mudah, suku cadang murah, cocok daily driver.'
+    };
+
+    // Build comprehensive prompt with vision data
+    let prompt = `Kamu adalah copywriter profesional automotive showroom dengan spesialisasi mobil bekas premium.
+
+📊 DATA MOBIL:
+- Brand: ${carData.brand}
+- Model: ${carData.model || 'standar'}
+- Tahun: ${carData.year}
+- Warna: ${carData.color || 'Silver'}
+- Transmisi: ${carData.transmission || 'Manual'}
+- KM: ${carData.km ? carData.km.toLocaleString() + ' km' : 'belum disebutkan'}
+- Harga: Rp ${carData.price ? (Number(carData.price) / 1000000).toFixed(0) : 0} juta
+- Fitur: ${carData.keyFeatures ? carData.keyFeatures.join(', ') : 'standar'}
+- Catatan user: ${carData.notes || 'tidak ada'}
+`;
+
+    // Add vision analysis data if available
+    if (visionData) {
+      prompt += `
+🔍 ANALISIS FOTO (GLM-4V):
+- Warna asli dari foto: ${visionData.actualColor || carData.color}
+- Varian/tipe: ${visionData.variant || 'standar'}
+- Kondisi cat: ${visionData.paintCondition || 'baik'}
+- Modifikasi: ${visionData.modifications?.join(', ') || 'standar'}
+- Fitur visual unggulan: ${visionData.visualFeatures?.join(', ') || 'standar'}
+- Kondisi keseluruhan: ${visionData.overallCondition || 'good'}
+- Poin menarik: ${visionData.appealingPoints?.join(', ') || '-'}
+`;
+    }
+
+    prompt += `
+🎯 COPYWRITING STYLE: "${variation.style}"
+${styleInstructions[variation.style as keyof typeof styleInstructions]}
+
+🎯 BENEFIT ANGLE: "${variation.angle}"
+${angleInstructions[variation.angle as keyof typeof angleInstructions]}
+
+📝 TUGAS KAMU:
+1. **Public Name**: Format: "[Brand] [Model] [Variant] [Tahun] [Warna]"
+   - Gunakan warna ASLI dari foto (bukan input user jika beda)
+   - Tambahkan variant jika teridentifikasi
+   - Contoh: "Honda Jazz RS 2019 Abu-Abu Metalik"
+
+2. **Description** (2-3 kalimat, 150-200 kata):
+   - Kalimat 1: Hook dengan style "${variation.style}"
+   - Kalimat 2-3: Detail benefit dengan angle "${variation.angle}"
+   - Sebutkan kondisi NYATA dari foto (cat, modifikasi, fitur visual)
+   - SEO-friendly: sebutkan brand, model, tahun, tipe transmisi
+   - Natural, tidak berlebihan, fokus pada fakta menarik
+   - Akhiri dengan soft CTA yang relevan dengan angle
+
+3. **Condition Notes** (1-2 kalimat, 50-80 kata):
+   - Highlight kondisi fisik berdasarkan foto
+   - Sebutkan modifikasi atau upgrade jika ada
+   - Sebutkan kelengkapan (jika disebutkan user)
+   - Fokus pada aspek yang membuat mobil ini stand out
+
+⚠️ PENTING:
+- Gunakan Bahasa Indonesia natural, bukan formal berlebihan
+- JANGAN gunakan kata: "unit", "siap tempur", "jarang ada", "langka"
+- JANGAN claim yang tidak bisa diverifikasi: "terawat bengkel resmi", "record service lengkap" (kecuali user sebutkan)
+- Jika ada perbedaan warna foto vs input user, GUNAKAN warna dari foto + sebutkan di condition notes
+- Setiap mobil HARUS punya copywriting UNIK (karena kombinasi style + angle berbeda)
+
+Format response JSON:
+{
+  "publicName": "...",
+  "description": "...",
+  "conditionNotes": "..."
+}`;
+
+    console.log('[UPLOAD V2] Generating copywriting with variation:', variation);
+
+    // Call GLM-4-Plus for text generation
+    const response = await this.zaiClient.generateResponse(prompt);
+
+    // Parse JSON response
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const enhancedData = JSON.parse(jsonMatch[0]);
+      console.log('[UPLOAD V2] Dynamic copywriting generated');
+      return enhancedData;
+    }
+
+    throw new Error('No JSON found in AI response');
   }
 
   /**
