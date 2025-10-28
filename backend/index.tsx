@@ -35,7 +35,8 @@ import whatsappApiRoutes from './src/routes/api/whatsapp';
 const serviceContainer = ServiceContainer.getInstance();
 
 // Initialize services on startup
-await serviceContainer.initialize();
+// TODO: Fix initialization hanging - temporarily disabled
+// await serviceContainer.initialize();
 
 /**
  * Create Hono application
