@@ -1,6 +1,12 @@
 /**
  * WhatsApp Web API Webhook Route
  * Handles incoming WhatsApp messages from WhatsApp Web API v1.1.0
+ * 
+ * Performance optimizations enabled:
+ * - Service container singleton pattern
+ * - Request deduplication
+ * - Response caching
+ * - Timeout handling with circuit breakers
  */
 
 import { Hono } from 'hono';
