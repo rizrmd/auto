@@ -79,22 +79,17 @@ async function identifyUserType(tenantId: number, senderPhone: string): Promise<
 whatsappWebhook.post(
   '/',
   asyncHandler(async (c) => {
-    const startTime = Date.now();
-    const requestId = Math.random().toString(36).substring(7);
-
-    // Log request details
-    console.log('='.repeat(50));
-    console.log(`[WEBHOOK] WhatsApp Web API webhook received - Request ID: ${requestId}`);
-    console.log(`[WEBHOOK] Timestamp: ${new Date().toISOString()}`);
-    console.log(`[WEBHOOK] Method: ${c.req.method}`);
-    console.log(`[WEBHOOK] URL: ${c.req.url}`);
-    console.log(`[WEBHOOK] User-Agent: ${c.req.header('user-agent') || 'Unknown'}`);
-    console.log(`[WEBHOOK] Content-Type: ${c.req.header('content-type') || 'Unknown'}`);
-    console.log(`[WEBHOOK] Content-Length: ${c.req.header('content-length') || 'Unknown'}`);
-
     const payload = await c.req.json();
-
-    console.log(`[WEBHOOK] WhatsApp Web API Payload:`, payload);
+    console.log(`[WEBHOOK] Payload received:`, payload);
+    
+    // Temporary minimal response for testing
+    return c.json({ 
+      success: true, 
+      data: { 
+        status: 'received',
+        message: 'Webhook is working' 
+      } 
+    });
 
     // Extract message details from WhatsApp Web API format
     let customerPhone: string;
