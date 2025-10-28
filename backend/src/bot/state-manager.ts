@@ -113,16 +113,26 @@ export class StateManager {
       currentFlow?: string;
       currentStep?: number;
       context?: ConversationContext;
-    }
+    },
+    userType: UserType = 'admin'
   ): Promise<void> {
-    await this.prisma.conversationState.update({
+    await this.prisma.conversationState.upsert({
       where: {
         tenantId_userPhone: {
           tenantId,
           userPhone
         }
       },
-      data: {
+      create: {
+        tenantId,
+        userPhone,
+        userType,
+        currentFlow: updates.currentFlow || 'idle',
+        currentStep: updates.currentStep || 0,
+        context: updates.context || {},
+        expiresAt: this.getExpiryDate()
+      },
+      update: {
         ...updates,
         expiresAt: this.getExpiryDate(),
         updatedAt: new Date()
@@ -133,15 +143,24 @@ export class StateManager {
   /**
    * Reset state to idle
    */
-  async resetState(tenantId: number, userPhone: string): Promise<void> {
-    await this.prisma.conversationState.update({
+  async resetState(tenantId: number, userPhone: string, userType: UserType = 'admin'): Promise<void> {
+    await this.prisma.conversationState.upsert({
       where: {
         tenantId_userPhone: {
           tenantId,
           userPhone
         }
       },
-      data: {
+      create: {
+        tenantId,
+        userPhone,
+        userType,
+        currentFlow: 'idle',
+        currentStep: 0,
+        context: {},
+        expiresAt: this.getExpiryDate()
+      },
+      update: {
         currentFlow: 'idle',
         currentStep: 0,
         context: {},
@@ -158,13 +177,14 @@ export class StateManager {
     tenantId: number,
     userPhone: string,
     flowName: string,
-    initialContext: ConversationContext = {}
+    initialContext: ConversationContext = {},
+    userType: UserType = 'admin'
   ): Promise<void> {
     await this.updateState(tenantId, userPhone, {
       currentFlow: flowName,
       currentStep: 0,
       context: initialContext
-    });
+    }, userType);
   }
 
   /**
