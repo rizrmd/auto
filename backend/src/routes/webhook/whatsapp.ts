@@ -367,7 +367,7 @@ whatsappWebhook.post(
 
         // Send fallback message
       try {
-        const whatsapp = serviceContainer.whatsappClient;
+         const whatsapp = serviceContainer.whatsappClient || new WhatsAppClient();
           if (whatsapp.isConfigured()) {
             const fallbackMessage = `Maaf, ada kendala teknis. Ketik /help untuk melihat perintah yang tersedia.`;
             await whatsapp.sendMessage({
@@ -409,14 +409,21 @@ whatsappWebhook.post(
         console.log(`[WEBHOOK] Entities:`, intent.entities);
 
         // Get optimized ZAI client and tool executor from container
-        const zaiClient = serviceContainer.zaiClient;
-        const toolExecutor = serviceContainer.getToolExecutor({
-          tenantId: tenant.id,
-          leadId: lead.id,
-          customerPhone: customerPhone,
-          prisma: prisma,
-          whatsapp: whatsapp,
-        });
+        const zaiClient = serviceContainer.zaiClient || new ZaiClient();
+        const toolExecutor = serviceContainer.getToolExecutor ? 
+          serviceContainer.getToolExecutor({
+            tenantId: tenant.id,
+            leadId: lead.id,
+            customerPhone: customerPhone,
+            prisma: prisma,
+            whatsapp: whatsapp,
+          }) : new ToolExecutor({
+            tenantId: tenant.id,
+            leadId: lead.id,
+            customerPhone: customerPhone,
+            prisma: prisma,
+            whatsapp: whatsapp,
+          });
 
         // Get conversation history for context (with caching)
         const cacheKey = `conversation:${tenant.id}:${lead.id}`;
@@ -427,11 +434,26 @@ whatsappWebhook.post(
           history = cachedHistory;
           console.log(`[WEBHOOK] Using cached conversation history`);
         } else {
-          history = await serviceContainer.getOptimizedQueries().getConversationHistory(
-            tenant.id, 
-            lead.id, 
-            10
-          );
+          // Fallback to simple query when optimized queries not available
+          if (serviceContainer.getOptimizedQueries) {
+            history = await serviceContainer.getOptimizedQueries().getConversationHistory(
+              tenant.id, 
+              lead.id, 
+              10
+            );
+          } else {
+            const messages = await prisma.message.findMany({
+              where: {
+                tenantId: tenant.id,
+                leadId: lead.id,
+              },
+              orderBy: {
+                createdAt: 'desc'
+              },
+              take: 10
+            });
+            history = messages;
+          }
           // Cache for 2 minutes
           await responseCache.set(cacheKey, history, { ttl: 120, tags: ['conversation', `tenant:${tenant.id}`] });
         }
@@ -716,7 +738,7 @@ Current customer message: "${message}"`,
       
        // Fallback to simple error message
        try {
-         const whatsapp = serviceContainer.whatsappClient;
+        const whatsapp = serviceContainer.whatsappClient || new WhatsAppClient();
         if (whatsapp.isConfigured()) {
           const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
            const sendResult = await timeoutHandler.withTimeout(
@@ -787,7 +809,9 @@ Current customer message: "${message}"`,
 whatsappWebhook.get(
   '/health',
   asyncHandler(async (c) => {
-    const healthStatus = await serviceContainer.healthChecker.checkHealth();
+    const healthStatus = serviceContainer.healthChecker ? 
+      await serviceContainer.healthChecker.checkHealth() : 
+      { status: 'healthy', services: {} };
     
     const response: ApiResponse = {
       success: healthStatus.status === 'healthy',
