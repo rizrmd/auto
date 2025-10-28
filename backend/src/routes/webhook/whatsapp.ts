@@ -240,46 +240,62 @@ whatsappWebhook.post(
 
           console.log(`[WEBHOOK] Admin bot response: "${adminResponse.substring(0, 100)}..."`);
 
-          // Send admin bot response
-          const sendResult = await whatsapp.sendMessage({
-            target: customerPhone,
-            message: adminResponse
-          });
-
-          if (sendResult.success) {
-            console.log(`[WEBHOOK] Admin bot response sent successfully to ${customerPhone}`);
-
-            // Save bot response to database
-            await prisma.message.create({
-              data: {
-                tenantId: tenant.id,
-                leadId: lead.id,
-                sender: 'bot',
-                message: adminResponse,
-                metadata: {
-                  type: 'text',
-                  autoReply: true,
-                  botType: 'admin',
-                  userType: userType,
-                  webhookFormat: 'whatsapp-web-api',
-                  hasMediaInput: media ? true : false,
-                  mediaType: media?.type,
-                },
-              },
+          // Skip sending if response is empty (silent processing for bulk photos)
+          if (adminResponse && adminResponse.trim().length > 0) {
+            // Send admin bot response
+            const sendResult = await whatsapp.sendMessage({
+              target: customerPhone,
+              message: adminResponse
             });
 
-            // Mark as read
+            if (sendResult.success) {
+              console.log(`[WEBHOOK] Admin bot response sent successfully to ${customerPhone}`);
+
+              // Save bot response to database
+              await prisma.message.create({
+                data: {
+                  tenantId: tenant.id,
+                  leadId: lead.id,
+                  sender: 'bot',
+                  message: adminResponse,
+                  metadata: {
+                    type: 'text',
+                    autoReply: true,
+                    botType: 'admin',
+                    userType: userType,
+                    webhookFormat: 'whatsapp-web-api',
+                    hasMediaInput: media ? true : false,
+                    mediaType: media?.type,
+                  },
+                },
+              });
+
+              // Mark as read
+              try {
+                const messageIds = messageId ? [messageId] : undefined;
+                const readResult = await whatsapp.markAsRead(customerPhone, messageIds);
+                if (readResult.success) {
+                  console.log(`[WEBHOOK] Message marked as read for ${customerPhone} (admin bot)`);
+                }
+              } catch (readError) {
+                console.warn('[WEBHOOK] Error marking message as read (admin):', readError);
+              }
+            } else {
+              console.error('[WEBHOOK] Failed to send admin bot response:', sendResult.error);
+            }
+          } else {
+            console.log(`[WEBHOOK] Skipping send (empty response = silent processing)`);
+
+            // Still mark as read even for silent processing
             try {
               const messageIds = messageId ? [messageId] : undefined;
               const readResult = await whatsapp.markAsRead(customerPhone, messageIds);
               if (readResult.success) {
-                console.log(`[WEBHOOK] Message marked as read for ${customerPhone} (admin bot)`);
+                console.log(`[WEBHOOK] Message marked as read for ${customerPhone} (silent processing)`);
               }
             } catch (readError) {
-              console.warn('[WEBHOOK] Error marking message as read (admin):', readError);
+              console.warn('[WEBHOOK] Error marking message as read (silent):', readError);
             }
-          } else {
-            console.error('[WEBHOOK] Failed to send admin bot response:', sendResult.error);
           }
         } else {
           console.warn('[WEBHOOK] WhatsApp API not configured, skipping admin bot reply');

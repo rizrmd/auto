@@ -200,11 +200,22 @@ Minimal: brand/model, tahun, harga`;
           }
         });
 
-        return `✅ Foto ${updatedPhotos.length} diterima!
+        // Only send response for first photo or every 5th photo to avoid spam
+        // When user sends bulk photos, most will be processed silently
+        if (updatedPhotos.length === 1) {
+          return `✅ Foto pertama diterima!
 
-📸 Total foto: ${updatedPhotos.length}/10
+📸 Kirim foto lainnya (maksimal 10 foto).
 
-Kirim foto lagi atau ketik *"selesai"* untuk lanjut ke konfirmasi.`;
+Setelah semua foto terkirim, ketik *"selesai"* untuk lanjut.`;
+        } else if (updatedPhotos.length % 5 === 0) {
+          return `📸 Total foto: ${updatedPhotos.length}/10
+
+Kirim foto lagi atau ketik *"selesai"* untuk lanjut.`;
+        }
+
+        // Silent processing for photos 2-4, 6-9 to avoid message spam
+        return '';
       } catch (error) {
         console.error('[UPLOAD V2] Error downloading photo:', error);
         return `⚠️ Gagal mengunduh foto. Silakan coba kirim lagi atau ketik *"skip"* untuk lanjut tanpa foto.`;
