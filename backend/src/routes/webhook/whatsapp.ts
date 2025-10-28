@@ -80,7 +80,7 @@ whatsappWebhook.post(
   '/',
   asyncHandler(async (c) => {
     const startTime = Date.now();
-    const requestId = c.get('requestId');
+    const requestId = Math.random().toString(36).substring(7);
 
     // Log request details
     console.log('='.repeat(50));
