@@ -27,6 +27,7 @@ import { ServiceContainer } from '../../services/service-container';
 import { RequestDeduplicator } from '../../middleware/request-deduplicator';
 import { TimeoutHandler } from '../../middleware/timeout-handler';
 import { responseCache } from '../../cache/response-cache';
+import { webhookDeduplicator } from '../../middleware/request-deduplicator';
 
 const whatsappWebhook = new Hono();
 
@@ -78,7 +79,7 @@ async function identifyUserType(tenantId: number, senderPhone: string): Promise<
 whatsappWebhook.post(
   '/',
   // Add request deduplication middleware
-  requestDeduplicator.deduplicate('webhook'),
+  webhookDeduplicator(),
   asyncHandler(async (c) => {
     const startTime = Date.now();
     const requestId = c.get('requestId');
