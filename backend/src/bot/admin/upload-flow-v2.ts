@@ -150,6 +150,15 @@ Minimal: brand/model, tahun, harga`;
   ): Promise<string> {
     const existingPhotos = context.carData?.photos || [];
 
+    // ⚠️ WORKAROUND: Handle "Image received" message from WhatsApp webhook
+    // Some WhatsApp API configurations send "Image received" text without media URL
+    // We acknowledge silently to avoid spam, actual photos will be added manually or via web dashboard
+    if (message.trim() === 'Image received') {
+      console.log('[UPLOAD V2] Received "Image received" notification (no media URL in webhook)');
+      // Silent acknowledgment - return empty string to avoid spam
+      return '';
+    }
+
     // Handle skip
     if (message.toLowerCase().trim() === 'skip' || message.toLowerCase().trim() === '-') {
       await this.stateManager.nextStep(tenant.id, userPhone, {
