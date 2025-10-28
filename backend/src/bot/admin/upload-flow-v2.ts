@@ -460,8 +460,8 @@ Berikan response dalam Bahasa Indonesia.`;
    */
   private async callZaiVisionApi(imageUrl: string, textPrompt: string): Promise<string> {
     const apiKey = process.env.ZAI_API_KEY || '';
-    const baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/coding/paas/v4';
-    const model = 'glm-4v-plus'; // Vision model
+    const baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/paas/v4';
+    const model = 'glm-4.5v'; // GLM-4.5V vision model (106B MOE, 12B active)
 
     if (!apiKey) {
       throw new Error('ZAI API key not configured');
