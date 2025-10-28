@@ -80,17 +80,278 @@ whatsappWebhook.post(
   '/',
   async (c) => {
     try {
+      const startTime = Date.now();
+      const requestId = Math.random().toString(36).substring(7);
+
+      console.log('='.repeat(50));
+      console.log(`[WEBHOOK] WhatsApp Web API webhook received - Request ID: ${requestId}`);
+      console.log(`[WEBHOOK] Timestamp: ${new Date().toISOString()}`);
+
       const payload = await c.req.json();
-      console.log(`[WEBHOOK] Payload received:`, payload);
-      
-      // Temporary minimal response for testing
-      return c.json({ 
-        success: true, 
-        data: { 
-          status: 'received',
-          message: 'Webhook is working' 
-        } 
+      console.log(`[WEBHOOK] WhatsApp Web API Payload:`, payload);
+
+      // Validate required fields for WhatsApp Web API v1.6.0
+      if (!payload.event || payload.event !== 'message') {
+        console.warn('[WEBHOOK] Invalid event type:', payload.event);
+        const response: ApiResponse = {
+          success: false,
+          error: {
+            code: 'INVALID_EVENT',
+            message: 'Only message events are supported',
+          },
+        };
+        return c.json(response, 400);
+      }
+
+      if (!payload.sender) {
+        console.error('[WEBHOOK] Missing sender field');
+        const response: ApiResponse = {
+          success: false,
+          error: {
+            code: 'MISSING_SENDER',
+            message: 'Sender field is required',
+          },
+        };
+        return c.json(response, 400);
+      }
+
+      // Extract message details from WhatsApp Web API format
+      let customerPhone: string;
+      let customerName: string | undefined;
+      let message: string;
+      let messageType: string = 'text';
+      let messageId: string | undefined;
+      let media: { url: string; type: string; caption?: string } | undefined;
+
+      // Extract phone from JID format: "1234567890@s.whatsapp.net" or "1234567890@c.us"
+      customerPhone = payload.sender.split('@')[0];
+      message = payload.message || payload.caption || '';
+      messageId = payload.id || undefined;
+
+      console.log(`[WEBHOOK] Message from ${customerPhone}: "${message}"`);
+      console.log(`[WEBHOOK] Chat: ${payload.chat || 'private'}`);
+      console.log(`[WEBHOOK] Time: ${payload.time || 'unknown'}`);
+
+      // Handle attachment according to WhatsApp Web API v1.6.0 format
+      if (payload.attachment) {
+        media = {
+          url: payload.attachment.url,
+          type: payload.attachment.type,
+          caption: payload.attachment.caption
+        };
+        messageType = payload.attachment.type;
+        console.log(`[WEBHOOK] 📸 Attachment detected:`, media);
+      }
+
+      // Determine tenant based on device/number
+      const tenant = await prisma.tenant.findFirst({
+        where: {
+          status: 'active',
+          whatsappBotEnabled: true,
+        },
       });
+
+      if (!tenant) {
+        console.warn('[WEBHOOK] No active tenant found for webhook');
+        const response: ApiResponse = {
+          success: false,
+          error: {
+            code: 'NO_TENANT',
+            message: 'No active tenant configured',
+          },
+        };
+        return c.json(response, 400);
+      }
+
+      // Use fallback services when container not initialized
+      const leadService = serviceContainer.leadService || new LeadService();
+      const ragEngine = serviceContainer.ragEngine || new RAGEngine(prisma);
+      const intentRecognizer = serviceContainer.intentRecognizer || new IntentRecognizer();
+
+      // Find or create lead
+      const lead = await leadService.findOrCreateByPhone(tenant.id, customerPhone, {
+        customerName,
+        source: 'wa',
+        status: 'new',
+      });
+
+      // Simple deduplication - check if message already exists
+      if (messageId) {
+        const existingMessage = await prisma.message.findFirst({
+          where: {
+            messageId: messageId,
+            tenantId: tenant.id
+          }
+        });
+
+        if (existingMessage) {
+          console.log(`[WEBHOOK] Duplicate message detected: ${messageId}`);
+          const response: ApiResponse = {
+            success: true,
+            data: {
+              status: 'duplicate',
+              message: 'Message already processed',
+            },
+          };
+          return c.json(response);
+        }
+      }
+
+      // Save message to database (with media metadata)
+      await prisma.message.create({
+        data: {
+          tenantId: tenant.id,
+          leadId: lead.id,
+          sender: 'customer',
+          message: message,
+          metadata: {
+            type: messageType,
+            chat: payload.chat,
+            time: payload.time,
+            messageId: messageId,
+            webhookFormat: 'whatsapp-web-api-v1.6.0',
+            media: media ? {
+              url: media.url,
+              type: media.type,
+              caption: media.caption
+            } : undefined,
+          },
+        },
+      });
+
+      // 🔀 ROUTING: Identify user type and route to appropriate bot
+      const userType = await identifyUserType(tenant.id, customerPhone);
+      console.log(`[WEBHOOK] User type identified: ${userType}`);
+
+      // 🤖 ADMIN/SALES BOT: Handle admin commands
+      if (userType === 'admin' || userType === 'sales') {
+        console.log(`[WEBHOOK] Routing to Admin Bot for ${userType}`);
+
+        try {
+          const whatsapp = serviceContainer.whatsappClient || new WhatsAppClient();
+
+          if (whatsapp.isConfigured()) {
+            const adminResponse = await adminBotHandler.handleMessage(
+              tenant,
+              customerPhone,
+              userType,
+              message,
+              media
+            );
+
+            console.log(`[WEBHOOK] Admin bot response: "${adminResponse.substring(0, 100)}..."`);
+
+            if (adminResponse && adminResponse.trim().length > 0) {
+              const sendResult = await whatsapp.sendMessage({
+                target: customerPhone,
+                message: adminResponse
+              });
+
+              if (sendResult.success) {
+                console.log(`[WEBHOOK] Admin bot response sent successfully to ${customerPhone}`);
+
+                await prisma.message.create({
+                  data: {
+                    tenantId: tenant.id,
+                    leadId: lead.id,
+                    sender: 'bot',
+                    message: adminResponse,
+                    metadata: {
+                      type: 'text',
+                      autoReply: true,
+                      botType: 'admin',
+                      userType: userType,
+                      webhookFormat: 'whatsapp-web-api-v1.6.0',
+                      hasMediaInput: media ? true : false,
+                      mediaType: media?.type,
+                    },
+                  },
+                });
+              }
+            }
+          }
+        } catch (adminError) {
+          console.error('[WEBHOOK] Error in admin bot workflow:', adminError);
+        }
+
+        const response: ApiResponse = {
+          success: true,
+          data: {
+            leadId: lead.id,
+            status: 'processed',
+            message: 'Admin bot processed message',
+            userType: userType,
+          },
+        };
+
+        return c.json(response);
+      }
+
+      // 👤 CUSTOMER BOT: Generate intelligent response using LLM with function calling
+      console.log(`[WEBHOOK] Routing to Customer Bot with LLM`);
+
+      try {
+        const whatsapp = serviceContainer.whatsappClient || new WhatsAppClient();
+
+        if (whatsapp.isConfigured()) {
+          console.log(`[WEBHOOK] Processing message: "${message}"`);
+
+          const intent = intentRecognizer.recognizeIntent(message);
+          console.log(`[WEBHOOK] Intent: ${intent.type}, Confidence: ${intent.confidence}`);
+
+          const finalResponse = await ragEngine.generateResponse(
+            tenant,
+            message,
+            intent.entities,
+            'general'
+          );
+
+          console.log(`[WEBHOOK] Generated response: "${finalResponse.substring(0, 100)}..."`);
+
+          const sendResult = await whatsapp.sendMessage({
+            target: customerPhone,
+            message: finalResponse
+          });
+
+          if (sendResult.success) {
+            console.log(`[WEBHOOK] Response sent successfully to ${customerPhone}`);
+
+            await prisma.message.create({
+              data: {
+                tenantId: tenant.id,
+                leadId: lead.id,
+                sender: 'bot',
+                message: finalResponse,
+                metadata: {
+                  type: 'text',
+                  autoReply: true,
+                  intent: intent.type,
+                  confidence: intent.confidence,
+                  entities: intent.entities,
+                  webhookFormat: 'whatsapp-web-api-v1.6.0',
+                },
+              },
+            });
+          }
+        }
+      } catch (error) {
+        console.error('[WEBHOOK] Error in customer bot workflow:', error);
+      }
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          leadId: lead.id,
+          status: 'processed',
+          message: 'WhatsApp Web API webhook processed',
+        },
+      };
+
+      const processingTime = Date.now() - startTime;
+      console.log(`[WEBHOOK] ✅ Webhook processed in ${processingTime}ms`);
+
+      return c.json(response);
+
     } catch (error) {
       console.error('[WEBHOOK] Error:', error);
       return c.json({ 
