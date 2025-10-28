@@ -173,16 +173,18 @@ Minimal: brand/model, tahun, harga`;
 
     // Handle "selesai"
     if (message.toLowerCase().trim() === 'selesai') {
-      if (existingPhotos.length === 0) {
-        return '❌ Belum ada foto. Kirim minimal 1 foto atau ketik *"skip"* untuk upload tanpa foto.';
-      }
-
+      // Allow "selesai" without photos - treat as skip
+      // User can upload photos later via web dashboard
       await this.stateManager.nextStep(tenant.id, userPhone, {
         carData: {
           ...context.carData,
           photos: existingPhotos
         }
       });
+
+      if (existingPhotos.length === 0) {
+        console.log('[UPLOAD V2] User typed "selesai" without photos, proceeding without photos');
+      }
 
       return await this.buildConfirmation(tenant, { ...context.carData, photos: existingPhotos });
     }

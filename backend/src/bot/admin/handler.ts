@@ -38,6 +38,15 @@ export class AdminBotHandler {
     media?: { url: string; type: string }
   ): Promise<string> {
     try {
+      // Parse command first to check for control commands
+      const command = this.parseCommand(message);
+
+      // Handle /cancel command (priority - works even in flow)
+      if (command.name === 'cancel') {
+        await this.stateManager.resetState(tenant.id, userPhone);
+        return '❌ Proses dibatalkan. Ketik /help untuk lihat perintah lain.';
+      }
+
       // Check if user is in upload flow
       const isInFlow = await this.stateManager.isInFlow(tenant.id, userPhone);
 
@@ -45,12 +54,16 @@ export class AdminBotHandler {
         const currentFlow = await this.stateManager.getCurrentFlow(tenant.id, userPhone);
 
         if (currentFlow === 'upload_car_v2') {
+          // Allow /upload to restart flow
+          if (command.name === 'upload') {
+            await this.stateManager.resetState(tenant.id, userPhone);
+            return await this.uploadCommand.execute(tenant, userPhone, message);
+          }
+
+          // Continue with current flow
           return await this.uploadFlowV2.processStep(tenant, userPhone, message, media);
         }
       }
-
-      // Parse command
-      const command = this.parseCommand(message);
 
       // Handle commands
       switch (command.name) {
