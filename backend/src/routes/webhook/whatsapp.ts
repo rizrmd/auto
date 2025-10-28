@@ -144,6 +144,27 @@ whatsappWebhook.post(
         messageType = payload.type;
         console.log(`[WEBHOOK] 📸 Media detected (format 4 - type/url):`, media);
       }
+      // Format 5: { attachment: { type: "image", ... } } - WITHOUT URL
+      // WhatsApp Web API may send attachment metadata without URL
+      // We detect it but can't download without URL - inform user
+      else if (payload.attachment?.type && !payload.attachment.url) {
+        messageType = payload.attachment.type;
+        console.log(`[WEBHOOK] 📸 Media detected BUT NO URL (format 5 - attachment without URL):`, {
+          type: payload.attachment.type,
+          mimetype: payload.attachment.mimetype,
+          file_length: payload.attachment.file_length
+        });
+        // Set media with special marker to indicate no URL available
+        media = {
+          url: '__NO_URL__',
+          type: payload.attachment.type,
+          metadata: {
+            mimetype: payload.attachment.mimetype,
+            file_length: payload.attachment.file_length,
+            caption: payload.attachment.caption || ''
+          }
+        };
+      }
 
       // Log full payload if no media detected (for debugging)
       if (!media && !message) {

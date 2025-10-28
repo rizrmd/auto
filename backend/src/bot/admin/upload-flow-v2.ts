@@ -191,6 +191,44 @@ Minimal: brand/model, tahun, harga`;
 
     // Handle photo
     if (media && media.type === 'image') {
+      // Check if URL is available
+      if (media.url === '__NO_URL__') {
+        // WhatsApp API sent attachment metadata but no URL to download
+        console.log('[UPLOAD V2] Photo received but no URL available from webhook');
+
+        // Count as photo received (for user feedback) but can't download
+        const photoCount = existingPhotos.length + 1;
+
+        // Update counter in state (but don't add actual URL since we can't download)
+        await this.stateManager.updateState(tenant.id, userPhone, {
+          context: {
+            ...context,
+            carData: {
+              ...context.carData,
+              photos: existingPhotos,
+              photoCount: photoCount  // Track count separately
+            }
+          }
+        });
+
+        // Acknowledge photo but explain limitation
+        if (photoCount === 1) {
+          return `📸 Foto terdeteksi!
+
+⚠️ *Catatan:* Webhook WhatsApp tidak mengirim URL foto. Foto perlu diupload via Web Dashboard setelah mobil tersimpan.
+
+💡 *Solusi:*
+1. Ketik *"selesai"* untuk lanjut tanpa foto
+2. Upload foto via https://auto.lumiku.com/admin setelah mobil tersimpan
+
+Atau ketik *"/cancel"* untuk batal dan upload via web langsung.`;
+        }
+
+        // Silent for subsequent photos
+        return '';
+      }
+
+      // URL available - try to download
       try {
         // Download and save photo
         const photoUrl = await this.mediaDownloader.downloadAndSave(
