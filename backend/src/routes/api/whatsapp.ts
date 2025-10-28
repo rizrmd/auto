@@ -210,4 +210,47 @@ app.get('/version', async (c) => {
   }
 });
 
+/**
+ * Debug endpoint to check webhook configuration
+ */
+app.get('/debug', async (c) => {
+  try {
+    // Try to get debug info from WhatsApp API
+    const response = await fetch('http://localhost:8080/health', {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'User-Agent': 'AutoLeads-Proxy/1.0',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`WhatsApp API debug failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    return c.json({
+      success: true,
+      data: data,
+      proxy: {
+        timestamp: new Date().toISOString(),
+        configured_webhook_url: process.env.APP_URL ? `${process.env.APP_URL}/webhook/whatsapp` : 'NOT_SET',
+        app_url: process.env.APP_URL || 'NOT_SET',
+      },
+    });
+  } catch (error) {
+    console.error('[WHATSAPP PROXY] Debug check failed:', error);
+    
+    return c.json({
+      success: false,
+      error: {
+        code: 'DEBUG_CHECK_FAILED',
+        message: 'Failed to get WhatsApp API debug info',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
+    }, 503);
+  }
+});
+
 export default app;

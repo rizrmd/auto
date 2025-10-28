@@ -57,7 +57,9 @@ async function identifyUserType(tenantId: number, senderPhone: string): Promise<
 whatsappWebhook.post('/', async (c) => {
   try {
     const payload: WhatsAppWebhookPayload = await c.req.json();
-    console.log(`[WEBHOOK] WhatsApp Web API v1.6.0 Payload:`, payload);
+    console.log(`[WEBHOOK] 📨 WhatsApp Web API v1.6.0 Payload:`, JSON.stringify(payload, null, 2));
+    console.log(`[WEBHOOK] 🕐 Timestamp: ${new Date().toISOString()}`);
+    console.log(`[WEBHOOK] 🌐 Request headers:`, JSON.stringify(Object.fromEntries(c.req.header()), null, 2));
 
     // Validate required fields
     if (!payload.event || payload.event !== 'message') {
