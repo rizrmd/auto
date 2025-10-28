@@ -86,6 +86,20 @@ export class RateLimitError extends AppError {
 }
 
 /**
+ * Timeout Error
+ */
+export class TimeoutError extends AppError {
+  constructor(operation: string, timeout: number) {
+    super(
+      HTTP_STATUS.REQUEST_TIMEOUT, 
+      'TIMEOUT', 
+      `Operation "${operation}" timed out after ${timeout}ms`
+    );
+    this.name = 'TimeoutError';
+  }
+}
+
+/**
  * Maps known error types to status codes and error codes
  */
 function mapErrorToResponse(error: Error): {

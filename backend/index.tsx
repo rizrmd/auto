@@ -15,6 +15,7 @@ import { readFile } from 'node:fs/promises';
 import { errorHandler } from './src/middleware/error-handler';
 import { CORS_CONFIG } from './src/config/constants';
 import { env, isDevelopment } from './src/config/env';
+import { ServiceContainer } from './src/services/service-container';
 
 // Import routes
 import healthRoutes from './src/routes/health';
@@ -27,6 +28,14 @@ import adminLeadsRoutes from './src/routes/admin/leads';
 import adminWhatsappRoutes from './src/routes/admin/whatsapp';
 import tenantRoutes from './src/routes/tenant';
 import whatsappApiRoutes from './src/routes/api/whatsapp';
+
+/**
+ * Initialize service container and warm up services
+ */
+const serviceContainer = ServiceContainer.getInstance();
+
+// Initialize services on startup
+await serviceContainer.initialize();
 
 /**
  * Create Hono application

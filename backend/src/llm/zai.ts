@@ -173,14 +173,46 @@ export class ZaiClient {
   private model: string;
   private defaultMaxTokens: number = 1024;
   private defaultTemperature: number = 0.7;
+  
+  // Connection pooling
+  private httpAgent: any;
+  private requestQueue: Map<string, Promise<any>> = new Map();
+  private readonly MAX_CONCURRENT_REQUESTS = 5;
+  private readonly REQUEST_TIMEOUT = 30000; // 30 seconds
 
   constructor() {
     this.apiKey = process.env.ZAI_API_KEY || '';
     this.baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/coding/paas/v4';
     this.model = process.env.ZAI_MODEL || 'glm-4.5v';
 
+    // Initialize HTTP agent with connection pooling
+    this.initializeHttpAgent();
+
     if (!this.apiKey) {
       console.warn('⚠️ ZAI_API_KEY not set. LLM features will not work.');
+    }
+  }
+
+  /**
+   * Initialize HTTP agent with connection pooling and keep-alive
+   */
+  private initializeHttpAgent(): void {
+    try {
+      // Use undici for better performance if available
+      const { fetch } = require('undici');
+      
+      // Create agent with connection pooling
+      this.httpAgent = new fetch.Agent({
+        connections: 10,
+        keepAlive: true,
+        keepAliveTimeout: 30000,
+        timeout: this.REQUEST_TIMEOUT,
+      });
+      
+      console.log('[ZAI CLIENT] HTTP agent initialized with connection pooling');
+    } catch (error) {
+      console.warn('[ZAI CLIENT] Using default fetch, connection pooling not available:', error);
+      this.httpAgent = null;
     }
   }
 
@@ -222,10 +254,49 @@ export class ZaiClient {
   }
 
   /**
-   * Core API call method
+   * Core API call method with connection pooling and request deduplication
    * @private
    */
   private async callZaiApi(
+    messages: ChatMessage[],
+    tools?: Tool[],
+    toolChoice?: 'auto' | 'none'
+  ): Promise<any> {
+    // Create request key for deduplication
+    const requestKey = this.createRequestKey(messages, tools, toolChoice);
+    
+    // Check if identical request is already in progress
+    if (this.requestQueue.has(requestKey)) {
+      console.log('[ZAI CLIENT] Request deduplication - waiting for existing request');
+      return await this.requestQueue.get(requestKey);
+    }
+
+    // Create request promise
+    const requestPromise = this.executeRequest(messages, tools, toolChoice);
+    
+    // Add to queue (limit concurrent requests)
+    if (this.requestQueue.size >= this.MAX_CONCURRENT_REQUESTS) {
+      // Remove oldest completed request
+      const oldestKey = this.requestQueue.keys().next().value;
+      this.requestQueue.delete(oldestKey);
+    }
+    
+    this.requestQueue.set(requestKey, requestPromise);
+
+    try {
+      const result = await requestPromise;
+      return result;
+    } finally {
+      // Clean up queue
+      this.requestQueue.delete(requestKey);
+    }
+  }
+
+  /**
+   * Execute actual HTTP request with timeout and retry
+   * @private
+   */
+  private async executeRequest(
     messages: ChatMessage[],
     tools?: Tool[],
     toolChoice?: 'auto' | 'none'
@@ -252,38 +323,80 @@ export class ZaiClient {
       lastMessageRole: messages[messages.length - 1]?.role
     });
 
-    const response = await fetch(
-      `${this.baseUrl}/chat/completions`,
-      {
+    // Create AbortController for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), this.REQUEST_TIMEOUT);
+
+    try {
+      const fetchOptions: RequestInit = {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Connection': 'keep-alive',
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
+        signal: controller.signal,
+      };
+
+      // Use pooled agent if available
+      if (this.httpAgent) {
+        (fetchOptions as any).dispatcher = this.httpAgent;
       }
-    );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      console.error('❌ ZAI API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorData
+      const response = await fetch(`${this.baseUrl}/chat/completions`, fetchOptions);
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ ZAI API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData
+        });
+        throw new Error(`ZAI API error: ${response.status} - ${response.statusText}`);
+      }
+
+      const data = await response.json();
+
+      console.log('📥 ZAI API Response:', {
+        finishReason: data.choices?.[0]?.finish_reason,
+        hasToolCalls: !!data.choices?.[0]?.message?.tool_calls,
+        toolCallsCount: data.choices?.[0]?.message?.tool_calls?.length || 0,
+        usage: data.usage
       });
-      throw new Error(`ZAI API error: ${response.status} - ${response.statusText}`);
+
+      return data;
+
+    } catch (error) {
+      clearTimeout(timeoutId);
+      
+      if (error.name === 'AbortError') {
+        throw new Error(`ZAI API timeout after ${this.REQUEST_TIMEOUT}ms`);
+      }
+      
+      throw error;
     }
+  }
 
-    const data = await response.json();
-
-    console.log('📥 ZAI API Response:', {
-      finishReason: data.choices?.[0]?.finish_reason,
-      hasToolCalls: !!data.choices?.[0]?.message?.tool_calls,
-      toolCallsCount: data.choices?.[0]?.message?.tool_calls?.length || 0,
-      usage: data.usage
-    });
-
-    return data;
+  /**
+   * Create unique key for request deduplication
+   * @private
+   */
+  private createRequestKey(
+    messages: ChatMessage[],
+    tools?: Tool[],
+    toolChoice?: 'auto' | 'none'
+  ): string {
+    const keyData = {
+      model: this.model,
+      messages: messages.map(m => ({ role: m.role, content: m.content?.slice(0, 100) })),
+      toolsCount: tools?.length || 0,
+      toolChoice
+    };
+    
+    return Buffer.from(JSON.stringify(keyData)).toString('base64');
   }
 
   /**

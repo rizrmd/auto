@@ -17,12 +17,22 @@ import type { ApiResponse } from '../../types/context';
 import { AdminBotHandler } from '../../bot/admin/handler';
 import { StateManager } from '../../bot/state-manager';
 import { UserType } from '../../../generated/prisma';
+import { ServiceContainer } from '../../services/service-container';
+import { RequestDeduplicator } from '../../middleware/request-deduplicator';
+import { TimeoutHandler } from '../../middleware/timeout-handler';
+import { ResponseCache } from '../../cache/response-cache';
 
 const whatsappWebhook = new Hono();
 
-// Initialize StateManager and AdminBotHandler
-const stateManager = new StateManager(prisma);
-const adminBotHandler = new AdminBotHandler(prisma, stateManager);
+// Initialize optimized service container
+const serviceContainer = ServiceContainer.getInstance();
+const requestDeduplicator = new RequestDeduplicator();
+const timeoutHandler = new TimeoutHandler();
+const responseCache = ResponseCache.getInstance();
+
+// Initialize StateManager and AdminBotHandler through service container
+const stateManager = serviceContainer.getStateManager();
+const adminBotHandler = serviceContainer.getAdminBotHandler();
 
 interface WhatsAppWebhookPayload {
   event: string;
@@ -63,6 +73,8 @@ async function identifyUserType(tenantId: number, senderPhone: string): Promise<
  */
 whatsappWebhook.post(
   '/',
+  // Add request deduplication middleware
+  requestDeduplicator.deduplicate('webhook'),
   asyncHandler(async (c) => {
     const startTime = Date.now();
     const requestId = c.get('requestId');
@@ -206,9 +218,10 @@ whatsappWebhook.post(
       return c.json(response, 400);
     }
 
-    const leadService = new LeadService();
-    const ragEngine = new RAGEngine(prisma);
-    const intentRecognizer = new IntentRecognizer();
+    // Get optimized services from container
+    const leadService = serviceContainer.getLeadService();
+    const ragEngine = serviceContainer.getRAGEngine();
+    const intentRecognizer = serviceContainer.getIntentRecognizer();
 
     // Find or create lead
     const lead = await leadService.findOrCreateByPhone(tenant.id, customerPhone, {
@@ -328,8 +341,8 @@ whatsappWebhook.post(
         console.error('[WEBHOOK] Error in admin bot workflow:', adminError);
 
         // Send fallback message
-        try {
-          const whatsapp = new WhatsAppClient();
+      try {
+        const whatsapp = serviceContainer.getWhatsAppClient();
           if (whatsapp.isConfigured()) {
             const fallbackMessage = `Maaf, ada kendala teknis. Ketik /help untuk melihat perintah yang tersedia.`;
             await whatsapp.sendMessage({
@@ -370,9 +383,9 @@ whatsappWebhook.post(
         console.log(`[WEBHOOK] Intent: ${intent.type}, Confidence: ${intent.confidence}`);
         console.log(`[WEBHOOK] Entities:`, intent.entities);
 
-        // Initialize ZAI client and tool executor
-        const zaiClient = new ZaiClient();
-        const toolExecutor = new ToolExecutor({
+        // Get optimized ZAI client and tool executor from container
+        const zaiClient = serviceContainer.getZaiClient();
+        const toolExecutor = serviceContainer.getToolExecutor({
           tenantId: tenant.id,
           leadId: lead.id,
           customerPhone: customerPhone,
@@ -380,19 +393,23 @@ whatsappWebhook.post(
           whatsapp: whatsapp,
         });
 
-        // Get conversation history for context
-        const history = await prisma.message.findMany({
-          where: {
-            tenantId: tenant.id,
-            leadId: lead.id,
-          },
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-          select: {
-            sender: true,
-            message: true,
-          },
-        });
+        // Get conversation history for context (with caching)
+        const cacheKey = `conversation:${tenant.id}:${lead.id}`;
+        const cachedHistory = await responseCache.get(cacheKey);
+        
+        let history;
+        if (cachedHistory) {
+          history = cachedHistory;
+          console.log(`[WEBHOOK] Using cached conversation history`);
+        } else {
+          history = await serviceContainer.getOptimizedQueries().getConversationHistory(
+            tenant.id, 
+            lead.id, 
+            10
+          );
+          // Cache for 2 minutes
+          await responseCache.set(cacheKey, history, { ttl: 120, tags: ['conversation', `tenant:${tenant.id}`] });
+        }
 
         // Build conversation context
         const conversationHistory: ChatMessage[] = [];
@@ -479,12 +496,30 @@ Current customer message: "${message}"`,
           console.log(`[WEBHOOK] Function calling iteration ${iterations}/${maxIterations}`);
 
           try {
-            // Call LLM with tools
-            const response = await zaiClient.generateWithTools(
-              '', // No additional prompt needed, all context is in messages
-              tools,
-              messages
-            );
+            // Check cache for similar LLM requests
+            const llmCacheKey = `llm:${tenant.id}:${message.substring(0, 50)}`;
+            const cachedResponse = await responseCache.get(llmCacheKey);
+            
+            let response;
+            if (cachedResponse) {
+              response = cachedResponse;
+              console.log(`[WEBHOOK] Using cached LLM response`);
+            } else {
+              // Call LLM with tools (with timeout)
+              response = await timeoutHandler.withTimeout(
+                'llm',
+                () => zaiClient.generateWithTools('', tools, messages),
+                30000 // 30 second timeout
+              );
+              
+              // Cache successful responses for 5 minutes
+              if (response && !response.tool_calls) {
+                await responseCache.set(llmCacheKey, response, { 
+                  ttl: 300, 
+                  tags: ['llm', `tenant:${tenant.id}`] 
+                });
+              }
+            }
 
             console.log(`[WEBHOOK] LLM finish_reason: ${response.finish_reason}`);
 
@@ -499,9 +534,11 @@ Current customer message: "${message}"`,
                 tool_calls: response.tool_calls,
               });
 
-              // Execute all tool calls in parallel
-              const toolResults: ToolResult[] = await toolExecutor.executeToolCalls(
-                response.tool_calls
+              // Execute all tool calls in parallel (with timeout)
+              const toolResults: ToolResult[] = await timeoutHandler.withTimeout(
+                'tools',
+                () => toolExecutor.executeToolCalls(response.tool_calls),
+                45000 // 45 second timeout for tool execution
               );
 
               console.log(`[WEBHOOK] Executed ${toolResults.length} tool(s) successfully`);
@@ -598,11 +635,15 @@ Current customer message: "${message}"`,
 
         console.log(`[WEBHOOK] Sending final response to customer`);
 
-        // Send final response to customer
-        const sendResult = await whatsapp.sendMessage({
-          target: customerPhone,
-          message: finalResponse
-        });
+        // Send final response to customer (with timeout)
+        const sendResult = await timeoutHandler.withTimeout(
+          'whatsapp',
+          () => whatsapp.sendMessage({
+            target: customerPhone,
+            message: finalResponse
+          }),
+          15000 // 15 second timeout for WhatsApp API
+        );
 
         if (sendResult.success) {
           console.log(`[WEBHOOK] Response sent successfully to ${customerPhone}`);
@@ -648,15 +689,19 @@ Current customer message: "${message}"`,
     } catch (error) {
       console.error('[WEBHOOK] Error in function calling workflow:', error);
       
-      // Fallback to simple error message
-      try {
-        const whatsapp = new WhatsAppClient();
+       // Fallback to simple error message
+       try {
+         const whatsapp = serviceContainer.getWhatsAppClient();
         if (whatsapp.isConfigured()) {
           const fallbackMessage = `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
-          const sendResult = await whatsapp.sendMessage({
-            target: customerPhone,
-            message: fallbackMessage
-          });
+           const sendResult = await timeoutHandler.withTimeout(
+             'whatsapp-fallback',
+             () => whatsapp.sendMessage({
+               target: customerPhone,
+               message: fallbackMessage
+             }),
+             15000 // 15 second timeout
+           );
           
           if (sendResult.success) {
             // Save fallback reply
@@ -707,6 +752,30 @@ Current customer message: "${message}"`,
     };
 
     return c.json(response);
+  })
+);
+
+/**
+ * GET /webhook/whatsapp/health
+ * Health check endpoint for webhook optimization services
+ */
+whatsappWebhook.get(
+  '/health',
+  asyncHandler(async (c) => {
+    const healthStatus = await serviceContainer.getHealthChecker().checkAll();
+    
+    const response: ApiResponse = {
+      success: healthStatus.healthy,
+      data: {
+        status: healthStatus.healthy ? 'healthy' : 'unhealthy',
+        services: healthStatus.services,
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    return c.json(response, healthStatus.healthy ? 200 : 503);
   })
 );
 

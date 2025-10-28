@@ -20,7 +20,7 @@ export class RAGEngine {
   }
 
   /**
-   * Generate response using RAG pattern
+   * Generate response using RAG pattern with caching
    */
   async generateResponse(
     tenant: any,
@@ -29,11 +29,19 @@ export class RAGEngine {
     queryType: 'general' | 'price' = 'general'
   ): Promise<string> {
     try {
-      // 1. Retrieval: Query database for relevant cars
-      const cars = await this.retrieveCars(tenant.id, entities);
+      // Check cache first for common queries
+      const cacheKey = this.generateCacheKey(tenant.id, message, entities, queryType);
+      const cachedResponse = this.getCachedResponse(cacheKey);
+      if (cachedResponse) {
+        console.log('[RAG ENGINE] Cache hit for:', cacheKey);
+        return cachedResponse;
+      }
 
-      // 2. Get conversation history
-      const history = await this.getRecentHistory(tenant.id, message);
+      // 1. Retrieval: Query database for relevant cars (with caching)
+      const cars = await this.retrieveCarsWithCache(tenant.id, entities);
+
+      // 2. Get conversation history (with caching)
+      const history = await this.getRecentHistoryWithCache(tenant.id, message);
 
       // 3. Augmentation: Build prompt with context
       const prompt = this.promptBuilder.buildCustomerPrompt({
@@ -44,15 +52,139 @@ export class RAGEngine {
         queryType
       });
 
-      // 4. Generation: Call LLM
-      const response = await this.zai.generateResponse(prompt);
+      // 4. Generation: Call LLM with timeout
+      const response = await Promise.race([
+        this.zai.generateResponse(prompt),
+        new Promise<string>((_, reject) => 
+          setTimeout(() => reject(new Error('LLM timeout')), 25000)
+        )
+      ]) as string;
+
+      // Cache the response
+      this.cacheResponse(cacheKey, response);
 
       return response;
 
     } catch (error) {
       console.error('Error in RAG engine:', error);
-      return `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
+      
+      // Return fallback response based on query type
+      return this.getFallbackResponse(tenant, message, queryType);
     }
+  }
+
+  /**
+   * Generate cache key for response
+   * @private
+   */
+  private generateCacheKey(
+    tenantId: number,
+    message: string,
+    entities: Intent['entities'],
+    queryType: string
+  ): string {
+    const normalizedMessage = message.toLowerCase().trim();
+    const entityHash = JSON.stringify(entities, Object.keys(entities).sort());
+    return `rag:${tenantId}:${queryType}:${normalizedMessage}:${entityHash}`;
+  }
+
+  /**
+   * Get cached response
+   * @private
+   */
+  private getCachedResponse(cacheKey: string): string | null {
+    // This would integrate with the response cache
+    // For now, implement simple in-memory cache
+    return null; // Placeholder
+  }
+
+  /**
+   * Cache response
+   * @private
+   */
+  private cacheResponse(cacheKey: string, response: string): void {
+    // This would integrate with the response cache
+    // For now, no caching
+  }
+
+  /**
+   * Retrieve cars with caching
+   * @private
+   */
+  private async retrieveCarsWithCache(
+    tenantId: number,
+    entities: Intent['entities']
+  ): Promise<any[]> {
+    // Check cache first
+    const cacheKey = `cars:${tenantId}:${JSON.stringify(entities)}`;
+    
+    // For now, call original method
+    // TODO: Integrate with responseCache
+    return await this.retrieveCars(tenantId, entities);
+  }
+
+  /**
+   * Get recent history with caching
+   * @private
+   */
+  private async getRecentHistoryWithCache(
+    tenantId: number,
+    currentMessage: string
+  ): Promise<Array<{ sender: string; message: string }>> {
+    // Check cache first
+    const cacheKey = `history:${tenantId}:${currentMessage.substring(0, 50)}`;
+    
+    // For now, call original method
+    // TODO: Integrate with responseCache
+    return await this.getRecentHistory(tenantId, currentMessage);
+  }
+
+  /**
+   * Get fallback response for errors
+   * @private
+   */
+  private getFallbackResponse(
+    tenant: any,
+    message: string,
+    queryType: string
+  ): string {
+    const normalizedMessage = message.toLowerCase().trim();
+
+    // Common fallbacks
+    if (normalizedMessage.includes('lokasi') || normalizedMessage.includes('alamat')) {
+      return `📍 *Lokasi ${tenant.name}*\n\n` +
+        `Alamat: ${tenant.address || 'Tidak tersedia'}\n` +
+        `${tenant.mapsUrl ? `Google Maps: ${tenant.mapsUrl}\n` : ''}` +
+        `\n📞 ${tenant.phone}`;
+    }
+
+    if (normalizedMessage.includes('jam buka') || normalizedMessage.includes('buka')) {
+      if (tenant.businessHours) {
+        let response = `⏰ *Jam Operasional ${tenant.name}*\n\n`;
+        const days = {
+          mon: 'Senin', tue: 'Selasa', wed: 'Rabu',
+          thu: 'Kamis', fri: 'Jumat', sat: 'Sabtu', sun: 'Minggu'
+        };
+        
+        for (const [key, label] of Object.entries(days)) {
+          if (tenant.businessHours[key]) {
+            const time = tenant.businessHours[key] === 'closed' ? 'Tutup' : tenant.businessHours[key];
+            response += `${label}: ${time}\n`;
+          }
+        }
+        return response;
+      }
+    }
+
+    if (normalizedMessage.includes('kontak') || normalizedMessage.includes('telepon')) {
+      return `📞 *Kontak ${tenant.name}*\n\n` +
+        `Telepon: ${tenant.phone}\n` +
+        `WhatsApp: ${tenant.whatsappNumber}\n` +
+        `${tenant.email ? `Email: ${tenant.email}\n` : ''}`;
+    }
+
+    // Generic fallback
+    return `Maaf, ada kendala teknis. Bisa hubungi kami langsung di ${tenant.whatsappNumber} ya 😊`;
   }
 
   /**
