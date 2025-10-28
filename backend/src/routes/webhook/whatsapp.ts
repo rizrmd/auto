@@ -14,8 +14,15 @@ import { ZaiClient, type ChatMessage, type ToolCall } from '../../llm/zai';
 import { tools } from '../../llm/tools';
 import { ToolExecutor, type ToolResult } from '../../llm/tool-executor';
 import type { ApiResponse } from '../../types/context';
+import { AdminBotHandler } from '../../bot/admin/handler';
+import { StateManager } from '../../bot/state-manager';
+import { UserType } from '../../../generated/prisma';
 
 const whatsappWebhook = new Hono();
+
+// Initialize StateManager and AdminBotHandler
+const stateManager = new StateManager(prisma);
+const adminBotHandler = new AdminBotHandler(prisma, stateManager);
 
 interface WhatsAppWebhookPayload {
   event: string;
@@ -24,6 +31,30 @@ interface WhatsAppWebhookPayload {
   chat?: string;
   time?: string;
   [key: string]: any;
+}
+
+/**
+ * Identify if sender is customer, admin, or sales
+ */
+async function identifyUserType(tenantId: number, senderPhone: string): Promise<UserType> {
+  // Check if sender is a registered user (admin/sales)
+  const user = await prisma.user.findFirst({
+    where: {
+      tenantId,
+      OR: [
+        { phone: { contains: senderPhone.slice(-10) } },
+        { whatsappNumber: { contains: senderPhone.slice(-10) } }
+      ],
+      status: 'active'
+    }
+  });
+
+  if (user) {
+    return user.role === 'owner' || user.role === 'admin' ? 'admin' : 'sales';
+  }
+
+  // Default to customer
+  return 'customer';
 }
 
 /**
@@ -127,7 +158,107 @@ whatsappWebhook.post(
       },
     });
 
-    // Generate intelligent response using LLM with function calling
+    // 🔀 ROUTING: Identify user type and route to appropriate bot
+    const userType = await identifyUserType(tenant.id, customerPhone);
+
+    console.log(`[WEBHOOK] User type identified: ${userType}`);
+
+    // 🤖 ADMIN/SALES BOT: Handle admin commands
+    if (userType === 'admin' || userType === 'sales') {
+      console.log(`[WEBHOOK] Routing to Admin Bot for ${userType}`);
+
+      try {
+        const whatsapp = new WhatsAppClient();
+
+        if (whatsapp.isConfigured()) {
+          // Handle message with admin bot
+          const adminResponse = await adminBotHandler.handleMessage(
+            tenant,
+            customerPhone,
+            userType,
+            message,
+            undefined // TODO: Add media support for admin bot
+          );
+
+          console.log(`[WEBHOOK] Admin bot response: "${adminResponse.substring(0, 100)}..."`);
+
+          // Send admin bot response
+          const sendResult = await whatsapp.sendMessage({
+            target: customerPhone,
+            message: adminResponse
+          });
+
+          if (sendResult.success) {
+            console.log(`[WEBHOOK] Admin bot response sent successfully to ${customerPhone}`);
+
+            // Save bot response to database
+            await prisma.message.create({
+              data: {
+                tenantId: tenant.id,
+                leadId: lead.id,
+                sender: 'bot',
+                message: adminResponse,
+                metadata: {
+                  type: 'text',
+                  autoReply: true,
+                  botType: 'admin',
+                  userType: userType,
+                  webhookFormat: 'whatsapp-web-api',
+                },
+              },
+            });
+
+            // Mark as read
+            try {
+              const messageIds = messageId ? [messageId] : undefined;
+              const readResult = await whatsapp.markAsRead(customerPhone, messageIds);
+              if (readResult.success) {
+                console.log(`[WEBHOOK] Message marked as read for ${customerPhone} (admin bot)`);
+              }
+            } catch (readError) {
+              console.warn('[WEBHOOK] Error marking message as read (admin):', readError);
+            }
+          } else {
+            console.error('[WEBHOOK] Failed to send admin bot response:', sendResult.error);
+          }
+        } else {
+          console.warn('[WEBHOOK] WhatsApp API not configured, skipping admin bot reply');
+        }
+      } catch (adminError) {
+        console.error('[WEBHOOK] Error in admin bot workflow:', adminError);
+
+        // Send fallback message
+        try {
+          const whatsapp = new WhatsAppClient();
+          if (whatsapp.isConfigured()) {
+            const fallbackMessage = `Maaf, ada kendala teknis. Ketik /help untuk melihat perintah yang tersedia.`;
+            await whatsapp.sendMessage({
+              target: customerPhone,
+              message: fallbackMessage
+            });
+          }
+        } catch (fallbackError) {
+          console.error('[WEBHOOK] Error sending admin fallback reply:', fallbackError);
+        }
+      }
+
+      // Return success response
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          leadId: lead.id,
+          status: 'processed',
+          message: 'Admin bot processed message',
+          userType: userType,
+        },
+      };
+
+      return c.json(response);
+    }
+
+    // 👤 CUSTOMER BOT: Generate intelligent response using LLM with function calling
+    console.log(`[WEBHOOK] Routing to Customer Bot with LLM`);
+
     try {
       const whatsapp = new WhatsAppClient();
 
