@@ -28,7 +28,57 @@ export class MediaDownloader {
   }
 
   /**
+   * Fetch with retry logic
+   * v1.6.0 race condition: Webhook sent before WhatsApp API finishes downloading
+   * Solution: Retry with exponential backoff
+   */
+  private async fetchWithRetry(
+    url: string,
+    maxRetries: number = 3,
+    delayMs: number = 2000
+  ): Promise<Response> {
+    let lastError: Error | null = null;
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url);
+
+        // If successful (200) or permanent error (403, 410, etc), return immediately
+        if (response.ok || response.status >= 400 && response.status < 500 && response.status !== 404) {
+          return response;
+        }
+
+        // If 404, it might be a race condition - retry
+        if (response.status === 404) {
+          console.log(`[MEDIA] Attempt ${attempt}/${maxRetries} - 404 (file not ready yet)`);
+
+          if (attempt < maxRetries) {
+            // Wait before retry (exponential backoff)
+            const waitTime = delayMs * Math.pow(1.5, attempt - 1);
+            console.log(`[MEDIA] Waiting ${Math.round(waitTime)}ms before retry...`);
+            await new Promise(resolve => setTimeout(resolve, waitTime));
+            continue;
+          }
+        }
+
+        return response;
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`[MEDIA] Attempt ${attempt}/${maxRetries} failed:`, error);
+
+        if (attempt < maxRetries) {
+          const waitTime = delayMs * Math.pow(1.5, attempt - 1);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+        }
+      }
+    }
+
+    throw lastError || new Error('Failed to fetch after retries');
+  }
+
+  /**
    * Download and save media file
+   * v1.6.0: Includes retry logic for race condition (webhook sent before download completes)
    */
   async downloadAndSave(
     url: string,
@@ -44,8 +94,8 @@ export class MediaDownloader {
       const fullUrl = this.resolveUrl(url);
       console.log(`[MEDIA] Downloading from: ${fullUrl}`);
 
-      // Download file
-      const response = await fetch(fullUrl);
+      // Download file with retry logic for v1.6.0 race condition
+      const response = await this.fetchWithRetry(fullUrl, 3, 2000);
 
       if (!response.ok) {
         throw new Error(`Failed to download: ${response.status}`);
