@@ -22,12 +22,13 @@ import { ToolExecutor, type ToolResult } from '../../llm/tool-executor';
 import type { ApiResponse } from '../../types/context';
 import { AdminBotHandler } from '../../bot/admin/handler';
 import { StateManager } from '../../bot/state-manager';
+
+// Initialize admin bot handler
+const adminBotHandler = new AdminBotHandler();
 import { UserType } from '../../../generated/prisma';
 import { ServiceContainer } from '../../services/service-container';
-import { RequestDeduplicator } from '../../middleware/request-deduplicator';
 import { TimeoutHandler } from '../../middleware/timeout-handler';
 import { responseCache } from '../../cache/response-cache';
-import { webhookDeduplicator } from '../../middleware/request-deduplicator';
 
 const whatsappWebhook = new Hono();
 
@@ -36,7 +37,6 @@ const serviceContainer = ServiceContainer.getInstance();
 
 // Note: Services will be initialized when serviceContainer.initialize() is called in main app
 // These are lazy-loaded properties that will be available after initialization
-const requestDeduplicator = new RequestDeduplicator();
 const timeoutHandler = new TimeoutHandler();
 
 interface WhatsAppWebhookPayload {
@@ -78,8 +78,6 @@ async function identifyUserType(tenantId: number, senderPhone: string): Promise<
  */
 whatsappWebhook.post(
   '/',
-  // Add request deduplication middleware
-  webhookDeduplicator(),
   asyncHandler(async (c) => {
     const startTime = Date.now();
     const requestId = c.get('requestId');
@@ -234,6 +232,28 @@ whatsappWebhook.post(
       source: 'wa',
       status: 'new',
     });
+
+    // Simple deduplication - check if message already exists
+    if (messageId) {
+      const existingMessage = await prisma.message.findFirst({
+        where: {
+          messageId: messageId,
+          tenantId: tenant.id
+        }
+      });
+
+      if (existingMessage) {
+        console.log(`[WEBHOOK] Duplicate message detected: ${messageId}`);
+        const response: ApiResponse = {
+          success: true,
+          data: {
+            status: 'duplicate',
+            message: 'Message already processed',
+          },
+        };
+        return c.json(response);
+      }
+    }
 
     // Save message to database (with media metadata)
     await prisma.message.create({
