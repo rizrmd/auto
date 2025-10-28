@@ -21,7 +21,7 @@ import { ServiceContainer } from './src/services/service-container';
 import healthRoutes from './src/routes/health';
 import publicCarsRoutes from './src/routes/public/cars';
 
-// import whatsappWebhookRoutes from './src/routes/webhook/whatsapp'; // Temporarily disabled
+import whatsappWebhookRoutes from './src/routes/webhook/whatsapp';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
