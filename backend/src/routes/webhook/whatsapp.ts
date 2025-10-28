@@ -87,16 +87,68 @@ whatsappWebhook.post(
     let message: string;
     let messageType: string = 'text';
     let messageId: string | undefined;
+    let media: { url: string; type: string } | undefined;
 
-    if (payload.event === 'message' && payload.message && payload.sender) {
+    if (payload.event === 'message' && payload.sender) {
       // WhatsApp Web API format
       customerPhone = payload.sender.split('@')[0]; // Extract phone from JID
-      message = payload.message;
+      message = payload.message || payload.caption || '';
       messageId = payload.id || undefined;
-      
+
       console.log(`[WEBHOOK] Message from ${customerPhone}: "${message}"`);
       console.log(`[WEBHOOK] Chat: ${payload.chat || 'private'}`);
       console.log(`[WEBHOOK] Time: ${payload.time || 'unknown'}`);
+
+      // 📸 MEDIA PARSING: Support multiple WhatsApp webhook formats
+      // Format 1: { attachment: { url: "...", type: "image" } }
+      if (payload.attachment?.url && payload.attachment?.type) {
+        media = {
+          url: payload.attachment.url,
+          type: payload.attachment.type
+        };
+        messageType = payload.attachment.type;
+        console.log(`[WEBHOOK] 📸 Media detected (format 1 - attachment):`, media);
+      }
+      // Format 2: { media_url: "...", media_type: "image" }
+      else if (payload.media_url && payload.media_type) {
+        media = {
+          url: payload.media_url,
+          type: payload.media_type
+        };
+        messageType = payload.media_type;
+        console.log(`[WEBHOOK] 📸 Media detected (format 2 - media_url):`, media);
+      }
+      // Format 3: { image_url: "..." } or { video_url: "..." }
+      else if (payload.image_url) {
+        media = {
+          url: payload.image_url,
+          type: 'image'
+        };
+        messageType = 'image';
+        console.log(`[WEBHOOK] 📸 Media detected (format 3 - image_url):`, media);
+      }
+      else if (payload.video_url) {
+        media = {
+          url: payload.video_url,
+          type: 'video'
+        };
+        messageType = 'video';
+        console.log(`[WEBHOOK] 📸 Media detected (format 3 - video_url):`, media);
+      }
+      // Format 4: { type: "image", url: "..." }
+      else if (payload.type && payload.url) {
+        media = {
+          url: payload.url,
+          type: payload.type
+        };
+        messageType = payload.type;
+        console.log(`[WEBHOOK] 📸 Media detected (format 4 - type/url):`, media);
+      }
+
+      // Log full payload if no media detected (for debugging)
+      if (!media && !message) {
+        console.warn('[WEBHOOK] ⚠️  No message or media detected. Full payload:', JSON.stringify(payload, null, 2));
+      }
     } else {
       console.error('[WEBHOOK] Invalid WhatsApp Web API payload format:', payload);
       const response: ApiResponse = {
@@ -141,7 +193,7 @@ whatsappWebhook.post(
       status: 'new',
     });
 
-    // Save message to database
+    // Save message to database (with media metadata)
     await prisma.message.create({
       data: {
         tenantId: tenant.id,
@@ -154,6 +206,10 @@ whatsappWebhook.post(
           time: payload.time,
           messageId: messageId,
           webhookFormat: 'whatsapp-web-api',
+          media: media ? {
+            url: media.url,
+            type: media.type
+          } : undefined,
         },
       },
     });
@@ -171,13 +227,15 @@ whatsappWebhook.post(
         const whatsapp = new WhatsAppClient();
 
         if (whatsapp.isConfigured()) {
-          // Handle message with admin bot
+          // Handle message with admin bot (with media support!)
+          console.log(`[WEBHOOK] Calling admin bot with media:`, media ? `${media.type} - ${media.url.substring(0, 50)}...` : 'none');
+
           const adminResponse = await adminBotHandler.handleMessage(
             tenant,
             customerPhone,
             userType,
             message,
-            undefined // TODO: Add media support for admin bot
+            media // ✅ Pass media to admin bot
           );
 
           console.log(`[WEBHOOK] Admin bot response: "${adminResponse.substring(0, 100)}..."`);
@@ -204,6 +262,8 @@ whatsappWebhook.post(
                   botType: 'admin',
                   userType: userType,
                   webhookFormat: 'whatsapp-web-api',
+                  hasMediaInput: media ? true : false,
+                  mediaType: media?.type,
                 },
               },
             });
