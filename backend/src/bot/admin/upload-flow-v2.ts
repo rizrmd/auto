@@ -411,6 +411,11 @@ Gunakan bahasa Indonesia yang natural dan menarik. Fokus pada benefit untuk pemb
       // Reset state
       await this.stateManager.resetState(tenant.id, userPhone);
 
+      // Use custom domain if verified, otherwise use subdomain
+      const catalogDomain = tenant.customDomainVerified && tenant.customDomain
+        ? tenant.customDomain
+        : tenant.subdomain;
+
       // Build success response with link
       let response = `✅ *Mobil Berhasil Diupload!*\n\n`;
       response += `📋 *Detail:*\n`;
@@ -419,7 +424,7 @@ Gunakan bahasa Indonesia yang natural dan menarik. Fokus pada benefit untuk pemb
       response += `• Harga: Rp ${(Number(car.price) / 1000000).toFixed(0)} juta\n`;
       response += `• Foto: ${carData.photos?.length || 0} foto\n\n`;
       response += `🔗 *Link Katalog:*\n`;
-      response += `https://${tenant.subdomain}/cars/${slug}\n\n`;
+      response += `https://${catalogDomain}/cars/${slug}\n\n`;
       response += `🚀 Mobil sudah LIVE di website dan siap dilihat customer!\n\n`;
       response += `Ketik /list untuk lihat semua mobil atau /upload untuk upload lagi.`;
 
