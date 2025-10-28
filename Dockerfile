@@ -50,6 +50,7 @@ EXPOSE 3000 8080
 # Set production environment
 ENV NODE_ENV=production
 ENV PORT=3000
+ENV APP_URL=https://auto.lumiku.com
 
 # Create startup script for both services
 RUN echo '#!/bin/bash\n\
