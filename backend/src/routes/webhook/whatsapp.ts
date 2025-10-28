@@ -183,16 +183,34 @@ whatsappWebhook.post('/', async (c) => {
     try {
       console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone} via proxy`);
       
-      const sendResponse = await fetch('http://localhost:8080/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          number: customerPhone.replace(/[^0-9]/g, ''), // Clean phone number
-          message: responseMessage
-        })
-      });
+      // Use internal service directly, fallback to proxy if needed
+      let sendResponse;
+      try {
+        // Try direct internal service first
+        sendResponse = await fetch('http://localhost:8080/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            number: customerPhone.replace(/[^0-9]/g, ''), // Clean phone number
+            message: responseMessage
+          })
+        });
+      } catch (directError) {
+        console.warn(`[WEBHOOK] Direct service failed, trying proxy:`, directError);
+        // Fallback to proxy endpoint
+        sendResponse = await fetch('/api/wa/send', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            number: customerPhone.replace(/[^0-9]/g, ''), // Clean phone number
+            message: responseMessage
+          })
+        });
+      }
 
       const sendData = await sendResponse.json();
       
