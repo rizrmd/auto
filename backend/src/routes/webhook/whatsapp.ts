@@ -92,7 +92,7 @@ whatsappWebhook.post(
     console.log(`[WEBHOOK] Content-Type: ${c.req.header('content-type') || 'Unknown'}`);
     console.log(`[WEBHOOK] Content-Length: ${c.req.header('content-length') || 'Unknown'}`);
 
-    const payload: WhatsAppWebhookPayload = await c.req.json();
+    const payload = await c.req.json();
 
     console.log(`[WEBHOOK] WhatsApp Web API Payload:`, payload);
 
