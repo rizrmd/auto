@@ -221,10 +221,10 @@ whatsappWebhook.post(
       return c.json(response, 400);
     }
 
-    // Get optimized services from container
-    const leadService = serviceContainer.leadService;
-    const ragEngine = serviceContainer.ragEngine;
-    const intentRecognizer = serviceContainer.intentRecognizer;
+    // Use fallback services when container not initialized
+    const leadService = serviceContainer.leadService || new LeadService();
+    const ragEngine = serviceContainer.ragEngine || new RAGEngine(prisma);
+    const intentRecognizer = serviceContainer.intentRecognizer || new IntentRecognizer();
 
     // Find or create lead
     const lead = await leadService.findOrCreateByPhone(tenant.id, customerPhone, {
