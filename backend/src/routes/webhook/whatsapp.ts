@@ -22,13 +22,13 @@ import { ToolExecutor, type ToolResult } from '../../llm/tool-executor';
 import type { ApiResponse } from '../../types/context';
 import { AdminBotHandler } from '../../bot/admin/handler';
 import { StateManager } from '../../bot/state-manager';
-
-// Initialize admin bot handler with fallback services
-const adminBotHandler = new AdminBotHandler(prisma, new StateManager(prisma));
 import { UserType } from '../../../generated/prisma';
 import { ServiceContainer } from '../../services/service-container';
 import { TimeoutHandler } from '../../middleware/timeout-handler';
 import { responseCache } from '../../cache/response-cache';
+
+// Initialize admin bot handler with fallback services
+const adminBotHandler = new AdminBotHandler(prisma, new StateManager(prisma));
 
 const whatsappWebhook = new Hono();
 
