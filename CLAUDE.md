@@ -38,6 +38,13 @@
 - **File Structure**: Backend in `/backend/src`, frontend in `/frontend/src`, shared types in root
 - **Environment**: Bun automatically loads .env, so don't use dotenv
 
+## Database & Prisma Guidelines
+- **NEVER import PrismaClient directly** from `../../../generated/prisma` - this causes runtime import errors
+- **ALWAYS import the singleton prisma instance** from `../../db` (relative to backend files) or `backend/src/db`
+- **Example**: `import { prisma } from '../../db';` instead of `import { PrismaClient } from '../../../generated/prisma';`
+- **Prisma client generation**: Happens automatically during Docker build and runtime startup
+- **Database operations**: Use the centralized prisma instance for all database queries
+
 ## Architecture Notes
 - Multi-tenant system with tenant isolation
 - WhatsApp integration via webhooks
