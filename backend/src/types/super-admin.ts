@@ -5,6 +5,8 @@
  */
 
 // Local type definitions to avoid import issues with generated prisma
+export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
+
 export interface SuperAdmin {
   id: number;
   name: string;

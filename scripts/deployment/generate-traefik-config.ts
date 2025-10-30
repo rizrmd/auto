@@ -196,8 +196,6 @@ async function generateTraefikConfig(): Promise<void> {
   } catch (error) {
     console.error('❌ Error generating traefik configuration:', error);
     process.exit(1);
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
