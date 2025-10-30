@@ -36,14 +36,15 @@ if [ ! -f "./generated/prisma/index.ts" ]; then
     echo "export * from \"./client\";" > ./generated/prisma/index.ts
 fi
 
+# Database migrations disabled for safety
 # Run database migrations in production
-if [ "$NODE_ENV" = "production" ]; then
-    echo "✓ Running production database migrations..."
-    bunx prisma migrate deploy || {
-        echo "❌ Migration failed!"
-        exit 1
-    }
-fi
+# if [ "$NODE_ENV" = "production" ]; then
+#     echo "✓ Running production database migrations..."
+#     bunx prisma migrate deploy || {
+#         echo "❌ Migration failed!"
+#         exit 1
+#     }
+# fi
 
 # Build frontend only if not already built (for Docker optimization)
 if [ ! -d "./frontend/dist" ] || [ ! -f "./frontend/dist/index.html" ]; then
