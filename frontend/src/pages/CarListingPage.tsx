@@ -172,7 +172,7 @@ export function CarListingPage() {
                   ) : (
                     <EmptyState
                       title="Tidak ada mobil ditemukan"
-                      description="Coba sesuaikan filter atau kata kunci pencarian Anda"
+                      description="Coba sesuaikan filter atau kata kunci pencarian Kamu"
                       icon="search"
                       actionLabel="Hapus Filter"
                       actionAsLink={true}

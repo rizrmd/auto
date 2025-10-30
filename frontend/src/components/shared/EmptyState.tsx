@@ -18,7 +18,7 @@ interface EmptyStateProps {
 
 export function EmptyState({
   title = 'Tidak ada mobil ditemukan',
-  description = 'Coba sesuaikan filter atau kata kunci pencarian Anda',
+  description = 'Coba sesuaikan filter atau kata kunci pencarian Kamu',
   icon = 'search',
   actionLabel,
   onAction,

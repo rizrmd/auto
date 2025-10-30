@@ -86,7 +86,7 @@ export function CarDetailPage({ carSlug }: CarDetailPageProps) {
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-2">Mobil Tidak Ditemukan</h1>
             <p className="text-muted-foreground mb-6">
-              {error || "Mobil yang Anda cari tidak ada"}
+              {error || "Mobil yang Kamu cari tidak ada"}
             </p>
             <Button asChild>
               <a

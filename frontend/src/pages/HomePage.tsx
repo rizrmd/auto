@@ -63,7 +63,7 @@ export function HomePage() {
             <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
               Temukan Mobil{' '}
               <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                Impian Anda
+                Impian Kamu
               </span>
             </h1>
 
@@ -118,7 +118,7 @@ export function HomePage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Kualitas Terjamin</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Setiap mobil diperiksa secara menyeluruh untuk ketenangan pikiran Anda
+                Setiap mobil diperiksa secara menyeluruh untuk ketenangan pikiran Kamu
               </p>
             </div>
 
@@ -138,7 +138,7 @@ export function HomePage() {
               </div>
               <h3 className="text-2xl font-bold mb-3">Pilihan Lengkap</h3>
               <p className="text-muted-foreground leading-relaxed">
-                Beragam pilihan merek dan model untuk memenuhi kebutuhan Anda
+                Beragam pilihan merek dan model untuk memenuhi kebutuhan Kamu
               </p>
             </div>
           </div>
@@ -194,7 +194,7 @@ export function HomePage() {
       <section className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-background">
         <div className="container mx-auto px-4 text-center relative z-10">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">
-            Siap Menemukan Mobil Impian Anda?
+            Siap Menemukan Mobil Impian Kamu?
           </h2>
           <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
             Jelajahi koleksi lengkap kami atau hubungi kami untuk bantuan personal

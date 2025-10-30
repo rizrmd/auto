@@ -51,7 +51,7 @@ Apakah masih tersedia?`;
   }
 
   if (!whatsappMessage) {
-    whatsappMessage = 'Halo, saya tertarik dengan mobil yang Anda jual.';
+    whatsappMessage = 'Halo, saya tertarik dengan mobil yang Kamu jual.';
   }
 
   const encodedMessage = encodeURIComponent(whatsappMessage);
