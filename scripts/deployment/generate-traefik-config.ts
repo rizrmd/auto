@@ -8,11 +8,12 @@
  * - All verified custom domains (tenant.customDomain where customDomainVerified = true)
  */
 
-import { PrismaClient, TenantStatus } from '../../generated/prisma';
+import { prisma } from '../../backend/src/db';
+import { TenantStatus } from '../../backend/src/types/super-admin';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-const prisma = new PrismaClient();
+// Using centralized prisma instance
 
 interface TraefikRoute {
   host: string;

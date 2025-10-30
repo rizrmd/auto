@@ -17,7 +17,8 @@
 - **Docker Container**: b8sc48s8s0c4w00008k808w8
 - **SSH Access**: `ssh root@cf.avolut.com`
 - **Check logs**: `ssh root@cf.avolut.com "docker logs b8sc48s8s0c4w00008k808w8"`
-- **Deploy progress**: `curl https://cf.avolut.com/api/v1/deployments/applications/b8sc48s8s0c4w00008k808w8 --header 'Authorization: Bearer 7|rsu1vBA8EzDIeetffQQk8PhM2pUqAiAKeHoaObun2bec5fc5'`
+- **Deploy progress**: `curl https://cf.avolut.com/api/v1/deployments/applications/b8sc48s8s0c4w00008k808w8 --header 'Authorization: Bearer 7|rsu1vBA8EzDIeetffQQk8PhM2pUqAiAKeHoaObun2bec5fc5"`
+- **Traefik Config**: `/traefik-proxy/autolmk.yaml` (inside Docker container)
 
 ## Commands (Docker Environment Only)
 - **Install**: `bun install` (instead of npm install)
