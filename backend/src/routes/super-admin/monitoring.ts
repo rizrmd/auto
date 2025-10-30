@@ -14,6 +14,7 @@ import {
   superAdminAuthMiddleware,
   requireSupport,
   superAdminActivityLogger,
+  getSuperAdmin,
 } from '../../middleware/super-admin-auth';
 import { ApiResponse } from '../../types/super-admin';
 

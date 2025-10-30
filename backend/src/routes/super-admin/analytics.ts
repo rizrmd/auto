@@ -18,9 +18,11 @@ import {
   superAdminAuthMiddleware,
   requireSupport,
   superAdminActivityLogger,
+  getSuperAdmin,
 } from '../../middleware/super-admin-auth';
 import { ApiResponse } from '../../types/super-admin';
-import { getSuperAdmin } from '../../middleware/super-admin-auth';
+import { BadRequestError } from '../../middleware/error-handler';
+import { prisma } from '../../db';
 
 const app = new Hono();
 
