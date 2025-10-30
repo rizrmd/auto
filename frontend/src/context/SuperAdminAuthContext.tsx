@@ -60,12 +60,17 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
         const isValid = await verifyTokenInternal(storedToken);
 
         if (isValid) {
-          setToken(storedToken);
-          setSuperAdmin(JSON.parse(storedProfile));
-          setIsAuthenticated(true);
+          try {
+            setToken(storedToken);
+            setSuperAdmin(JSON.parse(storedProfile));
+            setIsAuthenticated(true);
 
-          // Set up token refresh
-          scheduleTokenRefresh(storedToken);
+            // Set up token refresh
+            scheduleTokenRefresh(storedToken);
+          } catch (error) {
+            console.error('Failed to parse stored profile:', error);
+            clearAuthData();
+          }
         } else {
           // Token invalid, try refresh
           const refreshed = await refreshAuthToken(storedRefreshToken);
@@ -104,29 +109,37 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
     }
   };
 
-  const scheduleTokenRefresh = (currentToken: string) => {
-    try {
-      // Parse JWT payload to get expiration
-      const payload = JSON.parse(atob(currentToken.split('.')[1]));
-      const expiresAt = payload.exp * 1000; // Convert to milliseconds
-      const refreshAt = expiresAt - 5 * 60 * 1000; // Refresh 5 minutes before expiration
-      const delay = refreshAt - Date.now();
+   const scheduleTokenRefresh = (currentToken: string) => {
+     if (!currentToken || typeof currentToken !== 'string' || !currentToken.includes('.')) {
+       console.error('Invalid token for refresh scheduling:', currentToken);
+       return;
+     }
+     try {
+       // Parse JWT payload to get expiration
+       const payload = JSON.parse(atob(currentToken.split('.')[1]));
+       const expiresAt = payload?.exp * 1000; // Convert to milliseconds
+       if (!expiresAt || isNaN(expiresAt)) {
+         console.error('Invalid token payload:', payload);
+         return;
+       }
+       const refreshAt = expiresAt - 5 * 60 * 1000; // Refresh 5 minutes before expiration
+       const delay = refreshAt - Date.now();
 
-      if (delay > 0) {
-        const timeout = setTimeout(async () => {
-          const refreshed = await refreshToken();
-          if (!refreshed) {
-            // Refresh failed, logout
-            logout();
-          }
-        }, delay);
+       if (delay > 0) {
+         const timeout = setTimeout(async () => {
+           const refreshed = await refreshToken();
+           if (!refreshed) {
+             // Refresh failed, logout
+             logout();
+           }
+         }, delay);
 
-        setRefreshTimeout(timeout);
-      }
-    } catch (error) {
-      console.error('Failed to schedule token refresh:', error);
-    }
-  };
+         setRefreshTimeout(timeout);
+       }
+     } catch (error) {
+       console.error('Failed to schedule token refresh:', error);
+     }
+   };
 
   const refreshAuthToken = async (refreshTokenValue: string): Promise<boolean> => {
     try {
@@ -142,24 +155,28 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
         return false;
       }
 
-      const data = await response.json();
-      if (data.success && data.data) {
-        const { token: newToken, refreshToken: newRefreshToken, superAdmin: profile } = data.data;
+       const data = await response.json();
+       if (data.success && data.data) {
+         const { token: newToken, refreshToken: newRefreshToken, superAdmin: profile } = data.data;
 
-        // Update state and storage
-        setToken(newToken);
-        setSuperAdmin(profile);
-        setIsAuthenticated(true);
+         if (!newToken || !newRefreshToken || !profile) {
+           return false;
+         }
 
-        localStorage.setItem('super_admin_token', newToken);
-        localStorage.setItem('super_admin_refresh_token', newRefreshToken);
-        localStorage.setItem('super_admin_profile', JSON.stringify(profile));
+         // Update state and storage
+         setToken(newToken);
+         setSuperAdmin(profile);
+         setIsAuthenticated(true);
 
-        // Schedule next refresh
-        scheduleTokenRefresh(newToken);
+         localStorage.setItem('super_admin_token', newToken);
+         localStorage.setItem('super_admin_refresh_token', newRefreshToken);
+         localStorage.setItem('super_admin_profile', JSON.stringify(profile));
 
-        return true;
-      }
+         // Schedule next refresh
+         scheduleTokenRefresh(newToken);
+
+         return true;
+       }
     } catch (error) {
       console.error('Token refresh failed:', error);
     }
@@ -179,29 +196,31 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 
       const data = await response.json();
 
-      if (data.success && data.data) {
-        const { token: newToken, refreshToken: newRefreshToken, superAdmin: profile } = data.data;
+       if (data.success && data.data) {
+         const { token: newToken, refreshToken: newRefreshToken, superAdmin: profile } = data.data;
 
-        // Update state
-        setToken(newToken);
-        setSuperAdmin(profile);
-        setIsAuthenticated(true);
+         if (!newToken || !newRefreshToken || !profile) {
+           return {
+             success: false,
+             error: 'Invalid response from server'
+           };
+         }
 
-        // Store in localStorage
-        localStorage.setItem('super_admin_token', newToken);
-        localStorage.setItem('super_admin_refresh_token', newRefreshToken);
-        localStorage.setItem('super_admin_profile', JSON.stringify(profile));
+         // Update state
+         setToken(newToken);
+         setSuperAdmin(profile);
+         setIsAuthenticated(true);
 
-        // Schedule token refresh
-        scheduleTokenRefresh(newToken);
+         // Store in localStorage
+         localStorage.setItem('super_admin_token', newToken);
+         localStorage.setItem('super_admin_refresh_token', newRefreshToken);
+         localStorage.setItem('super_admin_profile', JSON.stringify(profile));
 
-        return { success: true };
-      } else {
-        return {
-          success: false,
-          error: data.error || 'Login failed. Please try again.'
-        };
-      }
+         // Schedule token refresh
+         scheduleTokenRefresh(newToken);
+
+         return { success: true };
+       }
     } catch (error) {
       console.error('Login failed:', error);
       return {
