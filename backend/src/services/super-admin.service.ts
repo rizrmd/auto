@@ -460,7 +460,7 @@ export class SuperAdminService {
       prisma.car.count({ where: { status: { not: 'deleted' } } }),
       prisma.car.count({ where: { status: 'available' } }),
       prisma.car.count({ where: { status: 'sold' } }),
-      prisma.lead.count(dateFilter),
+      prisma.lead.count({ where: dateFilter }),
       prisma.lead.count({
         where: {
           ...dateFilter,
@@ -886,12 +886,12 @@ export class SuperAdminService {
       include: {
         _count: {
           select: {
-            cars: { where: { status: { not: 'deleted' } } },
-            leads: dateFilter,
+            cars: true,
+            leads: true,
           },
         },
         cars: {
-          where: { status: 'sold', ...(dateRange && { soldAt: dateFilter }) },
+          where: { status: 'sold' },
           select: { id: true },
         },
       },
@@ -924,7 +924,7 @@ export class SuperAdminService {
    */
   private async getAnalyticsTrends(dateRange?: AnalyticsDateRange): Promise<any[]> {
     // Placeholder implementation
-    const days = dateRange
+    const days = (dateRange?.endDate && dateRange?.startDate)
       ? Math.ceil((dateRange.endDate.getTime() - dateRange.startDate.getTime()) / (1000 * 60 * 60 * 24))
       : 30;
 
