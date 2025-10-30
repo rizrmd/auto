@@ -37,6 +37,11 @@ model Tenant {
   phone              String  @db.VarChar(20)
   whatsappNumber     String  @map("whatsapp_number") @db.VarChar(20)
   whatsappBotEnabled Boolean @default(true) @map("whatsapp_bot_enabled")
+  
+  // WHATSAPP INSTANCE
+  whatsappInstanceId String? @map("whatsapp_instance_id") @db.VarChar(100) // Unique ID for WhatsApp instance
+  whatsappPort      Int?    @map("whatsapp_port") // Port for tenant's WhatsApp instance (8080, 8081, etc.)
+  whatsappStatus    String? @default("disconnected") @map("whatsapp_status") @db.VarChar(20) // connected, disconnected, pairing
   email              String? @db.VarChar(200)
   address            String? @db.Text
   city               String? @db.VarChar(100)

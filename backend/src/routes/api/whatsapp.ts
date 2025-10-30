@@ -1,15 +1,41 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
+import { PrismaClient } from '../../../generated/prisma';
 
 const app = new Hono();
+const prisma = new PrismaClient();
 
 /**
  * Proxy endpoint for WhatsApp pairing
- * Returns QR code image directly by fetching from qr_image_url
+ * Returns QR code image for tenant-specific WhatsApp instance
  */
 app.get('/pair', logger(), async (c) => {
   try {
-    const response = await fetch('http://localhost:8080/pair', {
+    // Get tenant from domain/subdomain
+    const host = c.req.header('host') || '';
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { subdomain: host },
+          { customDomain: host }
+        ],
+        whatsappBotEnabled: true
+      }
+    });
+
+    if (!tenant || !tenant.whatsappPort) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_NOT_FOUND',
+          message: 'Tenant not found or WhatsApp not configured',
+        },
+      }, 404);
+    }
+
+    console.log(`[WHATSAPP PAIR] Pairing for tenant: ${tenant.name} (${tenant.slug}) on port ${tenant.whatsappPort}`);
+
+    const response = await fetch(`http://localhost:${tenant.whatsappPort}/pair`, {
       method: 'GET',
       headers: {
         'User-Agent': 'AutoLeads-Proxy/1.0',
@@ -84,9 +110,31 @@ app.get('/pair', logger(), async (c) => {
 /**
  * Health check for WhatsApp API service
  */
-app.get('/health', async (c) => {
+app.get('/health', logger(), async (c) => {
   try {
-    const response = await fetch('http://localhost:8080/health', {
+    // Get tenant from domain/subdomain
+    const host = c.req.header('host') || '';
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { subdomain: host },
+          { customDomain: host }
+        ],
+        whatsappBotEnabled: true
+      }
+    });
+
+    if (!tenant || !tenant.whatsappPort) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_NOT_FOUND',
+          message: 'Tenant not found or WhatsApp not configured',
+        },
+      }, 404);
+    }
+
+    const response = await fetch(`http://localhost:${tenant.whatsappPort}/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -129,7 +177,31 @@ app.post('/send', logger(), async (c) => {
   try {
     const body = await c.req.json();
     
-    const response = await fetch('http://localhost:8080/send', {
+    // Get tenant from domain/subdomain
+    const host = c.req.header('host') || '';
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { subdomain: host },
+          { customDomain: host }
+        ],
+        whatsappBotEnabled: true
+      }
+    });
+
+    if (!tenant || !tenant.whatsappPort) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_NOT_FOUND',
+          message: 'Tenant not found or WhatsApp not configured',
+        },
+      }, 404);
+    }
+
+    console.log(`[WHATSAPP SEND] Sending via tenant: ${tenant.name} (${tenant.slug}) on port ${tenant.whatsappPort}`);
+
+    const response = await fetch(`http://localhost:${tenant.whatsappPort}/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

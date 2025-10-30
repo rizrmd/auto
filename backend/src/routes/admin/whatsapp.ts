@@ -8,11 +8,13 @@ import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
 import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
 import { authMiddleware } from '../../middleware/auth';
+import { tenantMiddleware } from '../../middleware/tenant';
 import type { ApiResponse } from '../../types/context';
 
 const whatsappAdmin = new Hono();
 
-// Apply authentication middleware to all routes
+// Apply tenant and authentication middleware to all routes
+whatsappAdmin.use('*', tenantMiddleware);
 whatsappAdmin.use('*', authMiddleware);
 
 /**
@@ -22,31 +24,64 @@ whatsappAdmin.use('*', authMiddleware);
 whatsappAdmin.get(
   '/status',
   asyncHandler(async (c) => {
-    const whatsapp = new WhatsAppClient();
+    const tenant = c.get('tenant');
+    const user = c.get('user');
     
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
+
+    console.log(`[WHATSAPP ADMIN] Status check for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+    
+    // Use tenant-specific WhatsApp instance via proxy
     try {
-      // Get detailed health status
-      const health = await whatsapp.healthCheck();
+      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
+      const response = await fetch(`${baseUrl}/api/wa/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Health check failed: ${response.status}`);
+      }
+
+      const health = await response.json();
       
       // Get version information
       const version = await whatsapp.getVersion();
       
       // Get webhook configuration
-      const webhookUrl = process.env.WA_WEBHOOK_URL;
+      const webhookUrl = `${process.env.APP_URL || 'https://auto.lumiku.com'}/webhook/whatsapp`;
       
       const response: ApiResponse = {
         success: true,
         data: {
-          configured: whatsapp.isConfigured(),
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            whatsappNumber: tenant.whatsappNumber,
+            whatsappBotEnabled: tenant.whatsappBotEnabled,
+            whatsappStatus: tenant.whatsappStatus,
+            whatsappPort: tenant.whatsappPort,
+          },
           health: health,
-          version: version,
           webhook: {
             configured: !!webhookUrl,
-            url: webhookUrl || null,
+            url: webhookUrl,
           },
           api: {
-            url: process.env.WHATSAPP_API_URL || 'http://localhost:8080/send',
-            swagger: whatsapp.getSwaggerUrl(),
+            url: `${process.env.APP_URL || 'https://auto.lumiku.com'}/api/wa`,
+            pairing: `${process.env.APP_URL || 'https://auto.lumiku.com'}/api/wa/pair`,
           }
         },
       };
@@ -76,11 +111,52 @@ whatsappAdmin.get(
   '/qr',
   asyncHandler(async (c) => {
     const format = c.req.query('format') as 'json' | 'image' || 'json';
+    const tenant = c.get('tenant');
+    const user = c.get('user');
     
-    const whatsapp = new WhatsAppClient();
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
+
+    console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
     
     try {
-      const result = await whatsapp.generateQR(format);
+      // Use tenant-specific WhatsApp instance via proxy
+      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
+      const response = await fetch(`${baseUrl}/api/wa/pair`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`QR generation failed: ${response.status}`);
+      }
+
+      if (format === 'image') {
+        // Return image directly
+        const imageBuffer = await response.arrayBuffer();
+        
+        return new Response(imageBuffer, {
+          status: 200,
+          headers: {
+            'Content-Type': 'image/png',
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0',
+          },
+        });
+      } else {
+        // Return JSON response
+        const result = await response.json();
       
       const response: ApiResponse = {
         success: result.success,
@@ -117,6 +193,18 @@ whatsappAdmin.post(
   asyncHandler(async (c) => {
     const body = await c.req.json();
     const { phone, message } = body;
+    const tenant = c.get('tenant');
+    const user = c.get('user');
+
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
 
     if (!phone || !message) {
       const response: ApiResponse = {
@@ -129,24 +217,43 @@ whatsappAdmin.post(
       return c.json(response, 400);
     }
 
-    const whatsapp = new WhatsAppClient();
+    console.log(`[WHATSAPP ADMIN] Test message for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+    console.log(`[WHATSAPP ADMIN] Sending test message to ${phone}: "${message}"`);
     
     try {
-      const result = await whatsapp.sendMessage({
-        target: phone,
-        message: message,
+      // Use tenant-specific WhatsApp instance via proxy
+      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
+      const cleanPhone = phone.replace(/[^0-9]/g, '');
+      
+      const response = await fetch(`${baseUrl}/api/wa/send`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
+        },
+        body: JSON.stringify({
+          number: cleanPhone,
+          message: message
+        })
       });
 
-      const response: ApiResponse = {
-        success: result.success,
-        data: result.success ? result.data : null,
-        error: result.success ? undefined : {
-          code: 'SEND_ERROR',
-          message: result.error || 'Failed to send test message',
+      const result = await response.json();
+
+      const apiResponse: ApiResponse = {
+        success: response.ok && result.success,
+        data: response.ok && result.success ? {
+          sent: true,
+          tenant: tenant.slug,
+          phone: cleanPhone,
+          message: message,
+        } : null,
+        error: response.ok && result.success ? undefined : {
+          code: 'TEST_SEND_ERROR',
+          message: result?.error || 'Failed to send test message',
         },
       };
 
-      return c.json(response, result.success ? 200 : 400);
+      return c.json(apiResponse, response.ok && result.success ? 200 : 400);
     } catch (error) {
       console.error('[WHATSAPP ADMIN] Error sending test message:', error);
       

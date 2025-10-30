@@ -59,7 +59,7 @@ whatsappWebhook.post('/', async (c) => {
     const payload: WhatsAppWebhookPayload = await c.req.json();
     console.log(`[WEBHOOK] 📨 WhatsApp Web API v1.6.0 Payload:`, JSON.stringify(payload, null, 2));
     console.log(`[WEBHOOK] 🕐 Timestamp: ${new Date().toISOString()}`);
-    console.log(`[WEBHOOK] 🌐 Request headers:`, JSON.stringify(Object.fromEntries(c.req.header()), null, 2));
+    console.log(`[WEBHOOK] 🌐 Request headers:`, JSON.stringify(c.req.header(), null, 2));
 
     // Validate required fields
     if (!payload.event || payload.event !== 'message') {
@@ -89,9 +89,16 @@ whatsappWebhook.post('/', async (c) => {
 
     console.log(`[WEBHOOK] Message from ${customerPhone}: "${message}"`);
 
-    // Find active tenant
+    // Find tenant by domain from webhook headers or request context
+    const host = c.req.header('host') || '';
+    console.log(`[WEBHOOK] Looking up tenant for domain: ${host}`);
+    
     const tenant = await prisma.tenant.findFirst({
       where: {
+        OR: [
+          { subdomain: host },
+          { customDomain: host }
+        ],
         status: 'active',
         whatsappBotEnabled: true,
       },
@@ -136,12 +143,12 @@ whatsappWebhook.post('/', async (c) => {
       // Continue anyway
     }
 
-    // Save message to database
+    // Save message to database with tenant context
     try {
       await prisma.message.create({
         data: {
           tenantId: tenant.id,
-          leadId: lead?.id || 1,
+          leadId: lead?.id,
           sender: 'customer',
           message: message,
           metadata: {
@@ -151,9 +158,17 @@ whatsappWebhook.post('/', async (c) => {
             messageId: messageId,
             webhookFormat: 'whatsapp-web-api-v1.6.0',
             attachment: payload.attachment || undefined,
+            tenant: {
+              id: tenant.id,
+              name: tenant.name,
+              slug: tenant.slug,
+              domain: host,
+            },
           },
         },
       });
+      
+      console.log(`[WEBHOOK] Message saved for tenant: ${tenant.name} (${tenant.slug})`);
     } catch (error) {
       console.error('[WEBHOOK] Error saving message:', error);
     }
@@ -180,20 +195,21 @@ whatsappWebhook.post('/', async (c) => {
 
     console.log(`[WEBHOOK] Response: "${responseMessage}"`);
 
-    // Send response via WhatsApp using proxy API (known to work)
+    // Send response via WhatsApp using tenant-specific proxy API
     let whatsappSendResult = null;
     try {
-      console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone}`);
+      console.log(`[WEBHOOK] Sending WhatsApp response to ${customerPhone} for tenant: ${tenant.name} (${tenant.slug})`);
       
       const cleanPhone = customerPhone.replace(/[^0-9]/g, '');
       console.log(`[WEBHOOK] Cleaned phone: ${cleanPhone}, Message: "${responseMessage}"`);
       
-      // Use proxy API with full URL
+      // Use tenant-specific proxy API
       const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
       const sendResponse = await fetch(`${baseUrl}/api/wa/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
         },
         body: JSON.stringify({
           number: cleanPhone,
@@ -220,6 +236,12 @@ whatsappWebhook.post('/', async (c) => {
     const response: ApiResponse = {
       success: true,
       data: {
+        tenant: {
+          id: tenant.id,
+          name: tenant.name,
+          slug: tenant.slug,
+          domain: host,
+        },
         leadId: lead?.id,
         status: 'processed',
         message: 'WhatsApp Web API webhook processed successfully',
