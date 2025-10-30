@@ -454,7 +454,7 @@ export const SystemSettingsUpdateSchema = z.object({
       .optional(),
 
     allowedIpRanges: z
-      .array(z.string().ip({ version: 'v4' }))
+      .array(z.string().regex(/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/, 'Invalid IP address format'))
       .optional(),
   }).optional(),
 

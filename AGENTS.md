@@ -36,6 +36,7 @@
 - **Custom Errors**: Use predefined error classes from `../middleware/error-handler` (BadRequestError, NotFoundError, etc.)
 - **Database**: Prisma ORM with typed models, always run migrations after schema changes
 - **API**: Hono framework with Zod validation for request/response schemas
+- **Validation**: Use Zod regex patterns for IP addresses, not `.ip()` method
 - **File Structure**: Backend in `/backend/src`, frontend in `/frontend/src`, shared types in root
 - **Environment**: Bun automatically loads .env, so don't use dotenv
 
