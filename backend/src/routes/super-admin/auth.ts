@@ -75,7 +75,7 @@ app.post('/login',
  * @returns {Promise<SuperAdminLoginResponse>} New JWT tokens and profile
  */
 app.post('/refresh',
-  zValidator('json', RefreshTokenSchema).optional(),
+  zValidator('json', RefreshTokenSchema.optional()),
   superAdminSecurityHeaders,
   async (c) => {
     // Try to get refresh token from body first, then from cookie

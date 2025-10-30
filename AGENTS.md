@@ -37,6 +37,7 @@
 - **Database**: Prisma ORM with typed models, always run migrations after schema changes
 - **API**: Hono framework with Zod validation for request/response schemas
 - **Validation**: Use Zod regex patterns for IP addresses, not `.ip()` method
+- **Zod Validators**: Use `Schema.optional()` for optional validation, not `zValidator().optional()`
 - **File Structure**: Backend in `/backend/src`, frontend in `/frontend/src`, shared types in root
 - **Environment**: Bun automatically loads .env, so don't use dotenv
 
