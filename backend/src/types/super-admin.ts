@@ -4,7 +4,21 @@
  * TypeScript interfaces and types for the Super Admin system.
  */
 
-import type { SuperAdmin, Tenant, User, Car, Lead } from '../../../generated/prisma';
+// Local type definitions to avoid import issues with generated prisma
+export interface SuperAdmin {
+  id: number;
+  name: string;
+  email: string;
+  passwordHash: string;
+  role: 'super_admin' | 'admin';
+  status: 'active' | 'inactive';
+  lastLoginAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Import other types from generated prisma if needed
+import type { Tenant, User, Car, Lead } from '../../../generated/prisma';
 
 // ============================================
 // AUTHENTICATION TYPES

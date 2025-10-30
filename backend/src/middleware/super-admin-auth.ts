@@ -7,9 +7,9 @@
 
 import type { Context, Next } from 'hono';
 import { UnauthorizedError, ForbiddenError } from './error-handler';
-import { SuperAdminAuthService } from '../../services/super-admin-auth.service';
-import { MESSAGES } from '../../config/constants';
-import type { SuperAdmin } from '../../../generated/prisma';
+import { SuperAdminAuthService } from '../services/super-admin-auth.service';
+import { MESSAGES } from '../config/constants';
+import type { SuperAdmin } from '../types/super-admin';
 import { prisma } from '../../db';
 
 /**

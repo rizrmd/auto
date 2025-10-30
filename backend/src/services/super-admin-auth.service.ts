@@ -6,7 +6,7 @@
  */
 
 import { prisma } from '../db';
-import type { SuperAdmin } from '../../../generated/prisma';
+import type { SuperAdmin } from '../types/super-admin';
 import { env } from '../config/env';
 import type { SuperAdminLoginResponse, SuperAdminJwtPayload } from '../types/super-admin';
 import { UnauthorizedError } from '../middleware/error-handler';
