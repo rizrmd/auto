@@ -107,6 +107,11 @@ class ServiceContainer {
       // Warm up connections and cache
       await this.warmUpServices();
 
+      // Start health checks after everything is initialized
+      console.log('[SERVICE CONTAINER] Calling health checker initialize...');
+      this._healthChecker.initialize();
+      console.log('[SERVICE CONTAINER] Health checker initialized');
+
       this.initialized = true;
       console.log('[SERVICE CONTAINER] ✅ All services initialized successfully');
 

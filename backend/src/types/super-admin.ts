@@ -5,7 +5,12 @@
  */
 
 // Local type definitions to avoid import issues with generated prisma
-export type TenantStatus = 'active' | 'suspended' | 'trial' | 'expired';
+export enum TenantStatus {
+  active = 'active',
+  suspended = 'suspended',
+  trial = 'trial',
+  expired = 'expired'
+}
 
 export interface SuperAdmin {
   id: number;

@@ -83,7 +83,7 @@ interface RecentActivity {
   severity: 'info' | 'warning' | 'error';
 }
 
-export function DashboardPage() {
+function DashboardPage() {
   const { apiCall } = useSuperAdminApi();
   const [analytics, setAnalytics] = useState<GlobalAnalytics | null>(null);
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
@@ -390,3 +390,5 @@ export function DashboardPage() {
     </div>
   );
 }
+
+export default DashboardPage;

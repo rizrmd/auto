@@ -74,10 +74,9 @@ async function generateTraefikConfig(): Promise<void> {
 
     console.log(`📊 Found ${tenants.length} tenants`);
 
-    // Get container IP address from environment or use default
-    // We need to use the actual IP address since container name resolution doesn't work
-    const containerIpAddress = process.env.CONTAINER_IP_ADDRESS || '10.0.1.44';
-    console.log(`🔧 Using container IP: ${containerIpAddress}`);
+    // Use container name for service discovery (containers now on same network)
+    const containerIdentifier = 'b8sc48s8s0c4w00008k808w8';
+    console.log(`🔧 Using container identifier: ${containerIdentifier}`);
     
     const config: TraefikConfig = {
       http: {
@@ -156,7 +155,7 @@ async function generateTraefikConfig(): Promise<void> {
           loadBalancer: {
             servers: [
               {
-                url: `http://${containerIpAddress}:3000` // Container IP address
+                url: `http://${containerIdentifier}:3000` // Container name (same network as Traefik)
               }
             ]
           }

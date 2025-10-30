@@ -48,7 +48,7 @@ export class HealthChecker {
   private healthCheckInterval: Timer | null = null;
 
   constructor() {
-    this.startPeriodicHealthChecks();
+    // Don't start periodic checks immediately - wait for service container initialization
   }
 
   /**
@@ -56,14 +56,17 @@ export class HealthChecker {
    */
   async checkHealth(): Promise<HealthStatus> {
     const startTime = Date.now();
-    
+
     try {
       const services = await this.checkAllServices();
       const metrics = await this.collectMetrics();
-      
+
+      // Debug: log service statuses
+      console.log('[HEALTH] Service statuses:', Object.entries(services).map(([name, s]) => `${name}: ${s.status}`).join(', '));
+
       // Determine overall status
       const overallStatus = this.determineOverallStatus(services);
-      
+
       this.healthStatus = {
         status: overallStatus,
         services,
@@ -75,12 +78,12 @@ export class HealthChecker {
       };
 
       console.log(`[HEALTH] Health check completed in ${Date.now() - startTime}ms - Status: ${overallStatus}`);
-      
+
       return this.healthStatus;
-      
+
     } catch (error) {
       console.error('[HEALTH] Health check failed:', error);
-      
+
       return {
         status: 'unhealthy',
         services: {
@@ -478,6 +481,14 @@ export class HealthChecker {
         console.error('[HEALTH] Periodic health check failed:', error);
       }
     }, 60000); // Every minute
+  }
+
+  /**
+   * Initialize health checker after service container is ready
+   */
+  initialize(): void {
+    console.log('[HEALTH] Initializing health checker...');
+    this.startPeriodicHealthChecks();
   }
 
   /**

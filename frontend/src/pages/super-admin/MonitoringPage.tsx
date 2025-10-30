@@ -29,7 +29,7 @@ import { useSuperAdminApi } from '@/context/SuperAdminAuthContext';
 import { AnalyticsChart } from '@/components/super-admin/AnalyticsChart';
 import { SystemHealth, WhatsAppBotMetrics, StorageMetrics } from '@/types/super-admin';
 
-export function MonitoringPage() {
+function MonitoringPage() {
   const { apiCall } = useSuperAdminApi();
   const [activeTab, setActiveTab] = useState<'health' | 'performance' | 'whatsapp' | 'storage' | 'logs'>('health');
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
@@ -545,3 +545,5 @@ export function MonitoringPage() {
     </div>
   );
 }
+
+export default MonitoringPage;

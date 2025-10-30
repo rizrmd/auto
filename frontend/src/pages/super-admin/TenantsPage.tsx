@@ -29,7 +29,7 @@ interface FilterOptions extends TenantFilter {
   search: string;
 }
 
-export function TenantsPage() {
+function TenantsPage() {
   const navigate = useNavigate();
   const { apiCall } = useSuperAdminApi();
 
@@ -537,3 +537,5 @@ export function TenantsPage() {
     </div>
   );
 }
+
+export default TenantsPage;

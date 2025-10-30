@@ -27,7 +27,7 @@ import {
 import { useSuperAdminApi } from '@/context/SuperAdminAuthContext';
 import { SystemSettings } from '@/types/super-admin';
 
-export function SettingsPage() {
+function SettingsPage() {
   const { apiCall } = useSuperAdminApi();
   const [activeTab, setActiveTab] = useState<'general' | 'security' | 'whatsapp' | 'notifications' | 'features'>('general');
   const [settings, setSettings] = useState<SystemSettings | null>(null);
@@ -792,3 +792,5 @@ export function SettingsPage() {
     </div>
   );
 }
+
+export default SettingsPage;

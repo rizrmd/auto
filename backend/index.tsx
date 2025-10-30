@@ -38,8 +38,9 @@ import superAdminRoutes from './src/routes/super-admin';
 const serviceContainer = ServiceContainer.getInstance();
 
 // Initialize services on startup
-// TODO: Fix initialization hanging - temporarily disabled
-// await serviceContainer.initialize();
+console.log('[STARTUP] Initializing service container...');
+await serviceContainer.initialize();
+console.log('[STARTUP] Service container initialized successfully');
 
 /**
  * Create Hono application

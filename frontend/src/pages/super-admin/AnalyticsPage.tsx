@@ -36,7 +36,7 @@ const presetRanges = [
   { label: 'Last 12 months', days: 365 }
 ];
 
-export function AnalyticsPage() {
+function AnalyticsPage() {
   const { apiCall } = useSuperAdminApi();
   const [activeTab, setActiveTab] = useState<'overview' | 'tenants' | 'revenue' | 'performance'>('overview');
   const [dateRange, setDateRange] = useState<DateRange>(() => {
@@ -467,3 +467,5 @@ export function AnalyticsPage() {
     </div>
   );
 }
+
+export default AnalyticsPage;

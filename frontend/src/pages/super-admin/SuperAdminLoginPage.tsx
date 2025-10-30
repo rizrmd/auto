@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { Shield, Eye, EyeOff, AlertTriangle, CheckCircle } from 'lucide-react';
 import { useSuperAdminAuth } from '@/context/SuperAdminAuthContext';
 
-export function SuperAdminLoginPage() {
+function SuperAdminLoginPage() {
   const navigate = useNavigate();
   const { login, isLoading } = useSuperAdminAuth();
 
@@ -201,9 +201,9 @@ export function SuperAdminLoginPage() {
           </p>
           <p className="text-slate-600 text-xs mt-1">
             All login attempts are monitored and logged.
-          </p>
-        </div>
-      </div>
+      </p>
     </div>
   );
 }
+
+export default SuperAdminLoginPage;
