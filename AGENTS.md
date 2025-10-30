@@ -38,6 +38,7 @@
 - **API**: Hono framework with Zod validation for request/response schemas
 - **Validation**: Use Zod regex patterns for IP addresses, not `.ip()` method
 - **Zod Validators**: Use `Schema.optional()` for optional validation, not `zValidator().optional()`
+- **Zod Imports**: Always import both `z` from 'zod' and `zValidator` from '@hono/zod-validator' when using Zod schemas
 - **File Structure**: Backend in `/backend/src`, frontend in `/frontend/src`, shared types in root
 - **Environment**: Bun automatically loads .env, so don't use dotenv
 
