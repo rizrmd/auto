@@ -10,7 +10,10 @@
     "db:generate": "bunx prisma generate",
     "db:migrate": "bunx prisma migrate dev",
     "db:studio": "bunx prisma studio",
-    "db:seed": "bun run seed.ts"
+    "db:seed": "bun run seed.ts",
+    "traefik:generate": "bun run scripts/deployment/generate-traefik-config.ts",
+    "traefik:update": "bun run scripts/deployment/update-traefik.ts",
+    "traefik:health": "bun run scripts/deployment/traefik-health-check.ts"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.5",

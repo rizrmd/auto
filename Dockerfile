@@ -58,6 +58,23 @@ set -e\n\
 \n\
 echo "🚀 Starting AutoLeads application..."\n\
 \n\
+# Generate Traefik configuration if DATABASE_URL is available\n\
+if [ -n "$DATABASE_URL" ]; then\n\
+    echo "🔧 Generating Traefik proxy configuration..."\n\
+    # Use proper service name for Coolify setup\n\
+    CONTAINER_SERVICE_NAME=${CONTAINER_SERVICE_NAME:-autoleads}\n\
+    export CONTAINER_SERVICE_NAME\n\
+    bun run traefik:generate || echo "⚠️  Warning: Failed to generate traefik config"\n\
+    \n\
+    # Ensure configuration is loaded by restarting traefik\n\
+    echo "🔄 Restarting Traefik to load new configuration..."\n\
+    if command -v docker >/dev/null 2>&1; then\n\
+        docker restart coolify-proxy || echo "⚠️  Could not restart traefik"\n\
+    fi\n\
+else\n\
+    echo "⚠️  DATABASE_URL not available, skipping traefik config generation"\n\
+fi\n\
+\n\
 # Start WhatsApp Web API in background\n\
 if [ -f "/app/whatsapp-api.env" ] && [ -n "$DATABASE_URL" ]; then\n\
     echo "📱 Starting WhatsApp Web API on port 8080..."\n\

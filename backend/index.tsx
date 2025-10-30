@@ -28,6 +28,7 @@ import adminLeadsRoutes from './src/routes/admin/leads';
 import adminWhatsappRoutes from './src/routes/admin/whatsapp';
 import adminIntelligenceRoutes from './src/routes/admin/intelligence';
 import tenantRoutes from './src/routes/tenant';
+import traefikRoutes from './src/routes/traefik';
 import whatsappApiRoutes from './src/routes/api/whatsapp';
 
 /**
@@ -163,6 +164,9 @@ app.route('/api/cars', publicCarsRoutes);
 // Tenant routes (public)
 app.route('/api/tenant', tenantRoutes);
 
+// Traefik management routes (admin only - should be secured)
+app.route('/api/traefik', traefikRoutes);
+
 // Webhook routes
 app.route('/webhook/whatsapp', whatsappWebhookRoutes);
 
@@ -200,6 +204,10 @@ app.get('/api', (c) => {
       whatsapp: {
         proxy: '/api/wa/pair',
         health: '/api/wa/health',
+      },
+      traefik: {
+        reload: '/api/traefik/reload',
+        status: '/api/traefik/status',
       },
       webhooks: {
         whatsapp: '/webhook/whatsapp',
