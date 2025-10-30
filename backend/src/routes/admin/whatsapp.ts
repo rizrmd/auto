@@ -42,7 +42,7 @@ whatsappAdmin.get(
     // Use tenant-specific WhatsApp instance via proxy
     try {
       const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
-      const response = await fetch(`${baseUrl}/api/wa/health`, {
+      const healthResponse = await fetch(`${baseUrl}/api/wa/health`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -50,19 +50,19 @@ whatsappAdmin.get(
         },
       });
 
-      if (!response.ok) {
-        throw new Error(`Health check failed: ${response.status}`);
+      if (!healthResponse.ok) {
+        throw new Error(`Health check failed: ${healthResponse.status}`);
       }
 
-      const health = await response.json();
-      
+      const health = await healthResponse.json();
+
       // Get version information
       const version = await whatsapp.getVersion();
-      
+
       // Get webhook configuration
       const webhookUrl = `${process.env.APP_URL || 'https://auto.lumiku.com'}/webhook/whatsapp`;
-      
-      const response: ApiResponse = {
+
+      const apiResponse: ApiResponse = {
         success: true,
         data: {
           tenant: {
@@ -89,8 +89,8 @@ whatsappAdmin.get(
       return c.json(response);
     } catch (error) {
       console.error('[WHATSAPP ADMIN] Error getting status:', error);
-      
-      const response: ApiResponse = {
+
+      const errorResponse: ApiResponse = {
         success: false,
         error: {
           code: 'STATUS_ERROR',
@@ -98,7 +98,7 @@ whatsappAdmin.get(
         },
       };
 
-      return c.json(response, 500);
+      return c.json(errorResponse, 500);
     }
   })
 );
@@ -158,7 +158,7 @@ whatsappAdmin.get(
         // Return JSON response
         const result = await response.json();
       
-      const response: ApiResponse = {
+      const qrResponse: ApiResponse = {
         success: result.success,
         data: result.success ? result.data : null,
         error: result.success ? undefined : {
@@ -167,11 +167,12 @@ whatsappAdmin.get(
         },
       };
 
-      return c.json(response, result.success ? 200 : 400);
+      return c.json(qrResponse);
+      }
     } catch (error) {
       console.error('[WHATSAPP ADMIN] Error generating QR:', error);
-      
-      const response: ApiResponse = {
+
+      const qrErrorResponse: ApiResponse = {
         success: false,
         error: {
           code: 'QR_GENERATION_ERROR',
@@ -179,7 +180,7 @@ whatsappAdmin.get(
         },
       };
 
-      return c.json(response, 500);
+      return c.json(qrErrorResponse, 500);
     }
   })
 );
