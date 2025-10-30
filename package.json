@@ -5,7 +5,6 @@
   "type": "module",
   "scripts": {
     "start": "bun backend/index.tsx",
-    "build": "bun run build.ts",
     "build:frontend": "bun run scripts/build/build-frontend.ts",
     "db:generate": "bunx prisma generate",
     "db:migrate": "bunx prisma migrate dev",
