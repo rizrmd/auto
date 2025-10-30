@@ -39,7 +39,12 @@ RUN bun install --frozen-lockfile
 COPY . .
 
 # Generate Prisma client (needs to happen after copying source code)
-RUN bunx prisma generate || echo "⚠️  Prisma generate failed - will retry at runtime"
+RUN echo "📦 Generating Prisma client..." && \
+    bunx prisma generate && \
+    echo "✅ Prisma client generated successfully" || \
+    (echo "⚠️  Prisma generate failed during build - will retry at runtime" && \
+     ls -la prisma/ && \
+     ls -la generated/ 2>/dev/null || echo "generated/ folder not found")
 
 # Build frontend for production (doesn't need DATABASE_URL)
 RUN bun run build:frontend

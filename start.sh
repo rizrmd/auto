@@ -23,15 +23,20 @@ fi
 
 
 
-# Generate Prisma client if not already generated
+# Generate Prisma client (always generate at runtime to ensure it's up to date)
+echo "✓ Generating Prisma client..."
+bunx prisma generate || {
+    echo "❌ Prisma client generation failed!"
+    echo "   This might be due to missing DATABASE_URL or schema issues"
+    echo "   Continuing anyway - application might still work..."
+}
+
+# Verify Prisma client was generated
 if [ ! -f "./generated/prisma/index.d.ts" ]; then
-    echo "✓ Generating Prisma client..."
-    bunx prisma generate || {
-        echo "❌ Prisma client generation failed!"
-        exit 1
-    }
+    echo "⚠️  WARNING: Prisma client not found at ./generated/prisma/index.d.ts"
+    echo "   This will cause import errors in the application"
 else
-    echo "✓ Prisma client already generated, skipping..."
+    echo "✓ Prisma client verified at ./generated/prisma/index.d.ts"
 fi
 
 # Create Prisma index file if not exists

@@ -1,9 +1,8 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
-import { PrismaClient } from '../../../generated/prisma';
+import { prisma } from '../../db';
 
 const app = new Hono();
-const prisma = new PrismaClient();
 
 /**
  * Proxy endpoint for WhatsApp pairing
