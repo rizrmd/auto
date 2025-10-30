@@ -1,33 +1,37 @@
 -- Seed initial super admin user
--- Password: admin123 (hashed with bcrypt)
+-- Password: admin123 (hashed with bcrypt using Bun.password.hash)
 INSERT INTO "super_admins" (
     "name",
     "email",
     "password_hash",
     "role",
-    "status"
+    "status",
+    "updated_at"
 ) VALUES (
     E'Super Admin',
     E'admin@autoleads.com',
-    E'$2b$10$rQZ8s/K/8qFvQJ6dL8v5/.hJd8qL6vL5Q9mH3nK8qP7vW5nK4dQ8C',
+    E'$2b$10$2X9E1/80ar4QQ9y2Vm9P6OwSQSCEXpG8fdzE5Jbi.DnEjo6518UjW',
     E'super_admin',
-    E'active'
+    E'active',
+    CURRENT_TIMESTAMP
 ) ON CONFLICT ("email") DO NOTHING;
 
 -- Create support admin user as well
--- Password: support123 (hashed with bcrypt)
+-- Password: support123 (hashed with bcrypt using Bun.password.hash)
 INSERT INTO "super_admins" (
     "name",
     "email",
     "password_hash",
     "role",
-    "status"
+    "status",
+    "updated_at"
 ) VALUES (
     E'Support Admin',
     E'support@autoleads.com',
-    E'$2b$10$sW9tL7/P9rGwRJ7eM9w6/.iKe9rM7wM6R0nI4oL9rQ8xX6oL5eR9D',
+    E'$2b$10$XSYz0il0EvEVmRcg9uvEyOImpSOdIgYkZVKuEXx0ct/PL0dP3b4hC',
     E'support',
-    E'active'
+    E'active',
+    CURRENT_TIMESTAMP
 ) ON CONFLICT ("email") DO NOTHING;
 
 -- Add comment for documentation
