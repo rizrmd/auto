@@ -33,6 +33,7 @@
 - **Components**: React functional components with TypeScript interfaces
 - **Styling**: Tailwind CSS with class-variance-authority for component variants
 - **Error Handling**: Use ErrorBoundary components, centralized error middleware in backend
+- **Custom Errors**: Use predefined error classes from `../middleware/error-handler` (BadRequestError, NotFoundError, etc.)
 - **Database**: Prisma ORM with typed models, always run migrations after schema changes
 - **API**: Hono framework with Zod validation for request/response schemas
 - **File Structure**: Backend in `/backend/src`, frontend in `/frontend/src`, shared types in root

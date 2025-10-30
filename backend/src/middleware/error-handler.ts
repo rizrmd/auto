@@ -66,6 +66,16 @@ export class ForbiddenError extends AppError {
 }
 
 /**
+ * Bad Request Error
+ */
+export class BadRequestError extends AppError {
+  constructor(message: string, details?: Record<string, any>) {
+    super(HTTP_STATUS.BAD_REQUEST, 'BAD_REQUEST', message, details);
+    this.name = 'BadRequestError';
+  }
+}
+
+/**
  * Conflict Error (duplicate resources)
  */
 export class ConflictError extends AppError {
