@@ -189,7 +189,7 @@ app.put('/security',
     passwordMinLength: z.number().int().min(8).max(50).optional(),
     requireStrongPassword: z.boolean().optional(),
     enableTwoFactor: z.boolean().optional(),
-    allowedIpRanges: z.array(z.string().ip({ version: 'v4' })).optional(),
+    allowedIpRanges: z.array(z.string().regex(/^((25[0-5]|(2[0-4]|1\d|[1-9]|)\d)\.?\b){4}$/, 'Invalid IP address format')).optional(),
   })),
   async (c) => {
     const securitySettings = c.req.valid('json');
