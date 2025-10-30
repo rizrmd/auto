@@ -1,6 +1,6 @@
 /**
  * WhatsApp Web API Webhook Route
- * Handles incoming WhatsApp messages from WhatsApp Web API v1.6.0
+ * Handles incoming WhatsApp messages from WhatsApp Web API v1.7.0
  */
 
 import { Hono } from 'hono';

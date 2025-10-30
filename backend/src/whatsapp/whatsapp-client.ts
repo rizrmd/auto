@@ -1,5 +1,5 @@
 /**
- * WhatsApp Web API Client v1.5.0
+ * WhatsApp Web API Client v1.7.0
  * HTTP-based WhatsApp Web API integration with QR pairing, messaging, and read receipts
  */
 
