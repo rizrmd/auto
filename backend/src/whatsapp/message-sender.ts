@@ -3,11 +3,14 @@
  * High-level interface for sending WhatsApp messages
  */
 
+import { WhatsAppClient } from './whatsapp-client';
+
 export class MessageSender {
   private readonly MAX_MESSAGE_LENGTH = 4096; // WhatsApp limit
+  private whatsappClient: WhatsAppClient;
 
   constructor() {
-    // WhatsApp client will be initialized when needed
+    this.whatsappClient = new WhatsAppClient();
   }
 
   /**
@@ -18,8 +21,16 @@ export class MessageSender {
     to: string,
     message: string
   ): Promise<boolean> {
-    console.warn('⚠️ WhatsApp messaging not configured - Fonnte client removed');
-    return false;
+    try {
+      const result = await this.whatsappClient.sendMessage({
+        target: to,
+        message: message
+      });
+      return result.success;
+    } catch (error) {
+      console.error('Error sending message:', error);
+      return false;
+    }
   }
 
   /**
@@ -31,8 +42,13 @@ export class MessageSender {
     message: string,
     imageUrl: string
   ): Promise<boolean> {
-    console.warn('⚠️ WhatsApp messaging not configured - Fonnte client removed');
-    return false;
+    try {
+      const result = await this.whatsappClient.sendImage(to, imageUrl, message);
+      return result.success;
+    } catch (error) {
+      console.error('Error sending message with image:', error);
+      return false;
+    }
   }
 
   /**
@@ -45,8 +61,19 @@ export class MessageSender {
     documentUrl: string,
     filename?: string
   ): Promise<boolean> {
-    console.warn('⚠️ WhatsApp messaging not configured - Fonnte client removed');
-    return false;
+    try {
+      // For documents, we'll send as a regular message with URL for now
+      // TODO: Implement proper document sending when WhatsAppClient supports it
+      const fullMessage = `${message}\n\nDocument: ${documentUrl}`;
+      const result = await this.whatsappClient.sendMessage({
+        target: to,
+        message: fullMessage
+      });
+      return result.success;
+    } catch (error) {
+      console.error('Error sending message with document:', error);
+      return false;
+    }
   }
 
   /**
@@ -208,6 +235,6 @@ export class MessageSender {
    * Check if sender is configured
    */
   isConfigured(): boolean {
-    return false; // Fonnte client removed
+    return this.whatsappClient.isConfigured();
   }
 }
