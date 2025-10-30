@@ -12,7 +12,8 @@
       "Bash(bun list:*)",
       "Bash(bun add:*)",
       "Bash(timeout:*)",
-      "Bash(bun build:*)"
+      "Bash(bun build:*)",
+      "Bash(git pull:*)"
     ],
     "deny": [],
     "ask": []
