@@ -9,7 +9,7 @@
  */
 
 import { prisma } from '../../backend/src/db';
-import { TenantStatus } from '../../backend/src/types/super-admin';
+import { TenantStatus } from '../../generated/prisma';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
