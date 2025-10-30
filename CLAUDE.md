@@ -38,6 +38,14 @@
 - **File Structure**: Backend in `/backend/src`, frontend in `/frontend/src`, shared types in root
 - **Environment**: Bun automatically loads .env, so don't use dotenv
 
+## Import Path Guidelines
+- **Backend imports**: Use relative paths (`../`, `./`) from current file location
+- **Frontend imports**: Use absolute paths with `@/` alias (e.g., `@/components/Button`)
+- **Service imports**: From middleware, use `../services/`; from routes, use `../../services/`
+- **Database imports**: Always use `../db` for the centralized prisma instance
+- **Type imports**: Prefer local type definitions over generated Prisma types to avoid import errors
+- **Verify paths**: Always double-check relative import paths before committing
+
 ## Database & Prisma Guidelines
 - **NEVER import PrismaClient directly** from `../../../generated/prisma` - this causes runtime import errors
 - **ALWAYS import the singleton prisma instance** from `../../db` (relative to backend files) or `backend/src/db`

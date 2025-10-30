@@ -10,7 +10,7 @@ import { UnauthorizedError, ForbiddenError } from './error-handler';
 import { SuperAdminAuthService } from '../services/super-admin-auth.service';
 import { MESSAGES } from '../config/constants';
 import type { SuperAdmin } from '../types/super-admin';
-import { prisma } from '../../db';
+import { prisma } from '../db';
 
 /**
  * Extract JWT token from Authorization header
