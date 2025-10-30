@@ -23,12 +23,16 @@ fi
 
 
 
-# Generate Prisma client (always generate at runtime to ensure it's up to date)
-echo "✓ Generating Prisma client..."
-bunx prisma generate || {
-    echo "❌ Prisma client generation failed!"
-    exit 1
-}
+# Generate Prisma client if not already generated
+if [ ! -f "./generated/prisma/index.d.ts" ]; then
+    echo "✓ Generating Prisma client..."
+    bunx prisma generate || {
+        echo "❌ Prisma client generation failed!"
+        exit 1
+    }
+else
+    echo "✓ Prisma client already generated, skipping..."
+fi
 
 # Create Prisma index file if not exists
 if [ ! -f "./generated/prisma/index.ts" ]; then
