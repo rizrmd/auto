@@ -41,48 +41,23 @@ function extractDomain(c: Context): { domain: string; type: 'subdomain' | 'custo
     }
   }
 
-  // Check domain structure
-  const parts = hostname.split('.');
+   // Check domain structure
+   const parts = hostname.split('.');
 
-  // Known custom domains (in production, you'd check against database)
-  const knownCustomDomains = ['auto.lumiku.com'];
-  if (knownCustomDomains.includes(hostname)) {
-    return {
-      domain: hostname,
-      type: 'customDomain',
-    };
-  }
+   // Check if it's a subdomain of autoleads.id
+   if (hostname.endsWith('.autoleads.id')) {
+     return {
+       domain: hostname,
+       type: 'subdomain',
+     };
+   }
 
-  // Check if it's a subdomain of autoleads.id
-  if (hostname.endsWith('.autoleads.id')) {
-    return {
-      domain: hostname,
-      type: 'subdomain',
-    };
-  }
-
-  // If 2 parts (e.g., example.com), treat as custom domain
-  if (parts.length === 2) {
-    return {
-      domain: hostname,
-      type: 'customDomain',
-    };
-  }
-
-  // If 3+ parts but not autoleads.id, treat as custom domain
-  // This handles cases like: auto.lumiku.com, www.example.com
-  if (parts.length >= 3) {
-    return {
-      domain: hostname,
-      type: 'customDomain',
-    };
-  }
-
-  // Fallback - treat as subdomain
-  return {
-    domain: hostname,
-    type: 'subdomain',
-  };
+   // For all other domains, treat as potential custom domains
+   // The tenant service will check the database and cache results
+   return {
+     domain: hostname,
+     type: 'customDomain',
+   };
 }
 
 /**
