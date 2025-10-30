@@ -181,15 +181,15 @@ whatsappWebhook.post('/', async (c) => {
     let responseMessage = '';
     
     if (userType === 'admin' || userType === 'sales') {
-      responseMessage = `👋 Admin command received: "${message}". Use /help for available commands.`;
+      responseMessage = `👋 Perintah admin diterima: "${message}". Gunakan /help untuk daftar perintah yang tersedia.`;
     } else {
       // Simple customer responses
       if (message.toLowerCase().includes('harga') || message.toLowerCase().includes('price')) {
-        responseMessage = '📝 For pricing information, please contact our sales team at ' + tenant.whatsappNumber;
+        responseMessage = '📝 Untuk informasi harga, silahkan hubungi tim sales kami di ' + tenant.whatsappNumber;
       } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('halo')) {
-        responseMessage = '👋 Hello! Welcome to ' + tenant.name + '. How can I help you today?';
+        responseMessage = '👋 Halo! Selamat datang di ' + tenant.name + '. Ada yang bisa saya bantu hari ini?';
       } else {
-        responseMessage = '🤖 Thank you for your message. Our team will get back to you soon! 📞 ' + tenant.whatsappNumber;
+        responseMessage = '🤖 Terima kasih atas pesan Anda. Tim kami akan segera menghubungi Anda kembali! 📞 ' + tenant.whatsappNumber;
       }
     }
 

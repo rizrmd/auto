@@ -30,6 +30,7 @@ import adminIntelligenceRoutes from './src/routes/admin/intelligence';
 import tenantRoutes from './src/routes/tenant';
 import traefikRoutes from './src/routes/traefik';
 import whatsappApiRoutes from './src/routes/api/whatsapp';
+import superAdminRoutes from './src/routes/super-admin';
 
 /**
  * Initialize service container and warm up services
@@ -180,6 +181,9 @@ app.route('/api/admin/intelligence', adminIntelligenceRoutes);
 // WhatsApp API proxy routes
 app.route('/api/wa', whatsappApiRoutes);
 
+// Super Admin API routes
+app.route('/api/super-admin', superAdminRoutes);
+
 /**
  * Root route - API info
  */
@@ -204,6 +208,14 @@ app.get('/api', (c) => {
       whatsapp: {
         proxy: '/api/wa/pair',
         health: '/api/wa/health',
+      },
+      'super-admin': {
+        auth: '/api/super-admin/auth/login',
+        tenants: '/api/super-admin/tenants',
+        analytics: '/api/super-admin/analytics/global',
+        monitoring: '/api/super-admin/monitoring/health',
+        settings: '/api/super-admin/settings',
+        docs: '/api/super-admin/docs',
       },
       traefik: {
         reload: '/api/traefik/reload',
@@ -453,6 +465,11 @@ console.log(`  Admin Leads:     /api/admin/leads`);
 console.log(`  Admin WhatsApp:  /api/admin/whatsapp`);
 console.log(`  WhatsApp API:     /api/wa/pair`);
 console.log(`  WhatsApp Health:  /api/wa/health`);
+console.log(`  Super Admin:      /api/super-admin/auth/login`);
+console.log(`  SA Tenants:       /api/super-admin/tenants`);
+console.log(`  SA Analytics:     /api/super-admin/analytics/global`);
+console.log(`  SA Monitoring:    /api/super-admin/monitoring/health`);
+console.log(`  SA Settings:      /api/super-admin/settings`);
 
 console.log(`  WhatsApp Webhook: /webhook/whatsapp`);
 console.log('='.repeat(60));

@@ -10,6 +10,7 @@ import { HomePage } from './src/pages/HomePage';
 import { CarListingPage } from './src/pages/CarListingPage';
 import { CarDetailPage } from './src/pages/CarDetailPage';
 import { AdminIntelligencePage } from './src/pages/AdminIntelligencePage';
+import { SuperAdminBridge } from './src/components/SuperAdminBridge';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { ErrorTest } from './src/components/ErrorTest';
 
@@ -18,7 +19,21 @@ export function App() {
   const path = window.location.pathname;
   const params = new URLSearchParams(window.location.search);
 
-  // Determine which page to render
+  // Check if this is a Super Admin route
+  if (path.startsWith('/super-admin')) {
+    // Render Super Admin app (has its own routing)
+    return (
+      <ErrorBoundary
+        onError={(error, errorInfo) => {
+          console.error('Super Admin App Error:', error, errorInfo);
+        }}
+      >
+        <SuperAdminBridge />
+      </ErrorBoundary>
+    );
+  }
+
+  // Determine which page to render for main app
   let PageComponent = HomePage;
   let pageProps = {};
 

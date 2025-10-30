@@ -264,7 +264,33 @@ enum MessageSender {
 }
 
 // ============================================
-// USERS (ADMIN & SALES)
+// SUPER ADMIN (GLOBAL SYSTEM ADMIN)
+// ============================================
+
+model SuperAdmin {
+  id Int @id @default(autoincrement())
+
+  // IDENTITY
+  name         String @db.VarChar(200)
+  email        String @unique @db.VarChar(200)
+  passwordHash String @map("password_hash") @db.Text
+
+  // ROLE & STATUS
+  role        SuperAdminRole @default(super_admin)
+  status      AdminStatus    @default(active)
+  lastLoginAt DateTime?      @map("last_login_at")
+
+  // META
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([email])
+  @@index([role, status])
+  @@map("super_admins")
+}
+
+// ============================================
+// USERS (TENANT ADMIN)
 // ============================================
 
 model User {
@@ -278,8 +304,8 @@ model User {
   whatsappNumber String? @map("whatsapp_number") @db.VarChar(20)
   passwordHash   String  @map("password_hash") @db.Text
 
-  // ROLE
-  role UserRole
+  // ROLE - Simplified to only tenant admin
+  role UserRole @default(tenant_admin)
 
   // STATUS
   status      UserStatus @default(active)
@@ -298,10 +324,19 @@ model User {
   @@map("users")
 }
 
+enum SuperAdminRole {
+  super_admin
+  support
+}
+
+enum AdminStatus {
+  active
+  inactive
+  suspended
+}
+
 enum UserRole {
-  owner
-  admin
-  sales
+  tenant_admin // Simplified - only admin role for tenants
 }
 
 enum UserStatus {
