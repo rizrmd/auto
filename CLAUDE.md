@@ -3,10 +3,12 @@
 ## Critical Safety Instructions
 🚨 **DATABASE SAFETY - NEVER DO THESE**:
 - Never reset the database (`bun run db:reset` or similar)
+- Never run db seed
 - Never run `bun run db:push` - this can destroy data
 - Never run destructive database operations without explicit approval
 - Always backup data before any database changes
 - Only use `bun run db:migrate` for safe, versioned migrations
+- you can run psql or any database queries against production databases from local/AI environments
 
 ⚠️ **IMPORTANT**: Never run this project locally. Use deployed environments only. Do not execute `bun run dev`, `bun run start`, or any local development commands.
 

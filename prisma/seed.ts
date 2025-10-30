@@ -41,7 +41,7 @@ async function main() {
       address: 'Jl. Sudirman No. 123, Jakarta Pusat',
       city: 'Jakarta',
       mapsUrl: 'https://maps.google.com/?q=Jl.+Sudirman+No.+123+Jakarta',
-      plan: 'premium',
+      plan: 'pro',
       status: 'active',
       primaryColor: '#2563EB',
       secondaryColor: '#1F2937',
@@ -378,11 +378,11 @@ async function main() {
       tenantId: tenant.id,
       customerPhone: '6281987654321',
       customerName: 'Ibu Siti',
-      carId: cars[1].id, // Mazda 2 2014
+      carId: cars[1].id, // Toyota Yaris 2020
       status: 'new',
       source: 'wa',
       tags: ['first-time-buyer'],
-      notes: 'Tertarik dengan Mazda 2, butuh mobil city car irit',
+      notes: 'Tertarik dengan Toyota Yaris, butuh mobil city car irit',
     },
   });
 
@@ -391,12 +391,12 @@ async function main() {
       tenantId: tenant.id,
       customerPhone: '6281987654322',
       customerName: 'Pak Andi',
-      carId: cars[0].id, // Mercedes C300 2010
+      carId: cars[0].id, // Mazda 2 2014
       status: 'hot',
       source: 'wa',
       assignedToUserId: budi.id,
       tags: ['ready-to-buy', 'cash'],
-      notes: 'Siap beli minggu ini, prefer cash. Tertarik Mercedes eksekutif.',
+      notes: 'Siap beli minggu ini, prefer cash. Tertarik Mazda sporty.',
     },
   });
 
@@ -405,39 +405,12 @@ async function main() {
       tenantId: tenant.id,
       customerPhone: '6281987654323',
       customerName: 'Dika',
-      carId: cars[5].id, // Honda Brio RS 2021
+      carId: null, // General inquiry
       status: 'warm',
       source: 'wa',
       assignedToUserId: ani.id,
       tags: ['student', 'budget-limited'],
       notes: 'Anak kuliah, cari mobil pertama yang irit dan sporty',
-    },
-  });
-
-  const lead4 = await prisma.lead.create({
-    data: {
-      tenantId: tenant.id,
-      customerPhone: '6281987654324',
-      customerName: 'Bu Nina',
-      carId: cars[2].id, // Honda Jazz RS 2017
-      status: 'hot',
-      source: 'web',
-      assignedToUserId: budi.id,
-      tags: ['credit', 'trade-in'],
-      notes: 'Mau tukar tambah dari Jazz lama, tertarik upgrade ke RS',
-    },
-  });
-
-  const lead5 = await prisma.lead.create({
-    data: {
-      tenantId: tenant.id,
-      customerPhone: '6281987654325',
-      customerName: 'Pak Rudi',
-      carId: null, // General inquiry
-      status: 'new',
-      source: 'wa',
-      tags: ['general-inquiry'],
-      notes: 'Tanya-tanya dulu, belum specific mobil apa',
     },
   });
 
