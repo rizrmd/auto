@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #0f172a;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-root">
+        <h1>Testing Dashboard Component...</h1>
+        <p>If this stays visible, React component failed to load.</p>
+    </div>
+
+    <!-- Load React -->
+    <script src="https://unpkg.com/react@19/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@19/umd/react-dom.development.js"></script>
+
+    <!-- Load our dashboard component -->
+    <script type="module">
+        console.log('🔧 Starting dashboard test...');
+
+        // Import our dashboard component
+        import DashboardPage from '/assets/DashboardPage-BFrqrp9e.js';
+
+        console.log('✅ Dashboard module imported:', DashboardPage);
+
+        // Try to render
+        try {
+            const { createElement } = React;
+            const { createRoot } = ReactDOM;
+
+            console.log('🎯 Creating React root...');
+            const root = createRoot(document.getElementById('test-root'));
+
+            console.log('🚀 Rendering dashboard...');
+            root.render(createElement(DashboardPage));
+
+            console.log('✅ Dashboard rendered successfully!');
+        } catch (error) {
+            console.error('❌ Error rendering dashboard:', error);
+            document.getElementById('test-root').innerHTML = `
+                <h1>❌ React Error</h1>
+                <p>Error: ${error.message}</p>
+                <pre>${error.stack}</pre>
+            `;
+        }
+    </script>
+</body>
+</html>

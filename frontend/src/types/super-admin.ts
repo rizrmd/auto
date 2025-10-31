@@ -200,21 +200,27 @@ export interface TenantAnalytics {
  * System Health Metrics
  */
 export interface SystemHealth {
-  status: 'healthy' | 'warning' | 'critical';
+  status: 'healthy' | 'degraded' | 'down';
   timestamp: string;
-  uptime: number;
-  version: string;
-  services: {
-    database: ServiceStatus;
-    redis: ServiceStatus;
-    whatsapp: ServiceStatus;
-    storage: ServiceStatus;
+  performance: {
+    uptime: number;
+    avgResponseTime: number;
+    errorRate: number;
+    requestRate: number;
   };
-  metrics: {
-    cpu: number;
-    memory: number;
-    disk: number;
-    network: number;
+  resources: {
+    cpuUsage: number;
+    memoryUsage: number;
+    diskUsage: number;
+    networkIO: number;
+  };
+  services: {
+    [serviceName: string]: {
+      status: 'up' | 'down' | 'degraded';
+      responseTime?: number;
+      lastCheck: string;
+      error?: string;
+    };
   };
 }
 
@@ -232,13 +238,15 @@ export interface ServiceStatus {
  * WhatsApp Metrics
  */
 export interface WhatsAppMetrics {
-  activeConnections: number;
-  messagesToday: number;
-  messagesThisMonth: number;
-  responseRate: number;
-  failedMessages: number;
-  queueSize: number;
-  uptime: number;
+  totalMessages: number;
+  successRate: number;
+  activeConversations: number;
+  errorCount: number;
+  averageResponseTime: number;
+  topCommands: Array<{
+    command: string;
+    count: number;
+  }>;
 }
 
 /**
@@ -250,15 +258,17 @@ export interface WhatsAppBotMetrics extends WhatsAppMetrics {}
  * Storage Metrics
  */
 export interface StorageMetrics {
-  totalSpace: number;
-  usedSpace: number;
-  availableSpace: number;
-  usagePercentage: number;
+  totalUsage: number;
   tenantUsage: Array<{
     tenantId: number;
     tenantName: string;
     usage: number;
-    files: number;
+    fileCount: number;
+  }>;
+  fileTypes: Array<{
+    type: string;
+    size: number;
+    count: number;
   }>;
 }
 
@@ -271,36 +281,44 @@ export interface StorageMetrics {
  */
 export interface SystemSettings {
   general: {
-    siteName: string;
-    siteDescription: string;
+    systemName: string;
     adminEmail: string;
-    timezone: string;
-    dateFormat: string;
+    supportEmail: string;
+    maintenanceMode: boolean;
+    maintenanceMessage?: string;
+    registrationEnabled: boolean;
+    defaultTenantPlan: 'trial' | 'free' | 'starter' | 'growth' | 'pro';
   };
   security: {
     sessionTimeout: number;
-    passwordMinLength: number;
-    requireTwoFactor: boolean;
     maxLoginAttempts: number;
+    lockoutDuration: number;
+    passwordMinLength: number;
+    requireStrongPassword: boolean;
+    enableTwoFactor: boolean;
   };
   whatsapp: {
-    maxConnections: number;
-    messageQueueSize: number;
-    retryAttempts: number;
-    timeoutDuration: number;
+    maxMessagesPerDay: number;
+    maxFileSize: number;
+    supportedFileTypes: string[];
+    autoReplyEnabled: boolean;
+    businessHours: Record<string, string>;
   };
   notifications: {
-    emailEnabled: boolean;
-    smsEnabled: boolean;
-    pushEnabled: boolean;
-    lowDiskThreshold: number;
-    highCpuThreshold: number;
+    emailNotifications: boolean;
+    smsNotifications: boolean;
+    alertThresholds: {
+      errorRate: number;
+      responseTime: number;
+      diskUsage: number;
+    };
   };
   features: {
-    betaFeatures: boolean;
-    analyticsEnabled: boolean;
-    monitoringEnabled: boolean;
-    autoBackup: boolean;
+    enableAnalytics: boolean;
+    enableMonitoring: boolean;
+    enableCustomDomains: boolean;
+    enableApiAccess: boolean;
+    enableWebhooks: boolean;
   };
 }
 
