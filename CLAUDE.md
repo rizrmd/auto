@@ -12,6 +12,69 @@
 
 ⚠️ **IMPORTANT**: Never run this project locally. Use deployed environments only. Do not execute `bun run dev`, `bun run start`, or any local development commands.
 
+## 🤖 WhatsApp Bot AI - CRITICAL SYSTEM (DO NOT BREAK)
+✅ **STATUS**: Fully operational, paired, and connected to AI (as of 2025-10-31)
+
+🚨 **CRITICAL WARNINGS - DO NOT BREAK THESE**:
+- **NEVER modify webhook handler** at `backend/src/routes/webhook/whatsapp.ts` without thorough testing
+- **NEVER change bot handlers** (`CustomerBotHandler`, `AdminBotHandler`, `StateManager`) - they are working perfectly
+- **NEVER edit Prisma enums** (`UserRole`, `UserType`) without proper migration - causes runtime failures
+- **NEVER disconnect or unpair** the WhatsApp device (6283134446903)
+- **NEVER modify** the bot initialization in webhook (stateManager, customerBot, adminBot instances)
+- **NEVER change** the Host header logic for tenant-specific routing
+
+### Current Configuration
+- **Paired Device**: 6283134446903 (Lumiku.com)
+- **Webhook**: `https://auto.lumiku.com/webhook/whatsapp`
+- **Status**: Connected, paired, AI fully functional
+- **WhatsApp API Version**: v1.7.0
+- **Port**: 8080 (AutoLeads Motors), 8081 (PrimaMobil)
+
+### Bot Architecture (WORKING - DO NOT MODIFY)
+```
+Webhook → identifyUserType → Route to Handler:
+├─ Admin/Sales → AdminBotHandler
+│  ├─ /help - Show commands
+│  ├─ /upload - AI-powered car catalog upload
+│  ├─ /list - List cars by status
+│  ├─ /status - Update car status
+│  ├─ /delete - Delete catalog items
+│  └─ /cancel - Cancel current flow
+└─ Customer → CustomerBotHandler (AI-powered)
+   ├─ Intent Recognition (greeting, inquiry, price, location, test drive)
+   ├─ RAG Engine for intelligent responses
+   ├─ Auto lead capture and tracking
+   └─ Conversation state management
+```
+
+### Admin Users (Tenant: AutoLeads Motors)
+- Owner: 6281234567890
+- Admin: 6281234567891, 6281235108908
+- Sales: 6281234567892
+
+### Key Files (DO NOT BREAK)
+- `backend/src/routes/webhook/whatsapp.ts` - Main webhook handler
+- `backend/src/bot/customer/handler.ts` - Customer AI bot
+- `backend/src/bot/admin/handler.ts` - Admin command handler
+- `backend/src/bot/state-manager.ts` - Conversation flow manager
+- `prisma/schema.prisma` - UserRole MUST be {owner, admin, sales}, UserType MUST be {customer, admin, sales}
+
+### Testing Bot
+```bash
+# Test webhook (from SSH)
+docker exec b8sc48s8s0c4w00008k808w8 curl -X POST http://localhost:3000/webhook/whatsapp \
+  -H "Content-Type: application/json" \
+  -H "Host: auto.lumiku.com" \
+  -d '{"event":"message","sender":"628xxx@s.whatsapp.net","message":"test"}'
+```
+
+### If Bot Breaks
+1. Check logs: `ssh root@cf.avolut.com "docker logs --tail 100 b8sc48s8s0c4w00008k808w8"`
+2. Look for: `[WEBHOOK]`, `AdminBotHandler`, `CustomerBotHandler`, `Prisma` errors
+3. Check WhatsApp pairing: Query `whatsmeow_device` table
+4. Verify Prisma client generation: `bun run db:generate` in container
+5. DO NOT attempt to "fix" by editing bot handlers - they are already correct
+
 ## Deployment Environment
 - **URL**: https://auto.lumiku.com
 - **Docker Container**: b8sc48s8s0c4w00008k808w8
