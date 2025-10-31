@@ -355,7 +355,19 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 export function useSuperAdminAuth() {
   const context = useContext(SuperAdminAuthContext);
   if (context === undefined) {
-    throw new Error('useSuperAdminAuth must be used within a SuperAdminAuthProvider');
+    console.warn('useSuperAdminAuth used outside SuperAdminAuthProvider, returning fallback state');
+    // Return fallback state instead of throwing error
+    return {
+      isAuthenticated: false,
+      isLoading: false,
+      superAdmin: null,
+      token: null,
+      login: async () => ({ success: false, error: 'Not available' }),
+      logout: () => {},
+      refreshToken: async () => false,
+      verifyToken: async () => false,
+      changePassword: async () => ({ success: false, error: 'Not available' }),
+    };
   }
   return context;
 }
