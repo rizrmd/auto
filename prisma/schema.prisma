@@ -304,8 +304,8 @@ model User {
   whatsappNumber String? @map("whatsapp_number") @db.VarChar(20)
   passwordHash   String  @map("password_hash") @db.Text
 
-  // ROLE - Simplified to only tenant admin
-  role UserRole @default(tenant_admin)
+  // ROLE
+  role UserRole @default(admin)
 
   // STATUS
   status      UserStatus @default(active)
