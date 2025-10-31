@@ -45,36 +45,36 @@ export function SuperAdminApp() {
                       <SuperAdminLayout>
                         <Routes>
                           {/* Dashboard */}
-                          <Route path="/dashboard" element={<DashboardPage />} />
+                          <Route path="dashboard" element={<DashboardPage />} />
 
                           {/* Tenants Management */}
-                          <Route path="/tenants" element={<TenantsPage />} />
-                          <Route path="/tenants/create" element={<TenantsPage />} />
-                          <Route path="/tenants/:id/edit" element={<TenantsPage />} />
-                          <Route path="/tenants/:id/theme" element={<TenantsPage />} />
-                          <Route path="/tenants/:id/analytics" element={<TenantsPage />} />
+                          <Route path="tenants" element={<TenantsPage />} />
+                          <Route path="tenants/create" element={<TenantsPage />} />
+                          <Route path="tenants/:id/edit" element={<TenantsPage />} />
+                          <Route path="tenants/:id/theme" element={<TenantsPage />} />
+                          <Route path="tenants/:id/analytics" element={<TenantsPage />} />
 
                           {/* Analytics */}
-                          <Route path="/analytics" element={<AnalyticsPage />} />
-                          <Route path="/analytics/performance" element={<AnalyticsPage />} />
-                          <Route path="/analytics/revenue" element={<AnalyticsPage />} />
-                          <Route path="/analytics/tenants/:id" element={<AnalyticsPage />} />
+                          <Route path="analytics" element={<AnalyticsPage />} />
+                          <Route path="analytics/performance" element={<AnalyticsPage />} />
+                          <Route path="analytics/revenue" element={<AnalyticsPage />} />
+                          <Route path="analytics/tenants/:id" element={<AnalyticsPage />} />
 
                           {/* Monitoring */}
-                          <Route path="/monitoring" element={<MonitoringPage />} />
-                          <Route path="/monitoring/whatsapp" element={<MonitoringPage />} />
-                          <Route path="/monitoring/performance" element={<MonitoringPage />} />
+                          <Route path="monitoring" element={<MonitoringPage />} />
+                          <Route path="monitoring/whatsapp" element={<MonitoringPage />} />
+                          <Route path="monitoring/performance" element={<MonitoringPage />} />
 
                           {/* Settings */}
-                          <Route path="/settings" element={<SettingsPage />} />
-                          <Route path="/settings/general" element={<SettingsPage />} />
-                          <Route path="/settings/security" element={<SettingsPage />} />
-                          <Route path="/settings/whatsapp" element={<SettingsPage />} />
-                          <Route path="/settings/notifications" element={<SettingsPage />} />
-                          <Route path="/settings/features" element={<SettingsPage />} />
+                          <Route path="settings" element={<SettingsPage />} />
+                          <Route path="settings/general" element={<SettingsPage />} />
+                          <Route path="settings/security" element={<SettingsPage />} />
+                          <Route path="settings/whatsapp" element={<SettingsPage />} />
+                          <Route path="settings/notifications" element={<SettingsPage />} />
+                          <Route path="settings/features" element={<SettingsPage />} />
 
                           {/* Default redirect */}
-                          <Route path="/" element={<Navigate to="/super-admin/dashboard" replace />} />
+                          <Route index element={<Navigate to="/super-admin/dashboard" replace />} />
                           <Route path="*" element={<Navigate to="/super-admin/dashboard" replace />} />
                         </Routes>
                       </SuperAdminLayout>
