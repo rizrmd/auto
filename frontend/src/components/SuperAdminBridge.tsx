@@ -7,7 +7,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
-import { SuperAdminApp } from '../SuperAdminApp-bypass';
+import { SuperAdminApp } from '../SuperAdminApp';
 
 interface SuperAdminBridgeProps {
   // Props can be added here if needed in the future

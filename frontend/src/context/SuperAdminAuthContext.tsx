@@ -50,6 +50,12 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
   }, []);
 
   const initializeAuth = async () => {
+    // Add overall timeout to prevent infinite loading
+    const authTimeout = setTimeout(() => {
+      console.warn('Auth initialization timeout - forcing completion');
+      setIsLoading(false);
+    }, 10000); // 10 second overall timeout
+
     try {
       const storedToken = localStorage.getItem('super_admin_token');
       const storedRefreshToken = localStorage.getItem('super_admin_refresh_token');
@@ -83,19 +89,27 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
       console.error('Auth initialization failed:', error);
       clearAuthData();
     } finally {
+      clearTimeout(authTimeout);
       setIsLoading(false);
     }
   };
 
   const verifyTokenInternal = async (tokenToVerify: string): Promise<boolean> => {
     try {
+      // Add timeout to prevent infinite hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const response = await fetch(`${API_BASE}/auth/verify-token`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${tokenToVerify}`,
           'Content-Type': 'application/json',
         },
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         return false;
@@ -143,13 +157,20 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 
   const refreshAuthToken = async (refreshTokenValue: string): Promise<boolean> => {
     try {
+      // Add timeout to prevent infinite hanging
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+
       const response = await fetch(`${API_BASE}/auth/refresh`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ refreshToken: refreshTokenValue }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         return false;

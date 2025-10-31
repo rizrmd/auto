@@ -1,12 +1,62 @@
 /**
- * Super Admin Dashboard - Working Version with Inline Styles
- * No dependencies on CSS frameworks or contexts
+ * Super Admin Dashboard - Production Ready Version
+ * Uses proper authentication and API calls
  */
 
 import React from 'react';
+import { useSuperAdminAuth } from '@/context/SuperAdminAuthContext';
 
 function DashboardPage() {
-  console.log('🔥🔥🔥 WORKING DASHBOARD MOUNTING! 🔥🔥🔥');
+  console.log('🚀 Super Admin Dashboard mounting with authentication...');
+  const { isAuthenticated, isLoading, superAdmin } = useSuperAdminAuth();
+
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#0f172a',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '20px',
+            height: '20px',
+            border: '2px solid #3b82f6',
+            borderTop: '2px solid transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite',
+            margin: '0 auto 16px'
+          }}></div>
+          <p>Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect if not authenticated
+  if (!isAuthenticated) {
+    React.useEffect(() => {
+      window.location.href = '/super-admin/login';
+    }, []);
+    return (
+      <div style={{
+        minHeight: '100vh',
+        backgroundColor: '#0f172a',
+        color: 'white',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontFamily: 'Arial, sans-serif'
+      }}>
+        <p>Redirecting to login...</p>
+      </div>
+    );
+  }
 
   const [clickCount, setClickCount] = React.useState(0);
   const [showDetails, setShowDetails] = React.useState(false);
@@ -32,8 +82,21 @@ function DashboardPage() {
     console.log('🌐 Testing API call...');
     setApiStatus('Testing...');
 
-    // Simple fetch test
-    fetch('/api/super-admin/analytics/global')
+    // Get token from localStorage or context
+    const token = localStorage.getItem('super_admin_token');
+    if (!token) {
+      setApiStatus('FAILED! No authentication token');
+      alert('API Test Failed! No authentication token found.');
+      return;
+    }
+
+    // Simple fetch test with authentication
+    fetch('/api/super-admin/analytics/global', {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    })
       .then(response => {
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -97,10 +160,10 @@ function DashboardPage() {
           🎉 Super Admin Dashboard
         </h1>
         <p style={{ color: '#94a3b8' }}>
-          Working dashboard - Inline styles version!
+          Welcome back, {superAdmin?.name || 'Super Admin'}!
         </p>
         <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
-          Current Time: {currentTime}
+          Current Time: {currentTime} | Authenticated: ✅
         </p>
       </div>
 
