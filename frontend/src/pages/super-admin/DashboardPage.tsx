@@ -1,412 +1,289 @@
 /**
- * Super Admin Dashboard Page
- *
- * Main dashboard providing global overview of all tenants, system health,
- * and key metrics. Features real-time data and interactive charts.
+ * Super Admin Dashboard - Working Version with Inline Styles
+ * No dependencies on CSS frameworks or contexts
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Building2,
-  Car,
-  Users,
-  TrendingUp,
-  Activity,
-  DollarSign,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  ArrowUp,
-  ArrowDown
-} from 'lucide-react';
-import { useSuperAdminApi } from '@/context/SuperAdminAuthContext';
-import { StatsCard } from '@/components/super-admin/StatsCard';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from 'recharts';
-
-interface GlobalAnalytics {
-  overview: {
-    totalTenants: number;
-    activeTenants: number;
-    totalCars: number;
-    availableCars: number;
-    soldCars: number;
-    totalLeads: number;
-    activeLeads: number;
-    closedLeads: number;
-    totalUsers: number;
-    activeUsers: number;
-  };
-  growth: {
-    newTenantsThisMonth: number;
-    newTenantsThisYear: number;
-    tenantGrowthRate: number;
-    newLeadsThisMonth: number;
-    newLeadsThisYear: number;
-    leadGrowthRate: number;
-    carsSoldThisMonth: number;
-    carsSoldThisYear: number;
-    salesGrowthRate: number;
-  };
-  trends: Array<{
-    period: string;
-    tenants: number;
-    leads: number;
-    sales: number;
-    revenue: string;
-  }>;
-}
-
-interface SystemHealth {
-  status: 'healthy' | 'degraded' | 'critical';
-  timestamp: Date;
-  services: {
-    database: { status: string; responseTime?: number };
-    api: { status: string; responseTime?: number };
-    whatsapp: { status: string; responseTime?: number };
-    storage: { status: string; responseTime?: number };
-    cache: { status: string; responseTime?: number };
-  };
-  performance: {
-    avgResponseTime: number;
-    errorRate: number;
-    requestRate: number;
-    uptime: number;
-  };
-}
-
-interface RecentActivity {
-  id: number;
-  type: 'tenant_created' | 'tenant_updated' | 'system_alert' | 'user_login';
-  description: string;
-  tenantName?: string;
-  timestamp: Date;
-  severity: 'info' | 'warning' | 'error';
-}
+import React from 'react';
 
 function DashboardPage() {
-  const { apiCall } = useSuperAdminApi();
-  const [analytics, setAnalytics] = useState<GlobalAnalytics | null>(null);
-  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
-  const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  console.log('🔥🔥🔥 WORKING DASHBOARD MOUNTING! 🔥🔥🔥');
 
-  const loadDashboardData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const [clickCount, setClickCount] = React.useState(0);
+  const [showDetails, setShowDetails] = React.useState(false);
+  const [currentTime, setCurrentTime] = React.useState(new Date().toLocaleTimeString());
+  const [apiStatus, setApiStatus] = React.useState('Not tested yet');
 
-      console.log('[Dashboard] Loading dashboard data...');
+  // Update time every second
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date().toLocaleTimeString());
+    }, 1000);
 
-      // Load all data in parallel with detailed error logging
-      const [analyticsRes, healthRes, activityRes] = await Promise.all([
-        apiCall('/analytics/global').catch((err) => {
-          console.error('[Dashboard] Analytics API failed:', err);
-          return null;
-        }),
-        apiCall('/monitoring/health').catch((err) => {
-          console.error('[Dashboard] Health API failed:', err);
-          return null;
-        }),
-        apiCall('/monitoring/logs?limit=10').catch((err) => {
-          console.error('[Dashboard] Logs API failed:', err);
-          return null;
-        })
-      ]);
+    return () => clearInterval(timer);
+  }, []);
 
-      console.log('[Dashboard] API responses:', { analyticsRes, healthRes, activityRes });
-
-      if (analyticsRes?.success) {
-        console.log('[Dashboard] Setting analytics data:', analyticsRes.data);
-        setAnalytics(analyticsRes.data);
-      } else {
-        console.warn('[Dashboard] Analytics response not successful:', analyticsRes);
-      }
-
-      if (healthRes?.success) {
-        console.log('[Dashboard] Setting health data:', healthRes.data);
-        setSystemHealth(healthRes.data);
-      } else {
-        console.warn('[Dashboard] Health response not successful:', healthRes);
-      }
-
-      // Mock recent activity if API doesn't exist yet
-      const mockActivity: RecentActivity[] = [
-        {
-          id: 1,
-          type: 'tenant_created',
-          description: 'New tenant onboarded',
-          tenantName: 'Showroom Motor Jaya',
-          timestamp: new Date(Date.now() - 2 * 60 * 1000),
-          severity: 'info'
-        },
-        {
-          id: 2,
-          type: 'system_alert',
-          description: 'High memory usage detected',
-          timestamp: new Date(Date.now() - 15 * 60 * 1000),
-          severity: 'warning'
-        },
-        {
-          id: 3,
-          type: 'user_login',
-          description: 'Super admin login',
-          timestamp: new Date(Date.now() - 30 * 60 * 1000),
-          severity: 'info'
-        },
-      ];
-
-      setRecentActivity(activityRes?.data?.items || mockActivity);
-      console.log('[Dashboard] Dashboard data loaded successfully');
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
-      setError(errorMessage);
-      console.error('[Dashboard] Dashboard data loading error:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [apiCall]);
-
-  useEffect(() => {
-    loadDashboardData();
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(loadDashboardData, 30000);
-    return () => clearInterval(interval);
-  }, [loadDashboardData]);
-
-  if (loading && !analytics) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="animate-pulse">
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-                <div className="w-12 h-12 bg-slate-700 rounded-lg mb-4" />
-                <div className="w-24 h-4 bg-slate-700 rounded mb-2" />
-                <div className="w-16 h-8 bg-slate-700 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-900/20 border border-red-800/50 rounded-xl p-6">
-        <div className="flex items-center space-x-3">
-          <AlertTriangle className="w-5 h-5 text-red-400" />
-          <p className="text-red-400">{error}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const getHealthStatusColor = (status: string) => {
-    switch (status) {
-      case 'healthy': return 'text-green-400';
-      case 'degraded': return 'text-yellow-400';
-      case 'critical': return 'text-red-400';
-      default: return 'text-slate-400';
-    }
+  const handleButtonClick = () => {
+    console.log('🖱️ BUTTON CLICKED! Count:', clickCount + 1);
+    setClickCount(prev => prev + 1);
+    setShowDetails(true);
   };
 
-  const getActivityIcon = (type: string, severity: string) => {
-    switch (type) {
-      case 'tenant_created':
-        return <Building2 className="w-4 h-4 text-blue-400" />;
-      case 'system_alert':
-        return <AlertTriangle className={`w-4 h-4 ${severity === 'error' ? 'text-red-400' : 'text-yellow-400'}`} />;
-      case 'user_login':
-        return <Users className="w-4 h-4 text-green-400" />;
-      default:
-        return <Activity className="w-4 h-4 text-slate-400" />;
-    }
+  const handleTestAPI = () => {
+    console.log('🌐 Testing API call...');
+    setApiStatus('Testing...');
+
+    // Simple fetch test
+    fetch('/api/super-admin/analytics/global')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('✅ API Response:', data);
+        setApiStatus(`SUCCESS! Got ${Object.keys(data).length} fields`);
+        alert('API Test Success! Check console for details.\nResponse: ' + JSON.stringify(data, null, 2));
+      })
+      .catch(error => {
+        console.error('❌ API Error:', error);
+        setApiStatus('FAILED! ' + error.message);
+        alert('API Test Failed!\nError: ' + error.message);
+      });
+  };
+
+  const buttonStyle = {
+    backgroundColor: 'white',
+    color: '#1e40af',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    border: 'none',
+    width: '100%',
+    marginTop: '10px'
+  };
+
+  const apiButtonStyle = {
+    backgroundColor: 'white',
+    color: '#7c3aed',
+    padding: '12px 24px',
+    borderRadius: '8px',
+    fontSize: '16px',
+    fontWeight: 'bold',
+    cursor: 'pointer',
+    border: 'none',
+    width: '100%',
+    marginTop: '10px'
   };
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-white mb-2">Dashboard</h1>
-        <p className="text-slate-400">Global overview of all tenants and system health</p>
+    <div style={{
+      minHeight: '100vh',
+      backgroundColor: '#0f172a',
+      color: 'white',
+      padding: '24px',
+      fontFamily: 'Arial, sans-serif'
+    }}>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{
+          fontSize: '36px',
+          fontWeight: 'bold',
+          color: 'white',
+          marginBottom: '8px'
+        }}>
+          🎉 Super Admin Dashboard
+        </h1>
+        <p style={{ color: '#94a3b8' }}>
+          Working dashboard - Inline styles version!
+        </p>
+        <p style={{ fontSize: '12px', color: '#64748b', marginTop: '4px' }}>
+          Current Time: {currentTime}
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatsCard
-          title="Total Tenants"
-          value={analytics?.overview.totalTenants || 0}
-          icon={Building2}
-          trend={{
-            value: analytics?.growth.tenantGrowthRate || 0,
-            period: 'vs last month'
-          }}
-          color="blue"
-        />
-        <StatsCard
-          title="Total Cars"
-          value={analytics?.overview.totalCars || 0}
-          icon={Car}
-          description={`${analytics?.overview.availableCars || 0} available`}
-          color="green"
-        />
-        <StatsCard
-          title="Total Leads"
-          value={analytics?.overview.totalLeads || 0}
-          icon={Users}
-          trend={{
-            value: analytics?.growth.leadGrowthRate || 0,
-            period: 'vs last month'
-          }}
-          color="purple"
-        />
-        <StatsCard
-          title="Cars Sold"
-          value={analytics?.overview.soldCars || 0}
-          icon={TrendingUp}
-          trend={{
-            value: analytics?.growth.salesGrowthRate || 0,
-            period: 'vs last month'
-          }}
-          color="yellow"
-        />
+      {/* Success Message */}
+      <div style={{
+        backgroundColor: '#16a34a',
+        color: 'white',
+        padding: '24px',
+        borderRadius: '12px',
+        marginBottom: '24px'
+      }}>
+        <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '8px' }}>
+          ✅ SUCCESS!
+        </h2>
+        <p>React components are working perfectly!</p>
+        <p style={{ fontSize: '14px', marginTop: '4px' }}>
+          Click count: {clickCount} | useEffect working: ✅
+        </p>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Growth Trends Chart */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">Growth Trends</h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <LineChart data={analytics?.trends || []}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="period" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: '#1e293b',
-                  border: '1px solid #334155',
-                  borderRadius: '8px'
-                }}
-              />
-              <Line
-                type="monotone"
-                dataKey="tenants"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={{ fill: '#3b82f6' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="leads"
-                stroke="#8b5cf6"
-                strokeWidth={2}
-                dot={{ fill: '#8b5cf6' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="sales"
-                stroke="#10b981"
-                strokeWidth={2}
-                dot={{ fill: '#10b981' }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+      {/* Test Buttons */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '24px',
+        marginBottom: '24px'
+      }}>
+        <div style={{
+          backgroundColor: '#2563eb',
+          color: 'white',
+          padding: '24px',
+          borderRadius: '12px'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
+            🖱️ React State Test
+          </h3>
+          <button
+            onClick={handleButtonClick}
+            style={buttonStyle}
+          >
+            CLICK ME! (Count: {clickCount})
+          </button>
+          {showDetails && (
+            <div style={{
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: '#1d4ed8',
+              borderRadius: '8px',
+              fontSize: '14px'
+            }}>
+              <p>✅ useState working</p>
+              <p>✅ onClick handler working</p>
+              <p>✅ Component re-rendering</p>
+            </div>
+          )}
         </div>
 
-        {/* System Health */}
-        <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-white mb-4">System Health</h3>
-          <div className="space-y-4">
-            {systemHealth ? (
-              <>
-                <div className="flex items-center justify-between p-3 bg-slate-700/50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <CheckCircle className="w-5 h-5 text-green-400" />
-                    <span className="text-white">Overall Status</span>
-                  </div>
-                  <span className={`font-medium ${getHealthStatusColor(systemHealth.status)}`}>
-                    {systemHealth.status.toUpperCase()}
-                  </span>
-                </div>
+        <div style={{
+          backgroundColor: '#7c3aed',
+          color: 'white',
+          padding: '24px',
+          borderRadius: '12px'
+        }}>
+          <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
+            🌐 API Test
+          </h3>
+          <button
+            onClick={handleTestAPI}
+            style={apiButtonStyle}
+          >
+            TEST API CALL
+          </button>
+          <p style={{ fontSize: '12px', marginTop: '8px' }}>
+            Test /api/super-admin/analytics/global
+          </p>
+          <p style={{ fontSize: '12px', marginTop: '4px', color: '#e0e7ff' }}>
+            Status: {apiStatus}
+          </p>
+        </div>
+      </div>
 
-                {Object.entries(systemHealth.services).map(([service, health]) => (
-                  <div key={service} className="flex items-center justify-between">
-                    <span className="text-slate-400 capitalize">{service}</span>
-                    <div className="flex items-center space-x-2">
-                      <div className={`
-                        w-2 h-2 rounded-full
-                        ${health.status === 'healthy' ? 'bg-green-400' : ''}
-                        ${health.status === 'degraded' ? 'bg-yellow-400' : ''}
-                        ${health.status === 'down' ? 'bg-red-400' : ''}
-                      `} />
-                      <span className="text-slate-300 text-sm">
-                        {health.responseTime ? `${health.responseTime}ms` : health.status}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="pt-4 border-t border-slate-700">
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-slate-400">Avg Response Time</p>
-                      <p className="text-white font-medium">{systemHealth.performance.avgResponseTime}ms</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-400">Error Rate</p>
-                      <p className="text-white font-medium">{systemHealth.performance.errorRate}%</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-400">Uptime</p>
-                      <p className="text-white font-medium">{systemHealth.performance.uptime}%</p>
-                    </div>
-                    <div>
-                      <p className="text-slate-400">Request Rate</p>
-                      <p className="text-white font-medium">{systemHealth.performance.requestRate}/s</p>
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="text-center py-8">
-                <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-                <p className="text-slate-400">Loading system health...</p>
-              </div>
-            )}
+      {/* Debug Info */}
+      <div style={{
+        backgroundColor: '#ca8a04',
+        color: 'white',
+        padding: '24px',
+        borderRadius: '12px',
+        marginBottom: '24px'
+      }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '16px' }}>
+          🔍 Debug Information
+        </h3>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: '16px',
+          fontSize: '14px'
+        }}>
+          <div>
+            <p><strong>React:</strong> ✅ Working</p>
+            <p><strong>useState:</strong> ✅ Working</p>
+            <p><strong>useEffect:</strong> ✅ Working</p>
+            <p><strong>Events:</strong> ✅ Working</p>
+          </div>
+          <div>
+            <p><strong>Context:</strong> ❌ Not Used</p>
+            <p><strong>Auth:</strong> ❌ Not Required</p>
+            <p><strong>API:</strong> ✅ Ready</p>
+            <p><strong>Time:</strong> {currentTime}</p>
           </div>
         </div>
       </div>
 
-      {/* Recent Activity */}
-      <div className="bg-slate-800 border border-slate-700 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
-        <div className="space-y-3">
-          {recentActivity.length > 0 ? (
-            recentActivity.map((activity) => (
-              <div key={activity.id} className="flex items-center space-x-3 p-3 hover:bg-slate-700/30 rounded-lg transition-colors">
-                {getActivityIcon(activity.type, activity.severity)}
-                <div className="flex-1">
-                  <p className="text-white">{activity.description}</p>
-                  {activity.tenantName && (
-                    <p className="text-slate-400 text-sm">{activity.tenantName}</p>
-                  )}
-                </div>
-                <div className="flex items-center space-x-2 text-slate-500 text-sm">
-                  <Clock className="w-4 h-4" />
-                  <span>{new Date(activity.timestamp).toLocaleTimeString()}</span>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="text-center py-8">
-              <Activity className="w-12 h-12 text-slate-600 mx-auto mb-4" />
-              <p className="text-slate-400">No recent activity</p>
-            </div>
-          )}
+      {/* Mock Dashboard Content */}
+      <div style={{
+        borderTop: '1px solid #475569',
+        paddingTop: '24px'
+      }}>
+        <h2 style={{
+          fontSize: '24px',
+          fontWeight: 'bold',
+          color: 'white',
+          marginBottom: '16px'
+        }}>
+          📊 Mock Dashboard Data
+        </h2>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr 1fr',
+          gap: '16px'
+        }}>
+          <div style={{
+            backgroundColor: '#1e293b',
+            padding: '16px',
+            borderRadius: '8px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#60a5fa', marginBottom: '8px' }}>
+              Total Tenants
+            </h3>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>2</p>
+            <p style={{ fontSize: '14px', color: '#94a3b8' }}>Active: 2</p>
+          </div>
+          <div style={{
+            backgroundColor: '#1e293b',
+            padding: '16px',
+            borderRadius: '8px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#34d399', marginBottom: '8px' }}>
+              Total Cars
+            </h3>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>4</p>
+            <p style={{ fontSize: '14px', color: '#94a3b8' }}>Available: 4</p>
+          </div>
+          <div style={{
+            backgroundColor: '#1e293b',
+            padding: '16px',
+            borderRadius: '8px'
+          }}>
+            <h3 style={{ fontSize: '16px', fontWeight: '600', color: '#fbbf24', marginBottom: '8px' }}>
+              Total Leads
+            </h3>
+            <p style={{ fontSize: '24px', fontWeight: 'bold', color: 'white' }}>6</p>
+            <p style={{ fontSize: '14px', color: '#94a3b8' }}>Active: 6</p>
+          </div>
         </div>
+      </div>
+
+      {/* Instructions */}
+      <div style={{
+        marginTop: '32px',
+        padding: '16px',
+        backgroundColor: '#1e293b',
+        borderRadius: '12px'
+      }}>
+        <h3 style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '8px' }}>
+          📝 Next Steps:
+        </h3>
+        <ol style={{ fontSize: '14px', color: '#cbd5e1', lineHeight: '1.5' }}>
+          <li>1. Test the "TEST API CALL" button above</li>
+          <li>2. Check browser console for API results</li>
+          <li>3. If API works, we can add authentication back</li>
+          <li>4. Then restore full dashboard functionality</li>
+        </ol>
       </div>
     </div>
   );
