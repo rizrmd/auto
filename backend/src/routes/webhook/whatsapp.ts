@@ -205,11 +205,14 @@ whatsappWebhook.post('/', async (c) => {
       
       // Use tenant-specific proxy API
       const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
+      const proxyHost = tenant.customDomain || tenant.subdomain;
+      console.log(`[WEBHOOK] Using proxy host: ${proxyHost} for tenant: ${tenant.name}`);
+
       const sendResponse = await fetch(`${baseUrl}/api/wa/send`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
+          'Host': proxyHost, // Use customDomain if available, fallback to subdomain
         },
         body: JSON.stringify({
           number: cleanPhone,
