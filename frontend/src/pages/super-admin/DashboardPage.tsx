@@ -5,7 +5,7 @@
  * and key metrics. Features real-time data and interactive charts.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Building2,
   Car,
@@ -91,31 +91,43 @@ function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadDashboardData();
-    // Set up auto-refresh every 30 seconds
-    const interval = setInterval(loadDashboardData, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const loadDashboardData = async () => {
+  const loadDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      // Load all data in parallel
+      console.log('[Dashboard] Loading dashboard data...');
+
+      // Load all data in parallel with detailed error logging
       const [analyticsRes, healthRes, activityRes] = await Promise.all([
-        apiCall('/analytics/global').catch(() => null),
-        apiCall('/monitoring/health').catch(() => null),
-        apiCall('/monitoring/logs?limit=10').catch(() => null)
+        apiCall('/analytics/global').catch((err) => {
+          console.error('[Dashboard] Analytics API failed:', err);
+          return null;
+        }),
+        apiCall('/monitoring/health').catch((err) => {
+          console.error('[Dashboard] Health API failed:', err);
+          return null;
+        }),
+        apiCall('/monitoring/logs?limit=10').catch((err) => {
+          console.error('[Dashboard] Logs API failed:', err);
+          return null;
+        })
       ]);
 
+      console.log('[Dashboard] API responses:', { analyticsRes, healthRes, activityRes });
+
       if (analyticsRes?.success) {
+        console.log('[Dashboard] Setting analytics data:', analyticsRes.data);
         setAnalytics(analyticsRes.data);
+      } else {
+        console.warn('[Dashboard] Analytics response not successful:', analyticsRes);
       }
 
       if (healthRes?.success) {
+        console.log('[Dashboard] Setting health data:', healthRes.data);
         setSystemHealth(healthRes.data);
+      } else {
+        console.warn('[Dashboard] Health response not successful:', healthRes);
       }
 
       // Mock recent activity if API doesn't exist yet
@@ -145,13 +157,22 @@ function DashboardPage() {
       ];
 
       setRecentActivity(activityRes?.data?.items || mockActivity);
+      console.log('[Dashboard] Dashboard data loaded successfully');
     } catch (err) {
-      setError('Failed to load dashboard data');
-      console.error('Dashboard data loading error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(errorMessage);
+      console.error('[Dashboard] Dashboard data loading error:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiCall]);
+
+  useEffect(() => {
+    loadDashboardData();
+    // Set up auto-refresh every 30 seconds
+    const interval = setInterval(loadDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, [loadDashboardData]);
 
   if (loading && !analytics) {
     return (
