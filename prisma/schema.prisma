@@ -336,7 +336,9 @@ enum AdminStatus {
 }
 
 enum UserRole {
-  tenant_admin // Simplified - only admin role for tenants
+  owner
+  admin
+  sales
 }
 
 enum UserStatus {
