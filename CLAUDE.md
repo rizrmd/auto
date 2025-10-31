@@ -19,7 +19,12 @@
 - **NEVER modify webhook handler** at `backend/src/routes/webhook/whatsapp.ts` without thorough testing
 - **NEVER change bot handlers** (`CustomerBotHandler`, `AdminBotHandler`, `StateManager`) - they are working perfectly
 - **NEVER edit Prisma enums** (`UserRole`, `UserType`) without proper migration - causes runtime failures
-- **NEVER disconnect or unpair** the WhatsApp device (6283134446903)
+- **WhatsApp devices can be disconnected/unpaired ONLY** when:
+  - Connectivity is verified before modification
+  - Alternative devices are available for the tenant
+  - Proper testing is done in staging environment
+  - Multi-tenant requirements necessitate device rotation
+  - Always verify device status in `whatsmeow_device` table before changes
 - **NEVER modify** the bot initialization in webhook (stateManager, customerBot, adminBot instances)
 - **NEVER change** the Host header logic for tenant-specific routing
 
