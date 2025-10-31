@@ -7,8 +7,17 @@ import { Hono } from 'hono';
 import { prisma } from '../../db';
 import type { ApiResponse } from '../../types/context';
 import { WhatsAppClient } from '../../whatsapp/whatsapp-client';
+import { CustomerBotHandler } from '../../bot/customer/handler';
+import { AdminBotHandler } from '../../bot/admin/handler';
+import { StateManager } from '../../bot/state-manager';
+import type { UserType } from '../../../generated/prisma';
 
 const whatsappWebhook = new Hono();
+
+// Initialize bot components
+const stateManager = new StateManager(prisma);
+const customerBot = new CustomerBotHandler(prisma, stateManager);
+const adminBot = new AdminBotHandler(prisma, stateManager);
 
 interface WhatsAppWebhookPayload {
   event: string;
@@ -177,23 +186,45 @@ whatsappWebhook.post('/', async (c) => {
     const userType = await identifyUserType(tenant.id, customerPhone);
     console.log(`[WEBHOOK] User type: ${userType}`);
 
-    // Generate simple response based on user type and message
+    // Generate AI bot response based on user type
     let responseMessage = '';
-    
-    if (userType === 'admin' || userType === 'sales') {
-      responseMessage = `👋 Perintah admin diterima: "${message}". Gunakan /help untuk daftar perintah yang tersedia.`;
-    } else {
-      // Simple customer responses
-      if (message.toLowerCase().includes('harga') || message.toLowerCase().includes('price')) {
-        responseMessage = '📝 Untuk informasi harga, silahkan hubungi tim sales kami di ' + tenant.whatsappNumber;
-      } else if (message.toLowerCase().includes('hello') || message.toLowerCase().includes('halo')) {
-        responseMessage = '👋 Halo! Selamat datang di ' + tenant.name + '. Ada yang bisa saya bantu hari ini?';
+
+    try {
+      if (userType === 'admin' || userType === 'sales') {
+        console.log(`[WEBHOOK] Processing admin/sales message via AdminBotHandler`);
+        responseMessage = await adminBot.handleMessage(
+          tenant,
+          customerPhone,
+          userType as UserType,
+          message,
+          payload.attachment ? {
+            url: payload.attachment.url || '',
+            type: payload.attachment.type || 'unknown'
+          } : undefined
+        );
       } else {
-        responseMessage = '🤖 Terima kasih atas pesan Anda. Tim kami akan segera menghubungi Anda kembali! 📞 ' + tenant.whatsappNumber;
+        console.log(`[WEBHOOK] Processing customer message via CustomerBotHandler`);
+        responseMessage = await customerBot.handleMessage(
+          tenant,
+          customerPhone,
+          message,
+          payload.attachment ? {
+            url: payload.attachment.url || '',
+            type: payload.attachment.type || 'image'
+          } : undefined
+        );
+      }
+    } catch (botError) {
+      console.error(`[WEBHOOK] Bot handler error:`, botError);
+      // Fallback to simple response on bot error
+      if (userType === 'admin' || userType === 'sales') {
+        responseMessage = `❌ Terjadi kesalahan. Ketik /help untuk bantuan.`;
+      } else {
+        responseMessage = `🤖 Terima kasih atas pesan Anda. Tim kami akan segera menghubungi Anda kembali! 📞 ${tenant.whatsappNumber}`;
       }
     }
 
-    console.log(`[WEBHOOK] Response: "${responseMessage}"`);
+    console.log(`[WEBHOOK] Bot response: "${responseMessage.substring(0, 100)}${responseMessage.length > 100 ? '...' : ''}"`);
 
     // Send response via WhatsApp using tenant-specific proxy API
     let whatsappSendResult = null;
