@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useSuperAdminAuth } from '@/context/SuperAdminAuthContext';
 
 interface AdminUser {
   id: number;
@@ -52,7 +53,14 @@ interface UserFormData {
 }
 
 export default function SecurityPage() {
-  const token = localStorage.getItem('super_admin_token');
+  const { token, isAuthenticated, isLoading: authLoading } = useSuperAdminAuth();
+
+  console.log('🔐 SecurityPage - Auth State:', {
+    hasToken: !!token,
+    isAuthenticated,
+    authLoading,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+  });
 
   // State management
   const [activeTab, setActiveTab] = useState<'users' | 'sessions' | 'logs' | 'settings'>('users');
@@ -181,8 +189,12 @@ export default function SecurityPage() {
 
   // Fetch security data
   const fetchSecurityData = async () => {
-    if (!token) {
-      console.log('🔐 No token found, using mock data');
+    // Fallback: Try direct token from localStorage if context token is missing
+    const fallbackToken = localStorage.getItem('super_admin_token');
+    const actualToken = token || fallbackToken;
+
+    if (!actualToken) {
+      console.log('🔐 No token available, using mock data');
       setUsers(generateMockUsers());
       setSessions(generateMockSessions());
       setSecurityLogs(generateMockSecurityLogs());
@@ -194,24 +206,14 @@ export default function SecurityPage() {
       setLoading(true);
       setError(null);
 
-      // Try to fetch real data (will use mock as fallback)
-      const usersResponse = await fetch('/api/super-admin/admin-users', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      console.log('🔐 Fetching security data with token:', actualToken.substring(0, 20) + '...');
 
-      if (usersResponse.ok) {
-        const usersData = await usersResponse.json();
-        if (usersData.success) {
-          setUsers(usersData.data || generateMockUsers());
-        } else {
-          setUsers(generateMockUsers());
-        }
-      } else {
-        setUsers(generateMockUsers());
-      }
+      // Use mock data for now since admin-users endpoint doesn't exist
+      // In the future, this could use auth endpoints for user management
+      console.log('🔐 Using mock security data (admin-users endpoint not available)');
+      setUsers(generateMockUsers());
+      setSessions(generateMockSessions());
+      setSecurityLogs(generateMockSecurityLogs());
 
       // For now, use mock data for sessions and logs
       setSessions(generateMockSessions());
@@ -231,10 +233,12 @@ export default function SecurityPage() {
     }
   };
 
-  // Load data on mount
+  // Load data on mount and when authentication state changes
   useEffect(() => {
-    fetchSecurityData();
-  }, []);
+    if (!authLoading) {
+      fetchSecurityData();
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Handle refresh
   const handleRefresh = () => {
@@ -273,8 +277,12 @@ export default function SecurityPage() {
   };
 
   const handleSaveUser = async () => {
-    if (!token) {
-      console.log('🔐 No token, simulating user save');
+    // Fallback: Try direct token from localStorage if context token is missing
+    const fallbackToken = localStorage.getItem('super_admin_token');
+    const actualToken = token || fallbackToken;
+
+    if (!actualToken) {
+      console.log('🔐 No token available, simulating user save');
       if (editingUser) {
         setUsers(prev => prev.map(u =>
           u.id === editingUser.id
