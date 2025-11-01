@@ -7,6 +7,7 @@
 import React, { useState } from 'react';
 import DashboardPage from '@/pages/super-admin/DashboardPage';
 import TenantsPage from '@/pages/super-admin/TenantsPage';
+import AnalyticsPage from '@/pages/super-admin/AnalyticsPage';
 
 interface SuperAdminLayoutProps {
   children?: React.ReactNode;
@@ -64,43 +65,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       case 'tenants':
         return <TenantsPage />;
       case 'analytics':
-        return (
-          <div style={{ color: '#ffffff' }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-              <div style={{ marginBottom: '32px' }}>
-                <h1 style={{
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  color: '#ffffff',
-                  marginBottom: '8px'
-                }}>
-                  Platform Analytics
-                </h1>
-                <p style={{ color: '#94a3b8' }}>
-                  Comprehensive analytics and insights for AutoLeads platform
-                </p>
-              </div>
-              <div style={{
-                backgroundColor: '#1e293b',
-                border: '1px solid #334155',
-                borderRadius: '12px',
-                padding: '24px'
-              }}>
-                <h3 style={{
-                  color: '#ffffff',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  marginBottom: '8px'
-                }}>
-                  📊 Phase 1.2 - Analytics Interface
-                </h3>
-                <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-                  Advanced analytics with charts, metrics, and data visualization will be implemented in Phase 2.
-                </p>
-              </div>
-            </div>
-          </div>
-        );
+        return <AnalyticsPage />;
       case 'monitoring':
         return (
           <div style={{ color: '#ffffff' }}>

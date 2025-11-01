@@ -62,6 +62,12 @@ export default function TenantsPage() {
   // Search debouncing
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
+  // Bulk operations state
+  const [selectedTenants, setSelectedTenants] = useState<Set<number>>(new Set());
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkAction, setBulkAction] = useState<'status' | 'delete' | null>(null);
+
   // Form states for create/edit
   const [formData, setFormData] = useState({
     name: '',
@@ -237,6 +243,150 @@ export default function TenantsPage() {
     }
 
     fetchTenantsData(true);
+  };
+
+  // Bulk operations handlers
+  const handleSelectAll = () => {
+    if (selectedTenants.size === tenants.length) {
+      setSelectedTenants(new Set());
+    } else {
+      setSelectedTenants(new Set(tenants.map(t => t.id)));
+    }
+  };
+
+  const handleSelectTenant = (tenantId: number) => {
+    const newSelected = new Set(selectedTenants);
+    if (newSelected.has(tenantId)) {
+      newSelected.delete(tenantId);
+    } else {
+      newSelected.add(tenantId);
+    }
+    setSelectedTenants(newSelected);
+  };
+
+  const handleBulkStatusUpdate = async (status: string) => {
+    if (selectedTenants.size === 0) return;
+
+    if (!confirm(`Update status to ${status} for ${selectedTenants.size} selected tenants?`)) {
+      return;
+    }
+
+    const token = localStorage.getItem('super_admin_token');
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
+    try {
+      setBulkLoading(true);
+      setBulkAction('status');
+
+      // Update each selected tenant
+      const promises = Array.from(selectedTenants).map(tenantId =>
+        fetch(`/api/super-admin/tenants/${tenantId}/status`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ status, reason: 'Bulk status update' }),
+        })
+      );
+
+      const results = await Promise.all(promises);
+      const failed = results.filter(r => !r.ok);
+
+      if (failed.length === 0) {
+        setSelectedTenants(new Set());
+        setShowBulkActions(false);
+        fetchTenantsData();
+        console.log(`✅ Bulk status update completed for ${selectedTenants.size} tenants`);
+      } else {
+        alert(`${failed.length} of ${selectedTenants.size} updates failed`);
+      }
+    } catch (error) {
+      console.error('❌ Bulk status update error:', error);
+      alert('Error updating tenant status');
+    } finally {
+      setBulkLoading(false);
+      setBulkAction(null);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedTenants.size === 0) return;
+
+    if (!confirm(`Delete ${selectedTenants.size} selected tenants? This action cannot be undone.`)) {
+      return;
+    }
+
+    const token = localStorage.getItem('super_admin_token');
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
+    try {
+      setBulkLoading(true);
+      setBulkAction('delete');
+
+      // Delete each selected tenant
+      const promises = Array.from(selectedTenants).map(tenantId =>
+        fetch(`/api/super-admin/tenants/${tenantId}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        })
+      );
+
+      const results = await Promise.all(promises);
+      const failed = results.filter(r => !r.ok);
+
+      if (failed.length === 0) {
+        setSelectedTenants(new Set());
+        setShowBulkActions(false);
+        fetchTenantsData();
+        console.log(`✅ Bulk deletion completed for ${selectedTenants.size} tenants`);
+      } else {
+        alert(`${failed.length} of ${selectedTenants.size} deletions failed`);
+      }
+    } catch (error) {
+      console.error('❌ Bulk delete error:', error);
+      alert('Error deleting tenants');
+    } finally {
+      setBulkLoading(false);
+      setBulkAction(null);
+    }
+  };
+
+  const handleExportData = () => {
+    const csvContent = [
+      ['ID', 'Name', 'Subdomain', 'Custom Domain', 'Status', 'Plan', 'Cars', 'Leads', 'Users', 'Created At'],
+      ...tenants.map(tenant => [
+        tenant.id,
+        tenant.name,
+        tenant.subdomain,
+        tenant.customDomain || '',
+        tenant.status,
+        tenant.plan,
+        tenant._count?.cars || 0,
+        tenant._count?.leads || 0,
+        tenant._count?.users || 0,
+        new Date(tenant.createdAt).toLocaleString()
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `tenants-export-${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
   };
 
   // Load data on mount
@@ -763,6 +913,23 @@ export default function TenantsPage() {
               </h2>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
+                  onClick={handleExportData}
+                  disabled={loading || tenants.length === 0}
+                  style={{
+                    backgroundColor: (loading || tenants.length === 0) ? '#6b7280' : '#8b5cf6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 20px',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    cursor: (loading || tenants.length === 0) ? 'not-allowed' : 'pointer',
+                    opacity: (loading || tenants.length === 0) ? 0.6 : 1
+                  }}
+                >
+                  📊 Export CSV
+                </button>
+                <button
                   onClick={() => fetchTenantsData()}
                   disabled={loading}
                   style={{
@@ -802,9 +969,115 @@ export default function TenantsPage() {
           </div>
 
           <div style={{ overflowX: 'auto' }}>
+            {/* Bulk Actions Bar */}
+            {selectedTenants.size > 0 && (
+              <div style={{
+                backgroundColor: '#10b98120',
+                border: '1px solid #10b98140',
+                borderRadius: '8px 8px 0 0',
+                padding: '16px 24px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <div style={{ color: '#10b981', fontSize: '14px', fontWeight: '500' }}>
+                  {selectedTenants.size} tenant{selectedTenants.size > 1 ? 's' : ''} selected
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <select
+                    onChange={(e) => handleBulkStatusUpdate(e.target.value)}
+                    disabled={bulkLoading}
+                    style={{
+                      padding: '8px 12px',
+                      backgroundColor: '#0f172a',
+                      border: '1px solid #334155',
+                      borderRadius: '6px',
+                      color: '#ffffff',
+                      fontSize: '14px',
+                      cursor: bulkLoading ? 'not-allowed' : 'pointer',
+                      opacity: bulkLoading ? 0.6 : 1
+                    }}
+                  >
+                    <option value="">Update Status</option>
+                    <option value="active">Set Active</option>
+                    <option value="suspended">Set Suspended</option>
+                    <option value="trial">Set Trial</option>
+                    <option value="expired">Set Expired</option>
+                  </select>
+
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={bulkLoading}
+                    style={{
+                      backgroundColor: bulkLoading ? '#6b7280' : '#ef4444',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      cursor: bulkLoading ? 'not-allowed' : 'pointer',
+                      opacity: bulkLoading ? 0.6 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {bulkLoading && (
+                      <div style={{
+                        width: '12px',
+                        height: '12px',
+                        border: '2px solid #ffffff',
+                        borderTop: '2px solid transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }}></div>
+                    )}
+                    Delete Selected
+                  </button>
+
+                  <button
+                    onClick={() => setSelectedTenants(new Set())}
+                    style={{
+                      backgroundColor: '#6b7280',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '8px 16px',
+                      fontSize: '14px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+            )}
+
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
                 <tr style={{ backgroundColor: '#0f172a' }}>
+                  <th style={{
+                    padding: '16px',
+                    textAlign: 'left',
+                    color: '#94a3b8',
+                    fontSize: '12px',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    borderBottom: '1px solid #334155',
+                    width: '40px'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedTenants.size === tenants.length && tenants.length > 0}
+                      onChange={handleSelectAll}
+                      style={{
+                        width: '16px',
+                        height: '16px',
+                        cursor: 'pointer'
+                      }}
+                    />
+                  </th>
                   <th style={{
                     padding: '16px',
                     textAlign: 'left',
@@ -875,7 +1148,25 @@ export default function TenantsPage() {
               </thead>
               <tbody>
                 {tenants.map((tenant) => (
-                  <tr key={tenant.id} style={{ borderBottom: '1px solid #334155' }}>
+                  <tr
+                    key={tenant.id}
+                    style={{
+                      borderBottom: '1px solid #334155',
+                      backgroundColor: selectedTenants.has(tenant.id) ? '#1e293b' : 'transparent'
+                    }}
+                  >
+                    <td style={{ padding: '16px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedTenants.has(tenant.id)}
+                        onChange={() => handleSelectTenant(tenant.id)}
+                        style={{
+                          width: '16px',
+                          height: '16px',
+                          cursor: 'pointer'
+                        }}
+                      />
+                    </td>
                     <td style={{ padding: '16px' }}>
                       <div>
                         <div style={{
