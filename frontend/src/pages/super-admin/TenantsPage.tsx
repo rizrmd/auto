@@ -21,7 +21,7 @@ interface Tenant {
 interface TenantsResponse {
   success: boolean;
   data: {
-    data: Tenant[];
+    items: Tenant[];
     pagination: {
       page: number;
       limit: number;
@@ -87,8 +87,8 @@ export default function TenantsPage() {
       if (tenantsResponse.ok) {
         const tenantsData: TenantsResponse = await tenantsResponse.json();
         if (tenantsData.success && tenantsData.data) {
-          setTenants(tenantsData.data.data);
-          console.log('✅ Tenants data fetched successfully');
+          setTenants(tenantsData.data.items);
+          console.log('✅ Tenants data fetched successfully:', tenantsData.data.items.length, 'tenants');
         }
       } else {
         console.warn('⚠️ Tenants API failed, using fallback data');
@@ -96,6 +96,10 @@ export default function TenantsPage() {
       }
     } catch (error) {
       console.error('❌ Error fetching tenants data:', error);
+      console.error('❌ Error details:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        stack: error instanceof Error ? error.stack : 'No stack trace'
+      });
       setError('Failed to fetch real data, showing cached data');
     } finally {
       setLoading(false);

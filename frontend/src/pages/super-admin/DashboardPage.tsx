@@ -89,7 +89,7 @@ export default function DashboardPage() {
         const tenantsData = await tenantsResponse.json();
         if (tenantsData.success && tenantsData.data) {
           // Update stats with real data
-          const tenants = tenantsData.data.data || [];
+          const tenants = tenantsData.data.items || [];
           const totalCars = tenants.reduce((sum: number, t: any) => sum + (t.totalCars || 0), 0);
           const totalLeads = tenants.reduce((sum: number, t: any) => sum + (t.totalLeads || 0), 0);
           const totalUsers = tenants.reduce((sum: number, t: any) => sum + (t.totalUsers || 0), 0);
