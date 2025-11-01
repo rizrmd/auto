@@ -88,6 +88,13 @@ export default function SettingsPage() {
   const { token, isAuthenticated, isLoading: authLoading } = useSuperAdminAuth();
   const { apiCall } = useSuperAdminApi();
 
+  console.log('⚙️ SettingsPage - Auth State:', {
+    hasToken: !!token,
+    isAuthenticated,
+    authLoading,
+    tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+  });
+
   // State management
   const [activeTab, setActiveTab] = useState<'platform' | 'whatsapp' | 'email' | 'sms' | 'system' | 'security'>('platform');
   const [loading, setLoading] = useState(true);
@@ -237,7 +244,14 @@ export default function SettingsPage() {
 
   // Save settings
   const handleSave = async (category: string) => {
+    console.log(`⚙️ Attempting to save ${category} settings...`, {
+      isAuthenticated,
+      hasToken: !!token,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none'
+    });
+
     if (!isAuthenticated || !token) {
+      console.error('❌ Authentication failed:', { isAuthenticated, hasToken: !!token });
       setError('Authentication required to save settings');
       return;
     }
