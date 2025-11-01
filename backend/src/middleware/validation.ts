@@ -44,7 +44,7 @@ export function validate(
 
       return next();
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof ZodError && error.errors && Array.isArray(error.errors)) {
         // Format Zod validation errors into user-friendly messages
         const issues = error.errors.map((err) => ({
           path: err.path.join('.') || 'root',
@@ -65,6 +65,7 @@ export function validate(
       }
 
       // Handle other errors (e.g., JSON parse errors)
+      console.error('Validation middleware error:', error);
       const response: ApiResponse = {
         success: false,
         error: {
@@ -124,7 +125,7 @@ export function validateQuery(schema: ZodSchema) {
 
       return next();
     } catch (error) {
-      if (error instanceof ZodError) {
+      if (error instanceof ZodError && error.errors && Array.isArray(error.errors)) {
         const issues = error.errors.map((err) => ({
           path: err.path.join('.') || 'root',
           message: err.message,
@@ -143,6 +144,7 @@ export function validateQuery(schema: ZodSchema) {
         return c.json(response, HTTP_STATUS.UNPROCESSABLE_ENTITY);
       }
 
+      console.error('Query validation error:', error);
       const response: ApiResponse = {
         success: false,
         error: {
