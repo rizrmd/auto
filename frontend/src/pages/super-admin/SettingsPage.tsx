@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import { useSuperAdminAuth, useSuperAdminApi } from '@/context/SuperAdminAuthContext';
 
 interface PlatformSettings {
   companyName: string;
@@ -84,7 +85,8 @@ interface SecuritySettings {
 }
 
 export default function SettingsPage() {
-  const token = localStorage.getItem('super_admin_token');
+  const { token, isAuthenticated, isLoading: authLoading } = useSuperAdminAuth();
+  const { apiCall } = useSuperAdminApi();
 
   // State management
   const [activeTab, setActiveTab] = useState<'platform' | 'whatsapp' | 'email' | 'sms' | 'system' | 'security'>('platform');
@@ -174,8 +176,8 @@ export default function SettingsPage() {
 
   // Fetch settings data
   const fetchSettings = async () => {
-    if (!token) {
-      console.log('⚙️ No token found, using default settings');
+    if (!isAuthenticated || !token) {
+      console.log('⚙️ Not authenticated, using default settings');
       setLoading(false);
       return;
     }
@@ -184,28 +186,38 @@ export default function SettingsPage() {
       setLoading(true);
       setError(null);
 
-      // Try to fetch real settings (will use defaults as fallback)
-      const response = await fetch('/api/super-admin/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Try to fetch real settings using proper API call
+      const settingsData = await apiCall('/settings');
 
-      if (response.ok) {
-        const settingsData = await response.json();
-        if (settingsData.success) {
-          if (settingsData.data.platform) {
-            setPlatformSettings({ ...platformSettings, ...settingsData.data.platform });
-          }
-          if (settingsData.data.whatsapp) {
-            setWhatsappSettings({ ...whatsappSettings, ...settingsData.data.whatsapp });
-          }
-          // ... other settings
+      if (settingsData.success && settingsData.data) {
+        // Map backend settings to frontend state
+        if (settingsData.data.general) {
+          setPlatformSettings(prev => ({
+            ...prev,
+            companyName: settingsData.data.general.systemName || prev.companyName,
+            contactEmail: settingsData.data.general.adminEmail || prev.contactEmail,
+          }));
+        }
+        if (settingsData.data.whatsapp) {
+          setWhatsappSettings(prev => ({
+            ...prev,
+            defaultBot: settingsData.data.whatsapp.autoReplyEnabled || prev.defaultBot,
+            businessHours: {
+              ...prev.businessHours,
+              enabled: !!settingsData.data.whatsapp.businessHours,
+            },
+          }));
+        }
+        if (settingsData.data.security) {
+          setSecuritySettings(prev => ({
+            ...prev,
+            sessionTimeout: Math.floor((settingsData.data.security.sessionTimeout || 1800) / 60), // Convert seconds to minutes
+            passwordMinLength: settingsData.data.security.passwordMinLength || prev.passwordMinLength,
+            requireStrongPassword: settingsData.data.security.requireStrongPassword !== undefined ? settingsData.data.security.requireStrongPassword : prev.requireStrongPassword,
+            enableTwoFactor: settingsData.data.security.enableTwoFactor || prev.enableTwoFactor,
+          }));
         }
         console.log('✅ Settings loaded successfully');
-      } else {
-        console.log('⚠️ Using default settings');
       }
 
     } catch (error) {
@@ -216,17 +228,17 @@ export default function SettingsPage() {
     }
   };
 
-  // Load data on mount
+  // Load data on mount and when authentication state changes
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (!authLoading) {
+      fetchSettings();
+    }
+  }, [authLoading, isAuthenticated]);
 
   // Save settings
   const handleSave = async (category: string) => {
-    if (!token) {
-      console.log('⚙️ No token, simulating save');
-      setSuccess(`${category} settings saved successfully!`);
-      setTimeout(() => setSuccess(null), 3000);
+    if (!isAuthenticated || !token) {
+      setError('Authentication required to save settings');
       return;
     }
 
@@ -322,27 +334,20 @@ export default function SettingsPage() {
           break;
       }
 
-      const response = await fetch('/api/super-admin/settings', {
+      // Use proper API call with authentication
+      const response = await apiCall('/settings', {
         method: 'PUT',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(updateData),
       });
 
-      if (response.ok) {
+      if (response.success) {
         setSuccess(`${category} settings saved successfully!`);
         setTimeout(() => setSuccess(null), 3000);
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('❌ API Error:', errorData);
-        setError(errorData.message || 'Failed to save settings');
       }
 
     } catch (error) {
       console.error('❌ Error saving settings:', error);
-      setError('Failed to save settings');
+      setError(error instanceof Error ? error.message : 'Failed to save settings');
     } finally {
       setSaving(false);
     }
