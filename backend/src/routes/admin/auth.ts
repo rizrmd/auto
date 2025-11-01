@@ -9,7 +9,7 @@ import { z } from 'zod';
 import { AuthService } from '../../services/auth.service';
 import { tenantMiddleware, getTenant } from '../../middleware/tenant';
 import { asyncHandler, ValidationError } from '../../middleware/error-handler';
-import { strictRateLimiter } from '../../middleware/rate-limiter';
+import { strictRateLimiter, clearRateLimitStore } from '../../middleware/rate-limiter';
 import { validate, getValidatedData } from '../../middleware/validation';
 import { LoginSchema } from '../../validation/schemas';
 import { HTTP_STATUS, MESSAGES } from '../../config/constants';
@@ -96,6 +96,45 @@ adminAuth.post(
       };
       return c.json(response, HTTP_STATUS.UNAUTHORIZED);
     }
+  })
+);
+
+/**
+ * POST /api/admin/auth/clear-rate-limits
+ * Debug endpoint to clear rate limits (development only)
+ */
+adminAuth.post(
+  '/clear-rate-limits',
+  asyncHandler(async (c) => {
+    // Only allow in development or with special debug header
+    const isDevelopment = process.env.NODE_ENV !== 'production';
+    const debugHeader = c.req.header('x-debug-clear-ratelimits');
+
+    if (!isDevelopment && debugHeader !== 'debug-auth-admin-clear') {
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: 'FORBIDDEN',
+          message: 'Rate limit clearing is only available in development mode',
+        },
+      };
+      return c.json(response, HTTP_STATUS.FORBIDDEN);
+    }
+
+    // Clear rate limit store
+    clearRateLimitStore();
+
+    console.log('[DEBUG] Rate limit store cleared via admin auth endpoint');
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        message: 'Rate limit store cleared successfully',
+        timestamp: new Date().toISOString(),
+      },
+    };
+
+    return c.json(response);
   })
 );
 

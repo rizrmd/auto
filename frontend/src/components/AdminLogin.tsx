@@ -9,8 +9,8 @@ import { Button } from './ui/button';
 
 export function AdminLogin() {
   const { login, isLoading, error, clearError } = useAdminAuth();
-  const [email, setEmail] = useState('admin@autolumiku.com');
-  const [password, setPassword] = useState('admin123456');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -141,23 +141,15 @@ export function AdminLogin() {
               </a>
             </div>
 
-            <div className="mt-6 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+            <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <div className="text-center">
-                <p className="text-orange-900 font-medium text-sm mb-2">
-                  🚀 Quick Access Credentials
+                <p className="text-blue-900 font-medium text-sm mb-2">
+                  🔐 Login Information
                 </p>
-                <div className="bg-white rounded-lg p-3 border border-orange-200">
-                  <p className="text-xs text-gray-600 mb-1">
-                    <strong>Email:</strong> admin@autolumiku.com
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    <strong>Password:</strong> admin123456
-                  </p>
-                  <p className="text-xs text-orange-600 mt-2">
-                    (Click 👁️ to show/hide password)
-                  </p>
-                </div>
-                <p className="text-xs text-gray-500 mt-2">
+                <p className="text-xs text-blue-700 mb-2">
+                  Enter your admin credentials to access the dashboard
+                </p>
+                <p className="text-xs text-gray-500">
                   <strong>Need help?</strong> Contact your system administrator
                 </p>
               </div>
