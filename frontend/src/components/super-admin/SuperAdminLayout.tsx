@@ -5,16 +5,18 @@
  */
 
 import React, { useState } from 'react';
+import DashboardPage from '@/pages/super-admin/DashboardPage';
+import TenantsPage from '@/pages/super-admin/TenantsPage';
 
 interface SuperAdminLayoutProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const [activeMenuItem, setActiveMenuItem] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-  console.log('🚀 SuperAdminLayout mounting...');
+  console.log('🚀 SuperAdminLayout mounting with page switching...');
 
   const menuItems = [
     {
@@ -52,11 +54,131 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
   const handleMenuItemClick = (itemId: string) => {
     console.log(`🔄 Navigation: ${activeMenuItem} → ${itemId}`);
     setActiveMenuItem(itemId);
+  };
 
-    // For now, just log navigation
-    // In Phase 1.2, this will switch between actual pages
-    if (itemId !== 'dashboard') {
-      alert(`Navigation to ${itemId} page - Coming in Phase 2!`);
+  // Page content based on active menu item
+  const renderPageContent = () => {
+    switch (activeMenuItem) {
+      case 'dashboard':
+        return <DashboardPage />;
+      case 'tenants':
+        return <TenantsPage />;
+      case 'analytics':
+        return (
+          <div style={{ color: '#ffffff' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '32px' }}>
+                <h1 style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  marginBottom: '8px'
+                }}>
+                  Platform Analytics
+                </h1>
+                <p style={{ color: '#94a3b8' }}>
+                  Comprehensive analytics and insights for AutoLeads platform
+                </p>
+              </div>
+              <div style={{
+                backgroundColor: '#1e293b',
+                border: '1px solid #334155',
+                borderRadius: '12px',
+                padding: '24px'
+              }}>
+                <h3 style={{
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  marginBottom: '8px'
+                }}>
+                  📊 Phase 1.2 - Analytics Interface
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+                  Advanced analytics with charts, metrics, and data visualization will be implemented in Phase 2.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case 'monitoring':
+        return (
+          <div style={{ color: '#ffffff' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '32px' }}>
+                <h1 style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  marginBottom: '8px'
+                }}>
+                  System Monitoring
+                </h1>
+                <p style={{ color: '#94a3b8' }}>
+                  Real-time system monitoring and health checks
+                </p>
+              </div>
+              <div style={{
+                backgroundColor: '#1e293b',
+                border: '1px solid #334155',
+                borderRadius: '12px',
+                padding: '24px'
+              }}>
+                <h3 style={{
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  marginBottom: '8px'
+                }}>
+                  🔍 Phase 1.2 - Monitoring Interface
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+                  Real-time monitoring, logs, and system health will be implemented in Phase 2.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      case 'settings':
+        return (
+          <div style={{ color: '#ffffff' }}>
+            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+              <div style={{ marginBottom: '32px' }}>
+                <h1 style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  color: '#ffffff',
+                  marginBottom: '8px'
+                }}>
+                  System Settings
+                </h1>
+                <p style={{ color: '#94a3b8' }}>
+                  Configuration and system settings
+                </p>
+              </div>
+              <div style={{
+                backgroundColor: '#1e293b',
+                border: '1px solid #334155',
+                borderRadius: '12px',
+                padding: '24px'
+              }}>
+                <h3 style={{
+                  color: '#ffffff',
+                  fontSize: '16px',
+                  fontWeight: 'bold',
+                  marginBottom: '8px'
+                }}>
+                  ⚙️ Phase 1.2 - Settings Interface
+                </h3>
+                <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+                  General settings, security, and system configuration will be implemented in Phase 2.
+                </p>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return <DashboardPage />;
     }
   };
 
@@ -314,11 +436,7 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
           overflow: 'auto',
           backgroundColor: '#0f172a'
         }}>
-          <div style={{
-            padding: '24px'
-          }}>
-            {children}
-          </div>
+          {renderPageContent()}
         </main>
       </div>
     </div>

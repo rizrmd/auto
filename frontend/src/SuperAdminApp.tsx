@@ -10,9 +10,5 @@ import DashboardPage from '@/pages/super-admin/DashboardPage';
 export function SuperAdminApp() {
   console.log('🚀 SuperAdminApp mounting with layout...');
 
-  return (
-    <SuperAdminLayout>
-      <DashboardPage />
-    </SuperAdminLayout>
-  );
+  return <SuperAdminLayout />;
 }
