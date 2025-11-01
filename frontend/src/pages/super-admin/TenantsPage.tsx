@@ -32,6 +32,8 @@ interface TenantsResponse {
       limit: number;
       total: number;
       totalPages: number;
+      hasNext: boolean;
+      hasPrev: boolean;
     };
   };
 }
@@ -45,6 +47,20 @@ export default function TenantsPage() {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+
+  // Search, Filter, and Pagination states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [planFilter, setPlanFilter] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+
+  // Search debouncing
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
 
   // Form states for create/edit
   const [formData, setFormData] = useState({
@@ -64,12 +80,12 @@ export default function TenantsPage() {
 
   console.log('🚀 TenantsPage mounting with API integration...');
 
-  // API fetching function for tenants data
-  const fetchTenantsData = async () => {
+  // API fetching function for tenants data with search, filter, and pagination
+  const fetchTenantsData = async (resetPage = false) => {
     const token = localStorage.getItem('super_admin_token');
     if (!token) {
       console.log('📝 No token found, using mock data');
-      setTenants([
+      const mockTenants = [
         {
           id: 1,
           name: 'AutoLeads Motors',
@@ -92,7 +108,10 @@ export default function TenantsPage() {
           createdAt: '2025-10-30T06:32:56.298Z',
           updatedAt: '2025-10-30T06:32:56.298Z'
         }
-      ]);
+      ];
+      setTenants(mockTenants);
+      setTotalItems(mockTenants.length);
+      setTotalPages(1);
       return;
     }
 
@@ -100,8 +119,20 @@ export default function TenantsPage() {
       setLoading(true);
       setError(null);
 
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (searchQuery.trim()) params.append('search', searchQuery.trim());
+      if (statusFilter) params.append('status', statusFilter);
+      if (planFilter) params.append('plan', planFilter);
+      params.append('sortBy', sortBy);
+      params.append('sortOrder', sortOrder);
+      params.append('page', (resetPage ? 1 : currentPage).toString());
+      params.append('limit', itemsPerPage.toString());
+
+      const url = `/api/super-admin/tenants?${params.toString()}`;
+
       // Fetch tenants data from API
-      const tenantsResponse = await fetch('/api/super-admin/tenants', {
+      const tenantsResponse = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -112,6 +143,11 @@ export default function TenantsPage() {
         const tenantsData: TenantsResponse = await tenantsResponse.json();
         if (tenantsData.success && tenantsData.data) {
           setTenants(tenantsData.data.items);
+          setTotalItems(tenantsData.data.pagination.total);
+          setTotalPages(tenantsData.data.pagination.totalPages);
+          if (resetPage) {
+            setCurrentPage(1);
+          }
           console.log('✅ Tenants data fetched successfully:', tenantsData.data.items.length, 'tenants');
         }
       } else {
@@ -130,6 +166,79 @@ export default function TenantsPage() {
     }
   };
 
+  // Search handler with debouncing
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    // Set new timeout for debouncing
+    const timeout = setTimeout(() => {
+      setCurrentPage(1);
+      fetchTenantsData(true);
+    }, 500);
+
+    setSearchTimeout(timeout);
+  };
+
+  // Filter handlers
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+    fetchTenantsData(true);
+  };
+
+  const handlePlanFilterChange = (value: string) => {
+    setPlanFilter(value);
+    setCurrentPage(1);
+    fetchTenantsData(true);
+  };
+
+  const handleSortByChange = (value: string) => {
+    setSortBy(value);
+    setCurrentPage(1);
+    fetchTenantsData(true);
+  };
+
+  const handleSortOrderChange = (value: string) => {
+    setSortOrder(value);
+    setCurrentPage(1);
+    fetchTenantsData(true);
+  };
+
+  // Pagination handlers
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchTenantsData();
+  };
+
+  const handleItemsPerPageChange = (limit: number) => {
+    setItemsPerPage(limit);
+    setCurrentPage(1);
+    fetchTenantsData(true);
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSearchQuery('');
+    setStatusFilter('');
+    setPlanFilter('');
+    setSortBy('createdAt');
+    setSortOrder('desc');
+    setCurrentPage(1);
+    setItemsPerPage(20);
+
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+      setSearchTimeout(null);
+    }
+
+    fetchTenantsData(true);
+  };
+
   // Load data on mount
   useEffect(() => {
     fetchTenantsData();
@@ -141,8 +250,13 @@ export default function TenantsPage() {
       fetchTenantsData();
     }, 60000);
 
-    return () => clearInterval(interval);
-  }, []);
+    return () => {
+      clearInterval(interval);
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout, searchQuery, statusFilter, planFilter, sortBy, sortOrder, currentPage, itemsPerPage]);
 
   // CRUD Operations
   const handleCreateTenant = async () => {
@@ -419,6 +533,210 @@ export default function TenantsPage() {
           </div>
         </div>
 
+        {/* Search and Filters */}
+        <div style={{
+          backgroundColor: '#1e293b',
+          border: '1px solid #334155',
+          borderRadius: '12px',
+          padding: '24px',
+          marginBottom: '24px'
+        }}>
+          <h2 style={{
+            fontSize: '20px',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            marginBottom: '20px'
+          }}>
+            Search & Filters
+          </h2>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '16px',
+            marginBottom: '20px'
+          }}>
+            {/* Search Input */}
+            <div>
+              <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                Search Tenants
+              </label>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search by name, subdomain, or email..."
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '14px'
+                }}
+              />
+            </div>
+
+            {/* Status Filter */}
+            <div>
+              <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                Status Filter
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => handleStatusFilterChange(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="trial">Trial</option>
+                <option value="expired">Expired</option>
+              </select>
+            </div>
+
+            {/* Plan Filter */}
+            <div>
+              <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                Plan Filter
+              </label>
+              <select
+                value={planFilter}
+                onChange={(e) => handlePlanFilterChange(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="">All Plans</option>
+                <option value="trial">Trial</option>
+                <option value="free">Free</option>
+                <option value="starter">Starter</option>
+                <option value="growth">Growth</option>
+                <option value="pro">Pro</option>
+              </select>
+            </div>
+
+            {/* Sort By */}
+            <div>
+              <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                Sort By
+              </label>
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortByChange(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="createdAt">Created Date</option>
+                <option value="name">Name</option>
+                <option value="lastActivity">Last Activity</option>
+                <option value="carsCount">Cars Count</option>
+                <option value="leadsCount">Leads Count</option>
+              </select>
+            </div>
+
+            {/* Sort Order */}
+            <div>
+              <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                Sort Order
+              </label>
+              <select
+                value={sortOrder}
+                onChange={(e) => handleSortOrderChange(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="desc">Descending</option>
+                <option value="asc">Ascending</option>
+              </select>
+            </div>
+
+            {/* Items Per Page */}
+            <div>
+              <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '6px', display: 'block' }}>
+                Items Per Page
+              </label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => handleItemsPerPageChange(parseInt(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '10px 12px',
+                  backgroundColor: '#0f172a',
+                  border: '1px solid #334155',
+                  borderRadius: '6px',
+                  color: '#ffffff',
+                  fontSize: '14px'
+                }}
+              >
+                <option value="10">10</option>
+                <option value="20">20</option>
+                <option value="50">50</option>
+                <option value="100">100</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            paddingTop: '16px',
+            borderTop: '1px solid #334155'
+          }}>
+            <div style={{ color: '#94a3b8', fontSize: '14px' }}>
+              Showing {tenants.length} of {totalItems} tenants
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px' }}>
+              <button
+                onClick={handleClearFilters}
+                style={{
+                  backgroundColor: '#6b7280',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  fontSize: '14px',
+                  cursor: 'pointer'
+                }}
+              >
+                Clear Filters
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Tenants Table */}
         <div style={{
           backgroundColor: '#1e293b',
@@ -445,7 +763,7 @@ export default function TenantsPage() {
               </h2>
               <div style={{ display: 'flex', gap: '12px' }}>
                 <button
-                  onClick={fetchTenantsData}
+                  onClick={() => fetchTenantsData()}
                   disabled={loading}
                   style={{
                     backgroundColor: loading ? '#6b7280' : '#3b82f6',
@@ -699,25 +1017,185 @@ export default function TenantsPage() {
           </div>
         </div>
 
-        {/* Phase 2.2 - CRUD Implementation Info */}
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div style={{
+            backgroundColor: '#1e293b',
+            border: '1px solid #334155',
+            borderRadius: '12px',
+            padding: '24px',
+            marginTop: '24px'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '16px'
+            }}>
+              {/* Page Info */}
+              <div style={{ color: '#94a3b8', fontSize: '14px' }}>
+                Page {currentPage} of {totalPages} ({totalItems} total items)
+              </div>
+
+              {/* Pagination Buttons */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                {/* Previous Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
+                  style={{
+                    backgroundColor: currentPage === 1 || loading ? '#6b7280' : '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    cursor: currentPage === 1 || loading ? 'not-allowed' : 'pointer',
+                    opacity: currentPage === 1 || loading ? 0.6 : 1
+                  }}
+                >
+                  Previous
+                </button>
+
+                {/* Page Numbers */}
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  {(() => {
+                    const pages = [];
+                    const maxVisible = 5;
+                    let startPage = Math.max(1, currentPage - Math.floor(maxVisible / 2));
+                    let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+                    if (endPage - startPage < maxVisible - 1) {
+                      startPage = Math.max(1, endPage - maxVisible + 1);
+                    }
+
+                    // Always show first page
+                    if (startPage > 1) {
+                      pages.push(
+                        <button
+                          key={1}
+                          onClick={() => handlePageChange(1)}
+                          style={{
+                            backgroundColor: '#1f2937',
+                            color: '#ffffff',
+                            border: '1px solid #334155',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            fontSize: '14px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          1
+                        </button>
+                      );
+
+                      if (startPage > 2) {
+                        pages.push(
+                          <span key="start-ellipsis" style={{ color: '#94a3b8', padding: '8px 4px' }}>
+                            ...
+                          </span>
+                        );
+                      }
+                    }
+
+                    // Show visible pages
+                    for (let i = startPage; i <= endPage; i++) {
+                      pages.push(
+                        <button
+                          key={i}
+                          onClick={() => handlePageChange(i)}
+                          disabled={i === currentPage}
+                          style={{
+                            backgroundColor: i === currentPage ? '#3b82f6' : '#1f2937',
+                            color: '#ffffff',
+                            border: i === currentPage ? '1px solid #3b82f6' : '1px solid #334155',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            fontSize: '14px',
+                            cursor: i === currentPage ? 'default' : 'pointer',
+                            opacity: i === currentPage ? 1 : 0.8
+                          }}
+                        >
+                          {i}
+                        </button>
+                      );
+                    }
+
+                    // Always show last page
+                    if (endPage < totalPages) {
+                      if (endPage < totalPages - 1) {
+                        pages.push(
+                          <span key="end-ellipsis" style={{ color: '#94a3b8', padding: '8px 4px' }}>
+                            ...
+                          </span>
+                        );
+                      }
+
+                      pages.push(
+                        <button
+                          key={totalPages}
+                          onClick={() => handlePageChange(totalPages)}
+                          style={{
+                            backgroundColor: '#1f2937',
+                            color: '#ffffff',
+                            border: '1px solid #334155',
+                            borderRadius: '6px',
+                            padding: '8px 12px',
+                            fontSize: '14px',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {totalPages}
+                        </button>
+                      );
+                    }
+
+                    return pages;
+                  })()}
+                </div>
+
+                {/* Next Button */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}
+                  style={{
+                    backgroundColor: currentPage === totalPages || loading ? '#6b7280' : '#3b82f6',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    cursor: currentPage === totalPages || loading ? 'not-allowed' : 'pointer',
+                    opacity: currentPage === totalPages || loading ? 0.6 : 1
+                  }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Phase 2.3 - Search, Filtering & Pagination Info */}
         <div style={{
           marginTop: '16px',
           padding: '16px',
-          backgroundColor: '#3b82f620',
-          border: '1px solid #3b82f640',
+          backgroundColor: '#10b98120',
+          border: '1px solid #10b98140',
           borderRadius: '8px'
         }}>
           <h3 style={{
-            color: '#3b82f6',
+            color: '#10b981',
             fontSize: '16px',
             fontWeight: 'bold',
             marginBottom: '8px'
           }}>
-            🚀 Phase 2.2 - Full CRUD Operations
+            🔍 Phase 2.3 - Search, Filtering & Pagination
           </h3>
           <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Complete tenant management with Create, Read, Update, Delete operations. Modal forms for creating
-            and editing tenants with validation. Real-time API integration with error handling and success feedback.
+            Advanced tenant search with real-time filtering. Multi-criteria filtering by status, plan, and sorting.
+            Pagination with configurable items per page. Search debouncing for optimal performance.
           </p>
           <div style={{
             marginTop: '12px',
@@ -732,7 +1210,7 @@ export default function TenantsPage() {
               fontSize: '12px',
               color: '#64748b'
             }}>
-              Create: + Add Tenant
+              Search: Real-time (500ms)
             </div>
             <div style={{
               padding: '6px 12px',
@@ -741,7 +1219,7 @@ export default function TenantsPage() {
               fontSize: '12px',
               color: '#64748b'
             }}>
-              Update: Edit Modal
+              Filter: Status & Plan
             </div>
             <div style={{
               padding: '6px 12px',
@@ -750,7 +1228,7 @@ export default function TenantsPage() {
               fontSize: '12px',
               color: '#64748b'
             }}>
-              Delete: Confirmation
+              Sort: 5 fields
             </div>
             <div style={{
               padding: '6px 12px',
@@ -759,7 +1237,16 @@ export default function TenantsPage() {
               fontSize: '12px',
               color: '#64748b'
             }}>
-              Form: Validation
+              Pagination: 10-100 items
+            </div>
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#0f172a',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#64748b'
+            }}>
+              API: Query parameters
             </div>
           </div>
         </div>
@@ -778,10 +1265,10 @@ export default function TenantsPage() {
             fontWeight: 'bold',
             marginBottom: '8px'
           }}>
-            📋 Phase 2.3 - Coming Next
+            📋 Phase 2.4 - Coming Next
           </h3>
           <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Advanced search, filtering, pagination, and bulk operations will be implemented in Phase 2.3.
+            Bulk operations, advanced analytics, tenant health monitoring, and export functionality will be implemented in Phase 2.4.
           </p>
         </div>
 
