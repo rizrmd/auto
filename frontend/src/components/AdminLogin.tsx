@@ -46,7 +46,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             Admin Login
           </CardTitle>
           <p className="text-center text-gray-600">
-            Masuk untuk mengakses dashboard intelligence
+            Masuk untuk mengakses dashboard admin
           </p>
         </CardHeader>
         <CardContent>

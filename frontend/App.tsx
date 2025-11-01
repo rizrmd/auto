@@ -9,7 +9,6 @@ import { TenantProvider } from './src/context/TenantContext';
 import { HomePage } from './src/pages/HomePage';
 import { CarListingPage } from './src/pages/CarListingPage';
 import { CarDetailPage } from './src/pages/CarDetailPage';
-import { AdminIntelligencePage } from './src/pages/AdminIntelligencePage';
 import { SuperAdminBridge } from './src/components/SuperAdminBridge';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { ErrorTest } from './src/components/ErrorTest';
@@ -41,11 +40,7 @@ export function App() {
     // Error test page (development/testing only)
     PageComponent = ErrorTest;
     pageProps = {};
-  } else if (path === '/admin/intelligence') {
-    // Admin intelligence dashboard
-    PageComponent = AdminIntelligencePage;
-    pageProps = {};
-  } else if (path.startsWith('/cars/')) {
+    } else if (path.startsWith('/cars/')) {
     // Car detail page: /cars/avanza-2020-hitam-a01
     const slug = path.replace('/cars/', '');
     PageComponent = CarDetailPage;

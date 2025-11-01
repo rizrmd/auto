@@ -26,7 +26,6 @@ import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
 import adminWhatsappRoutes from './src/routes/admin/whatsapp';
-import adminIntelligenceRoutes from './src/routes/admin/intelligence';
 import tenantRoutes from './src/routes/tenant';
 import traefikRoutes from './src/routes/traefik';
 import whatsappApiRoutes from './src/routes/api/whatsapp';
@@ -177,7 +176,6 @@ app.route('/api/admin/auth', adminAuthRoutes);
 app.route('/api/admin/cars', adminCarsRoutes);
 app.route('/api/admin/leads', adminLeadsRoutes);
 app.route('/api/admin/whatsapp', adminWhatsappRoutes);
-app.route('/api/admin/intelligence', adminIntelligenceRoutes);
 
 // WhatsApp API proxy routes
 app.route('/api/wa', whatsappApiRoutes);
