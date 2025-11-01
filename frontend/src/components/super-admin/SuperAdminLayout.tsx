@@ -8,6 +8,8 @@ import React, { useState } from 'react';
 import DashboardPage from '@/pages/super-admin/DashboardPage';
 import TenantsPage from '@/pages/super-admin/TenantsPage';
 import AnalyticsPage from '@/pages/super-admin/AnalyticsPage';
+import SecurityPage from '@/pages/super-admin/SecurityPage';
+import SettingsPage from '@/pages/super-admin/SettingsPage';
 
 interface SuperAdminLayoutProps {
   children?: React.ReactNode;
@@ -39,10 +41,10 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
       color: '#8b5cf6'
     },
     {
-      id: 'monitoring',
-      label: 'Monitoring',
-      icon: '🔍',
-      color: '#f59e0b'
+      id: 'security',
+      label: 'Security',
+      icon: '🔐',
+      color: '#ef4444'
     },
     {
       id: 'settings',
@@ -66,6 +68,10 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
         return <TenantsPage />;
       case 'analytics':
         return <AnalyticsPage />;
+      case 'security':
+        return <SecurityPage />;
+      case 'settings':
+        return <SettingsPage />;
       case 'monitoring':
         return (
           <div style={{ color: '#ffffff' }}>
