@@ -234,25 +234,91 @@ export default function SettingsPage() {
       setSaving(true);
       setError(null);
 
-      let data = {};
+      // Map frontend categories to backend schema structure
+      let updateData = {};
       switch (category) {
         case 'platform':
-          data = platformSettings;
+          // Map platform settings to general settings schema
+          updateData = {
+            general: {
+              systemName: platformSettings.companyName,
+              adminEmail: platformSettings.contactEmail,
+              supportEmail: platformSettings.contactEmail,
+              maintenanceMode: false,
+              maintenanceMessage: '',
+              registrationEnabled: true,
+              defaultTenantPlan: 'trial' as const,
+            }
+          };
           break;
         case 'whatsapp':
-          data = whatsappSettings;
+          // Map WhatsApp settings to backend schema
+          updateData = {
+            whatsapp: {
+              maxMessagesPerDay: 1000,
+              maxFileSize: 5242880, // 5MB
+              supportedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+              autoReplyEnabled: whatsappSettings.defaultBot,
+              businessHours: whatsappSettings.businessHours.enabled ? {
+                monday: whatsappSettings.businessHours.startTime + '-' + whatsappSettings.businessHours.endTime,
+                tuesday: whatsappSettings.businessHours.startTime + '-' + whatsappSettings.businessHours.endTime,
+                wednesday: whatsappSettings.businessHours.startTime + '-' + whatsappSettings.businessHours.endTime,
+                thursday: whatsappSettings.businessHours.startTime + '-' + whatsappSettings.businessHours.endTime,
+                friday: whatsappSettings.businessHours.startTime + '-' + whatsappSettings.businessHours.endTime,
+                saturday: whatsappSettings.businessHours.startTime + '-' + whatsappSettings.businessHours.endTime,
+                sunday: 'closed',
+              } : {},
+            }
+          };
           break;
         case 'email':
-          data = emailSettings;
-          break;
-        case 'sms':
-          data = smsSettings;
+          // Email settings are part of notifications in backend
+          updateData = {
+            notifications: {
+              emailNotifications: emailSettings.provider !== 'none',
+              smsNotifications: false,
+              alertThresholds: {
+                errorRate: 5,
+                responseTime: 2000,
+                diskUsage: 80,
+              },
+            }
+          };
           break;
         case 'system':
-          data = systemSettings;
+          // System settings combine multiple backend categories
+          updateData = {
+            general: {
+              systemName: platformSettings.companyName,
+              adminEmail: platformSettings.contactEmail,
+              supportEmail: platformSettings.contactEmail,
+              maintenanceMode: systemSettings.maintenanceMode,
+              maintenanceMessage: systemSettings.maintenanceMessage,
+              registrationEnabled: true,
+              defaultTenantPlan: 'trial' as const,
+            },
+            features: {
+              enableAnalytics: true,
+              enableMonitoring: !systemSettings.debugMode,
+              enableCustomDomains: true,
+              enableApiAccess: true,
+              enableWebhooks: true,
+            },
+          };
           break;
         case 'security':
-          data = securitySettings;
+          // Map security settings to backend schema
+          updateData = {
+            security: {
+              sessionTimeout: securitySettings.sessionTimeout * 60, // Convert minutes to seconds
+              maxLoginAttempts: 5,
+              lockoutDuration: 900, // 15 minutes
+              passwordMinLength: securitySettings.passwordMinLength,
+              requireStrongPassword: securitySettings.requireStrongPassword,
+              enableTwoFactor: securitySettings.enableTwoFactor,
+              allowedIpRanges: securitySettings.ipWhitelist ? securitySettings.ipWhitelist.split(',').map(ip => ip.trim()) : [],
+            }
+          };
           break;
       }
 
@@ -262,14 +328,16 @@ export default function SettingsPage() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ category, data }),
+        body: JSON.stringify(updateData),
       });
 
       if (response.ok) {
         setSuccess(`${category} settings saved successfully!`);
         setTimeout(() => setSuccess(null), 3000);
       } else {
-        setError('Failed to save settings');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ API Error:', errorData);
+        setError(errorData.message || 'Failed to save settings');
       }
 
     } catch (error) {

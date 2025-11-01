@@ -110,44 +110,6 @@ export function SuperAdminLayout({ children }: SuperAdminLayoutProps) {
             </div>
           </div>
         );
-      case 'settings':
-        return (
-          <div style={{ color: '#ffffff' }}>
-            <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-              <div style={{ marginBottom: '32px' }}>
-                <h1 style={{
-                  fontSize: '28px',
-                  fontWeight: 'bold',
-                  color: '#ffffff',
-                  marginBottom: '8px'
-                }}>
-                  System Settings
-                </h1>
-                <p style={{ color: '#94a3b8' }}>
-                  Configuration and system settings
-                </p>
-              </div>
-              <div style={{
-                backgroundColor: '#1e293b',
-                border: '1px solid #334155',
-                borderRadius: '12px',
-                padding: '24px'
-              }}>
-                <h3 style={{
-                  color: '#ffffff',
-                  fontSize: '16px',
-                  fontWeight: 'bold',
-                  marginBottom: '8px'
-                }}>
-                  ⚙️ Phase 1.2 - Settings Interface
-                </h3>
-                <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-                  General settings, security, and system configuration will be implemented in Phase 2.
-                </p>
-              </div>
-            </div>
-          </div>
-        );
       default:
         return <DashboardPage />;
     }
