@@ -29,21 +29,18 @@ export default function DashboardPage() {
 
   return (
     <div style={{
-      minHeight: '100vh',
-      backgroundColor: '#0f172a',
-      color: '#ffffff',
-      padding: '24px'
+      color: '#ffffff'
     }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{
-            fontSize: '32px',
+            fontSize: '28px',
             fontWeight: 'bold',
             color: '#ffffff',
             marginBottom: '8px'
           }}>
-            Super Admin Dashboard
+            Dashboard Overview
           </h1>
           <p style={{ color: '#94a3b8' }}>
             Selamat datang di dashboard admin sistem
