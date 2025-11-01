@@ -106,15 +106,11 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
 
     try {
-      // Get current tenant from subdomain
-      const hostname = window.location.hostname;
-      const subdomain = hostname.includes('.') ? hostname.split('.')[0] : 'autolumiku';
-
+      
       const response = await fetch('/api/admin/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Host': `${subdomain}.lumiku.com`, // This will be handled by backend
         },
         body: JSON.stringify({ email, password }),
       });
