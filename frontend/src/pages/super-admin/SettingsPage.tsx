@@ -183,8 +183,12 @@ export default function SettingsPage() {
 
   // Fetch settings data
   const fetchSettings = async () => {
-    if (!isAuthenticated || !token) {
-      console.log('⚙️ Not authenticated, using default settings');
+    // Fallback: Try direct token from localStorage if context token is missing
+    const fallbackToken = localStorage.getItem('super_admin_token');
+    const actualToken = token || fallbackToken;
+
+    if (!actualToken) {
+      console.log('⚙️ No token available, using default settings');
       setLoading(false);
       return;
     }
@@ -193,8 +197,22 @@ export default function SettingsPage() {
       setLoading(true);
       setError(null);
 
+      console.log('🔑 Fetching settings with token:', actualToken.substring(0, 20) + '...');
+
       // Try to fetch real settings using proper API call
-      const settingsData = await apiCall('/settings');
+      const response = await fetch('/api/super-admin/settings', {
+        headers: {
+          'Authorization': `Bearer ${actualToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        console.warn('⚠️ Failed to fetch settings, using defaults');
+        return;
+      }
+
+      const settingsData = await response.json();
 
       if (settingsData.success && settingsData.data) {
         // Map backend settings to frontend state
@@ -255,6 +273,18 @@ export default function SettingsPage() {
       setError('Authentication required to save settings');
       return;
     }
+
+    // Fallback: Try direct token from localStorage if context token is missing
+    const fallbackToken = localStorage.getItem('super_admin_token');
+    const actualToken = token || fallbackToken;
+
+    if (!actualToken) {
+      console.error('❌ No token available in context or localStorage');
+      setError('No authentication token found');
+      return;
+    }
+
+    console.log('🔑 Using token:', actualToken.substring(0, 20) + '...');
 
     try {
       setSaving(true);
@@ -349,12 +379,24 @@ export default function SettingsPage() {
       }
 
       // Use proper API call with authentication
-      const response = await apiCall('/settings', {
+      const response = await fetch('/api/super-admin/settings', {
         method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${actualToken}`,
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(updateData),
       });
 
-      if (response.success) {
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('❌ API Error:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+
+      if (result.success) {
         setSuccess(`${category} settings saved successfully!`);
         setTimeout(() => setSuccess(null), 3000);
       }
