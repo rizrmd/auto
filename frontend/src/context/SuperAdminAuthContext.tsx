@@ -6,7 +6,7 @@
  */
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { SuperAdminProfile, SuperAdminLoginResponse } from '@/types/super-admin';
+import { SuperAdminProfile, SuperAdminLoginResponse } from '../types/super-admin';
 
 interface SuperAdminAuthContextValue {
   // Authentication state

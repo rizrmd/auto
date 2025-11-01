@@ -5,11 +5,11 @@
  */
 
 import React, { useState } from 'react';
-import DashboardPage from '@/pages/super-admin/DashboardPage';
-import TenantsPage from '@/pages/super-admin/TenantsPage';
-import AnalyticsPage from '@/pages/super-admin/AnalyticsPage';
-import SecurityPage from '@/pages/super-admin/SecurityPage';
-import SettingsPage from '@/pages/super-admin/SettingsPage';
+import DashboardPage from '../../pages/super-admin/DashboardPage';
+import TenantsPage from '../../pages/super-admin/TenantsPage';
+import AnalyticsPage from '../../pages/super-admin/AnalyticsPage';
+import SecurityPage from '../../pages/super-admin/SecurityPage';
+import SettingsPage from '../../pages/super-admin/SettingsPage';
 
 interface SuperAdminLayoutProps {
   children?: React.ReactNode;
