@@ -8,12 +8,17 @@ import React, { useState, useEffect } from 'react';
 interface Tenant {
   id: number;
   name: string;
-  domain: string;
+  subdomain: string;
+  customDomain?: string;
   status: string;
   plan: string;
-  totalCars: number;
-  totalLeads: number;
-  totalUsers: number;
+  _count: {
+    cars: number;
+    leads: number;
+    users: number;
+    activeLeads: number;
+    soldCars: number;
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -47,26 +52,24 @@ export default function TenantsPage() {
         {
           id: 1,
           name: 'AutoLeads Motors',
-          domain: 'autoleads.lumiku.com',
-          status: 'Active',
-          plan: 'Pro',
-          totalCars: 4,
-          totalLeads: 6,
-          totalUsers: 5,
-          createdAt: '2024-01-15',
-          updatedAt: '2024-01-15'
+          subdomain: 'auto.autoleads.id',
+          customDomain: 'auto.lumiku.com',
+          status: 'active',
+          plan: 'pro',
+          _count: { cars: 2, leads: 3, users: 4, activeLeads: 3, soldCars: 0 },
+          createdAt: '2025-10-30T06:32:56.161Z',
+          updatedAt: '2025-10-30T06:32:56.161Z'
         },
         {
           id: 2,
-          name: 'PrimaMobil',
-          domain: 'prima.lumiku.com',
-          status: 'Active',
-          plan: 'Basic',
-          totalCars: 3,
-          totalLeads: 4,
-          totalUsers: 3,
-          createdAt: '2024-01-20',
-          updatedAt: '2024-01-20'
+          name: 'PrimaMobil Indonesia',
+          subdomain: 'primamobil.autoleads.id',
+          customDomain: 'primamobil.id',
+          status: 'active',
+          plan: 'growth',
+          _count: { cars: 2, leads: 3, users: 3, activeLeads: 3, soldCars: 0 },
+          createdAt: '2025-10-30T06:32:56.298Z',
+          updatedAt: '2025-10-30T06:32:56.298Z'
         }
       ]);
       return;
@@ -200,7 +203,7 @@ export default function TenantsPage() {
           }}>
             <h3 style={{ color: '#10b981', marginBottom: '8px' }}>Total Cars</h3>
             <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
-              {tenants.reduce((sum, t) => sum + (t.totalCars || 0), 0)}
+              {tenants.reduce((sum, t) => sum + (t._count?.cars || 0), 0)}
             </p>
             <p style={{ color: '#94a3b8', fontSize: '14px' }}>Semua tenant</p>
           </div>
@@ -213,7 +216,7 @@ export default function TenantsPage() {
           }}>
             <h3 style={{ color: '#8b5cf6', marginBottom: '8px' }}>Total Leads</h3>
             <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
-              {tenants.reduce((sum, t) => sum + (t.totalLeads || 0), 0)}
+              {tenants.reduce((sum, t) => sum + (t._count?.leads || 0), 0)}
             </p>
             <p style={{ color: '#94a3b8', fontSize: '14px' }}>Bulan ini</p>
           </div>
@@ -226,7 +229,7 @@ export default function TenantsPage() {
           }}>
             <h3 style={{ color: '#f59e0b', marginBottom: '8px' }}>Total Users</h3>
             <p style={{ fontSize: '32px', fontWeight: 'bold', color: '#ffffff' }}>
-              {tenants.reduce((sum, t) => sum + (t.totalUsers || 0), 0)}
+              {tenants.reduce((sum, t) => sum + (t._count?.users || 0), 0)}
             </p>
             <p style={{ color: '#94a3b8', fontSize: '14px' }}>Semua tenant</p>
           </div>
@@ -379,7 +382,7 @@ export default function TenantsPage() {
                           {tenant.name}
                         </div>
                         <div style={{ color: '#94a3b8', fontSize: '12px' }}>
-                          {tenant.domain}
+                          {tenant.customDomain || tenant.subdomain}
                         </div>
                       </div>
                     </td>
@@ -408,10 +411,10 @@ export default function TenantsPage() {
                       </span>
                     </td>
                     <td style={{ padding: '16px', color: '#ffffff', fontSize: '14px' }}>
-                      {tenant.totalCars || 0}
+                      {tenant._count?.cars || 0}
                     </td>
                     <td style={{ padding: '16px', color: '#ffffff', fontSize: '14px' }}>
-                      {tenant.totalLeads || 0}
+                      {tenant._count?.leads || 0}
                     </td>
                     <td style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', gap: '8px' }}>
