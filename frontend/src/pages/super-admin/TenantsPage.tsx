@@ -40,6 +40,27 @@ export default function TenantsPage() {
   const [tenants, setTenants] = useState<Tenant[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
+  const [modalLoading, setModalLoading] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // Form states for create/edit
+  const [formData, setFormData] = useState({
+    name: '',
+    subdomain: '',
+    customDomain: '',
+    primaryColor: '#FF5722',
+    secondaryColor: '#000000',
+    phone: '',
+    whatsappNumber: '',
+    email: '',
+    address: '',
+    city: '',
+    plan: 'basic',
+    status: 'active'
+  });
 
   console.log('🚀 TenantsPage mounting with API integration...');
 
@@ -122,6 +143,169 @@ export default function TenantsPage() {
 
     return () => clearInterval(interval);
   }, []);
+
+  // CRUD Operations
+  const handleCreateTenant = async () => {
+    const token = localStorage.getItem('super_admin_token');
+    if (!token) {
+      setModalError('Authentication required');
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+      setModalError(null);
+
+      const response = await fetch('/api/super-admin/tenants', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          console.log('✅ Tenant created successfully:', result.data);
+          setShowCreateModal(false);
+          resetForm();
+          fetchTenantsData(); // Refresh list
+        } else {
+          setModalError(result.message || 'Failed to create tenant');
+        }
+      } else {
+        const errorData = await response.json();
+        setModalError(errorData.message || 'Failed to create tenant');
+      }
+    } catch (error) {
+      console.error('❌ Error creating tenant:', error);
+      setModalError('Network error occurred');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleUpdateTenant = async () => {
+    if (!selectedTenant) return;
+
+    const token = localStorage.getItem('super_admin_token');
+    if (!token) {
+      setModalError('Authentication required');
+      return;
+    }
+
+    try {
+      setModalLoading(true);
+      setModalError(null);
+
+      const response = await fetch(`/api/super-admin/tenants/${selectedTenant.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          console.log('✅ Tenant updated successfully:', result.data);
+          setShowEditModal(false);
+          setSelectedTenant(null);
+          resetForm();
+          fetchTenantsData(); // Refresh list
+        } else {
+          setModalError(result.message || 'Failed to update tenant');
+        }
+      } else {
+        const errorData = await response.json();
+        setModalError(errorData.message || 'Failed to update tenant');
+      }
+    } catch (error) {
+      console.error('❌ Error updating tenant:', error);
+      setModalError('Network error occurred');
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const handleDeleteTenant = async (tenant: Tenant) => {
+    if (!confirm(`Are you sure you want to delete ${tenant.name}? This action cannot be undone.`)) {
+      return;
+    }
+
+    const token = localStorage.getItem('super_admin_token');
+    if (!token) {
+      alert('Authentication required');
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/super-admin/tenants/${tenant.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success) {
+          console.log('✅ Tenant deleted successfully');
+          fetchTenantsData(); // Refresh list
+        } else {
+          alert(result.message || 'Failed to delete tenant');
+        }
+      } else {
+        const errorData = await response.json();
+        alert(errorData.message || 'Failed to delete tenant');
+      }
+    } catch (error) {
+      console.error('❌ Error deleting tenant:', error);
+      alert('Network error occurred');
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      subdomain: '',
+      customDomain: '',
+      primaryColor: '#FF5722',
+      secondaryColor: '#000000',
+      phone: '',
+      whatsappNumber: '',
+      email: '',
+      address: '',
+      city: '',
+      plan: 'basic',
+      status: 'active'
+    });
+    setModalError(null);
+  };
+
+  const openEditModal = (tenant: Tenant) => {
+    setSelectedTenant(tenant);
+    setFormData({
+      name: tenant.name,
+      subdomain: tenant.subdomain,
+      customDomain: tenant.customDomain || '',
+      primaryColor: '#FF5722', // Default colors for edit
+      secondaryColor: '#000000',
+      phone: '',
+      whatsappNumber: '',
+      email: '',
+      address: '',
+      city: '',
+      plan: tenant.plan,
+      status: tenant.status
+    });
+    setShowEditModal(true);
+  };
 
   return (
     <div style={{ color: '#ffffff' }}>
@@ -278,7 +462,10 @@ export default function TenantsPage() {
                   {loading ? 'Refreshing...' : '🔄 Refresh'}
                 </button>
                 <button
-                  onClick={() => alert('Add Tenant - Coming in Phase 2!')}
+                  onClick={() => {
+                    resetForm();
+                    setShowCreateModal(true);
+                  }}
                   style={{
                     backgroundColor: '#10b981',
                     color: '#ffffff',
@@ -419,7 +606,7 @@ export default function TenantsPage() {
                     <td style={{ padding: '16px' }}>
                       <div style={{ display: 'flex', gap: '8px' }}>
                         <button
-                          onClick={() => alert(`Edit ${tenant.name} - Coming in Phase 2!`)}
+                          onClick={() => openEditModal(tenant)}
                           style={{
                             backgroundColor: '#3b82f6',
                             color: '#ffffff',
@@ -433,9 +620,9 @@ export default function TenantsPage() {
                           Edit
                         </button>
                         <button
-                          onClick={() => alert(`View ${tenant.name} - Coming in Phase 2!`)}
+                          onClick={() => handleDeleteTenant(tenant)}
                           style={{
-                            backgroundColor: '#6b7280',
+                            backgroundColor: '#ef4444',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '6px',
@@ -444,7 +631,7 @@ export default function TenantsPage() {
                             cursor: 'pointer'
                           }}
                         >
-                          View
+                          Delete
                         </button>
                       </div>
                     </td>
@@ -512,6 +699,71 @@ export default function TenantsPage() {
           </div>
         </div>
 
+        {/* Phase 2.2 - CRUD Implementation Info */}
+        <div style={{
+          marginTop: '16px',
+          padding: '16px',
+          backgroundColor: '#3b82f620',
+          border: '1px solid #3b82f640',
+          borderRadius: '8px'
+        }}>
+          <h3 style={{
+            color: '#3b82f6',
+            fontSize: '16px',
+            fontWeight: 'bold',
+            marginBottom: '8px'
+          }}>
+            🚀 Phase 2.2 - Full CRUD Operations
+          </h3>
+          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
+            Complete tenant management with Create, Read, Update, Delete operations. Modal forms for creating
+            and editing tenants with validation. Real-time API integration with error handling and success feedback.
+          </p>
+          <div style={{
+            marginTop: '12px',
+            display: 'flex',
+            gap: '16px',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#0f172a',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#64748b'
+            }}>
+              Create: + Add Tenant
+            </div>
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#0f172a',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#64748b'
+            }}>
+              Update: Edit Modal
+            </div>
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#0f172a',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#64748b'
+            }}>
+              Delete: Confirmation
+            </div>
+            <div style={{
+              padding: '6px 12px',
+              backgroundColor: '#0f172a',
+              borderRadius: '6px',
+              fontSize: '12px',
+              color: '#64748b'
+            }}>
+              Form: Validation
+            </div>
+          </div>
+        </div>
+
         {/* Phase Info */}
         <div style={{
           marginTop: '16px',
@@ -526,13 +778,446 @@ export default function TenantsPage() {
             fontWeight: 'bold',
             marginBottom: '8px'
           }}>
-            📋 Phase 2.2 - Coming Next
+            📋 Phase 2.3 - Coming Next
           </h3>
           <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Full CRUD operations, advanced search, filtering, pagination, and tenant management features
-            will be implemented in Phase 2.2.
+            Advanced search, filtering, pagination, and bulk operations will be implemented in Phase 2.3.
           </p>
         </div>
+
+        {/* Create/Edit Tenant Modal */}
+        {(showCreateModal || showEditModal) && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: '#1e293b',
+              border: '1px solid #334155',
+              borderRadius: '12px',
+              padding: '32px',
+              width: '90%',
+              maxWidth: '600px',
+              maxHeight: '90vh',
+              overflow: 'auto'
+            }}>
+              <h2 style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                marginBottom: '24px'
+              }}>
+                {showCreateModal ? 'Create New Tenant' : 'Edit Tenant'}
+              </h2>
+
+              {modalError && (
+                <div style={{
+                  backgroundColor: '#dc262620',
+                  border: '1px solid #dc262640',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  marginBottom: '24px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center' }}>
+                    <span style={{ color: '#dc2626', marginRight: '8px' }}>⚠️</span>
+                    <span style={{ color: '#ef4444' }}>{modalError}</span>
+                  </div>
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gap: '16px' }}>
+                {/* Basic Information */}
+                <div>
+                  <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>Basic Information</h3>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        Tenant Name *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.name}
+                        onChange={(e) => setFormData({...formData, name: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="Enter tenant name"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        Subdomain *
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.subdomain}
+                        onChange={(e) => setFormData({...formData, subdomain: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="subdomain"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        Custom Domain
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.customDomain}
+                        onChange={(e) => setFormData({...formData, customDomain: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="example.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div>
+                  <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>Contact Information</h3>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        Phone Number *
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="+628123456789"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        WhatsApp Number *
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.whatsappNumber}
+                        onChange={(e) => setFormData({...formData, whatsappNumber: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="+628123456789"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({...formData, email: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="info@example.com"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>Address</h3>
+                  <div style={{ display: 'grid', gap: '12px' }}>
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        Address
+                      </label>
+                      <textarea
+                        value={formData.address}
+                        onChange={(e) => setFormData({...formData, address: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px',
+                          minHeight: '80px',
+                          resize: 'vertical'
+                        }}
+                        placeholder="Enter address"
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                        City
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => setFormData({...formData, city: e.target.value})}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          backgroundColor: '#0f172a',
+                          border: '1px solid #334155',
+                          borderRadius: '6px',
+                          color: '#ffffff',
+                          fontSize: '14px'
+                        }}
+                        placeholder="City name"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Theme Colors (only for create) */}
+                {showCreateModal && (
+                  <div>
+                    <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>Theme Colors</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                          Primary Color
+                        </label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input
+                            type="color"
+                            value={formData.primaryColor}
+                            onChange={(e) => setFormData({...formData, primaryColor: e.target.value})}
+                            style={{
+                              width: '50px',
+                              height: '40px',
+                              border: '1px solid #334155',
+                              borderRadius: '6px',
+                              backgroundColor: '#0f172a'
+                            }}
+                          />
+                          <input
+                            type="text"
+                            value={formData.primaryColor}
+                            onChange={(e) => setFormData({...formData, primaryColor: e.target.value})}
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              backgroundColor: '#0f172a',
+                              border: '1px solid #334155',
+                              borderRadius: '6px',
+                              color: '#ffffff',
+                              fontSize: '14px'
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                          Secondary Color
+                        </label>
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                          <input
+                            type="color"
+                            value={formData.secondaryColor}
+                            onChange={(e) => setFormData({...formData, secondaryColor: e.target.value})}
+                            style={{
+                              width: '50px',
+                              height: '40px',
+                              border: '1px solid #334155',
+                              borderRadius: '6px',
+                              backgroundColor: '#0f172a'
+                            }}
+                          />
+                          <input
+                            type="text"
+                            value={formData.secondaryColor}
+                            onChange={(e) => setFormData({...formData, secondaryColor: e.target.value})}
+                            style={{
+                              flex: 1,
+                              padding: '12px',
+                              backgroundColor: '#0f172a',
+                              border: '1px solid #334155',
+                              borderRadius: '6px',
+                              color: '#ffffff',
+                              fontSize: '14px'
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Plan and Status (only for edit) */}
+                {showEditModal && (
+                  <div>
+                    <h3 style={{ color: '#ffffff', fontSize: '16px', marginBottom: '12px' }}>Settings</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                      <div>
+                        <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                          Plan
+                        </label>
+                        <select
+                          value={formData.plan}
+                          onChange={(e) => setFormData({...formData, plan: e.target.value})}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            backgroundColor: '#0f172a',
+                            border: '1px solid #334155',
+                            borderRadius: '6px',
+                            color: '#ffffff',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="basic">Basic</option>
+                          <option value="pro">Pro</option>
+                          <option value="growth">Growth</option>
+                          <option value="enterprise">Enterprise</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label style={{ color: '#94a3b8', fontSize: '14px', marginBottom: '4px', display: 'block' }}>
+                          Status
+                        </label>
+                        <select
+                          value={formData.status}
+                          onChange={(e) => setFormData({...formData, status: e.target.value})}
+                          style={{
+                            width: '100%',
+                            padding: '12px',
+                            backgroundColor: '#0f172a',
+                            border: '1px solid #334155',
+                            borderRadius: '6px',
+                            color: '#ffffff',
+                            fontSize: '14px'
+                          }}
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                          <option value="suspended">Suspended</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Actions */}
+              <div style={{
+                display: 'flex',
+                gap: '12px',
+                justifyContent: 'flex-end',
+                marginTop: '32px',
+                paddingTop: '24px',
+                borderTop: '1px solid #334155'
+              }}>
+                <button
+                  onClick={() => {
+                    setShowCreateModal(false);
+                    setShowEditModal(false);
+                    setSelectedTenant(null);
+                    resetForm();
+                  }}
+                  disabled={modalLoading}
+                  style={{
+                    backgroundColor: '#6b7280',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: modalLoading ? 'not-allowed' : 'pointer',
+                    opacity: modalLoading ? 0.6 : 1
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={showCreateModal ? handleCreateTenant : handleUpdateTenant}
+                  disabled={modalLoading || !formData.name || !formData.subdomain || !formData.phone || !formData.whatsappNumber}
+                  style={{
+                    backgroundColor: (modalLoading || !formData.name || !formData.subdomain || !formData.phone || !formData.whatsappNumber) ? '#6b7280' : '#10b981',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '12px 24px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: (modalLoading || !formData.name || !formData.subdomain || !formData.phone || !formData.whatsappNumber) ? 'not-allowed' : 'pointer',
+                    opacity: (modalLoading || !formData.name || !formData.subdomain || !formData.phone || !formData.whatsappNumber) ? 0.6 : 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                >
+                  {modalLoading && (
+                    <div style={{
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid #ffffff',
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }}></div>
+                  )}
+                  {modalLoading ? 'Processing...' : (showCreateModal ? 'Create Tenant' : 'Update Tenant')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
