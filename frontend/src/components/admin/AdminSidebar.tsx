@@ -4,7 +4,6 @@
  */
 
 import React from 'react';
-import { useLocation, Link } from 'react-router-dom';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 
@@ -14,7 +13,6 @@ interface AdminSidebarProps {
 }
 
 export function AdminSidebar({ currentPath, className = '' }: AdminSidebarProps) {
-  const location = useLocation();
 
   const menuItems = [
     {
@@ -59,7 +57,7 @@ export function AdminSidebar({ currentPath, className = '' }: AdminSidebarProps)
 
         <nav className="space-y-2">
           {menuItems.map((item) => (
-            <Link key={item.path} to={item.path}>
+            <a key={item.path} href={item.path}>
               <Button
                 variant={isActive(item.path) ? 'default' : 'ghost'}
                 className={`w-full justify-start h-auto p-3 ${
@@ -80,7 +78,7 @@ export function AdminSidebar({ currentPath, className = '' }: AdminSidebarProps)
                   </div>
                 </div>
               </Button>
-            </Link>
+            </a>
           ))}
         </nav>
 
@@ -97,12 +95,12 @@ export function AdminSidebar({ currentPath, className = '' }: AdminSidebarProps)
         </div>
 
         <div className="mt-8">
-          <Link to="/">
+          <a href="/">
             <Button variant="ghost" className="w-full justify-start text-gray-500 hover:text-gray-700">
               <span className="mr-2">←</span>
               Back to Site
             </Button>
-          </Link>
+          </a>
         </div>
       </div>
     </div>

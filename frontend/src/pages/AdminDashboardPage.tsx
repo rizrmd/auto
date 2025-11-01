@@ -8,7 +8,6 @@ import { useAdminAuth } from '../context/AdminAuthContext';
 import { adminAPI } from '../services/adminApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
-import { Link } from 'react-router-dom';
 
 interface DashboardData {
   totalUsers: number;
@@ -136,11 +135,11 @@ export function AdminDashboardPage() {
                   : 'WhatsApp bot is not connected. Scan QR code to connect.'
                 }
               </p>
-              <Link to="/admin/whatsapp">
+              <a href="/admin/whatsapp">
                 <Button variant="outline" size="sm" className="w-full">
                   {dashboardData?.whatsappStatus === 'connected' ? 'Manage WhatsApp' : 'Connect WhatsApp'}
                 </Button>
-              </Link>
+              </a>
             </div>
           </CardContent>
         </Card>
@@ -161,11 +160,11 @@ export function AdminDashboardPage() {
               <p className="text-sm text-gray-600">
                 {dashboardData?.totalUsers || 0} total users, {dashboardData?.activeUsers || 0} active
               </p>
-              <Link to="/admin/users">
+              <a href="/admin/users">
                 <Button variant="outline" size="sm" className="w-full">
                   Manage Team
                 </Button>
-              </Link>
+              </a>
             </div>
           </CardContent>
         </Card>
@@ -180,18 +179,18 @@ export function AdminDashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <Link to="/admin/whatsapp">
+              <a href="/admin/whatsapp">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <span className="mr-2">📱</span>
                   Setup WhatsApp Bot
                 </Button>
-              </Link>
-              <Link to="/admin/users">
+              </a>
+              <a href="/admin/users">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <span className="mr-2">➕</span>
                   Add Team Member
                 </Button>
-              </Link>
+              </a>
               <Button variant="outline" size="sm" className="w-full justify-start" onClick={refreshData}>
                 <span className="mr-2">🔄</span>
                 Refresh Data
@@ -244,16 +243,16 @@ export function AdminDashboardPage() {
                 To get the most out of your admin panel, start by connecting your WhatsApp bot and adding team members.
               </p>
               <div className="flex space-x-2">
-                <Link to="/admin/whatsapp">
+                <a href="/admin/whatsapp">
                   <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
                     Setup WhatsApp
                   </Button>
-                </Link>
-                <Link to="/admin/users">
+                </a>
+                <a href="/admin/users">
                   <Button size="sm" variant="outline" className="border-blue-300 text-blue-700 hover:bg-blue-100">
                     Add Users
                   </Button>
-                </Link>
+                </a>
               </div>
             </div>
           </div>

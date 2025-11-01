@@ -25,6 +25,7 @@ import whatsappWebhookRoutes from './src/routes/webhook/whatsapp';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminCarsRoutes from './src/routes/admin/cars';
 import adminLeadsRoutes from './src/routes/admin/leads';
+import adminUsersRoutes from './src/routes/admin/users';
 import adminWhatsappRoutes from './src/routes/admin/whatsapp';
 import setupAdminRoutes from './src/routes/admin/setup';
 import tenantRoutes from './src/routes/tenant';
@@ -176,6 +177,7 @@ app.route('/webhook/whatsapp', whatsappWebhookRoutes);
 app.route('/api/admin/auth', adminAuthRoutes);
 app.route('/api/admin/cars', adminCarsRoutes);
 app.route('/api/admin/leads', adminLeadsRoutes);
+app.route('/api/admin/users', adminUsersRoutes);
 app.route('/api/admin/whatsapp', adminWhatsappRoutes);
 app.route('/api/admin/setup', setupAdminRoutes);
 
