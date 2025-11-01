@@ -12,6 +12,12 @@ import { CarDetailPage } from './src/pages/CarDetailPage';
 import { SuperAdminBridge } from './src/components/SuperAdminBridge';
 import { ErrorBoundary } from './src/components/ErrorBoundary';
 import { ErrorTest } from './src/components/ErrorTest';
+import { AdminAuthProvider, useAdminAuth } from './src/context/AdminAuthContext';
+import { AdminLogin } from './src/components/AdminLogin';
+import { AdminLayout } from './src/components/admin/AdminLayout';
+import { AdminDashboardPage } from './src/pages/AdminDashboardPage';
+import { AdminWhatsAppPage } from './src/pages/AdminWhatsAppPage';
+import { AdminUsersPage } from './src/pages/AdminUsersPage';
 
 export function App() {
   // Simple client-side routing based on URL path
@@ -28,6 +34,21 @@ export function App() {
         }}
       >
         <SuperAdminBridge />
+      </ErrorBoundary>
+    );
+  }
+
+  // Check if this is an Admin route
+  if (path.startsWith('/admin')) {
+    return (
+      <ErrorBoundary
+        onError={(error, errorInfo) => {
+          console.error('Admin App Error:', error, errorInfo);
+        }}
+      >
+        <AdminAuthProvider>
+          <AdminAppRouter currentPath={path} />
+        </AdminAuthProvider>
       </ErrorBoundary>
     );
   }
@@ -80,6 +101,63 @@ export function App() {
         <PageComponent {...pageProps} />
       </TenantProvider>
     </ErrorBoundary>
+  );
+}
+
+/**
+ * Admin App Router Component
+ * Handles routing for admin pages with authentication
+ */
+function AdminAppRouter({ currentPath }: { currentPath: string }) {
+  const { isAuthenticated, isLoading, user } = useAdminAuth();
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-500">Loading admin panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Redirect to login if not authenticated
+  if (!isAuthenticated) {
+    if (currentPath !== '/admin/login') {
+      // Store the intended destination for redirect after login
+      sessionStorage.setItem('admin_redirect', currentPath);
+      window.location.href = '/admin/login';
+      return null;
+    }
+    return <AdminLogin />;
+  }
+
+  // Redirect authenticated users away from login page
+  if (currentPath === '/admin/login') {
+    const redirectPath = sessionStorage.getItem('admin_redirect') || '/admin';
+    sessionStorage.removeItem('admin_redirect');
+    window.location.href = redirectPath;
+    return null;
+  }
+
+  // Determine which admin page to render
+  let AdminPageComponent = AdminDashboardPage;
+
+  if (currentPath === '/admin' || currentPath === '/admin/') {
+    AdminPageComponent = AdminDashboardPage;
+  } else if (currentPath.startsWith('/admin/whatsapp')) {
+    AdminPageComponent = AdminWhatsAppPage;
+  } else if (currentPath.startsWith('/admin/users')) {
+    AdminPageComponent = AdminUsersPage;
+  }
+  // Add more admin routes here as needed
+
+  return (
+    <AdminLayout currentPath={currentPath}>
+      <AdminPageComponent />
+    </AdminLayout>
   );
 }
 
