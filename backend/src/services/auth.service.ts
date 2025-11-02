@@ -57,35 +57,20 @@ export class AuthService {
    * Verify JWT token
    */
   verifyToken(token: string): JwtPayload {
-    console.log('[AUTH SERVICE] Verifying token, length:', token.length);
-    console.log('[AUTH SERVICE] JWT_SECRET exists:', !!env.JWT_SECRET);
-
     try {
-      // First try to decode without verification to see the payload
-      const decoded = jwt.decode(token);
-      console.log('[AUTH SERVICE] Token decoded without verification:', decoded);
-
-      const verified = jwt.verify(token, env.JWT_SECRET, {
+      const decoded = jwt.verify(token, env.JWT_SECRET, {
         algorithms: ['HS256'],  // Prevent algorithm confusion
         issuer: 'autoleads-api',
         audience: 'autoleads-client',
       });
 
-      console.log('[AUTH SERVICE] Token verified successfully:', verified);
-
       // Type guard
-      if (typeof verified === 'string') {
+      if (typeof decoded === 'string') {
         throw new UnauthorizedError('Invalid token format');
       }
 
-      return verified as JwtPayload;
+      return decoded as JwtPayload;
     } catch (error) {
-      console.log('[AUTH SERVICE] Token verification error:', {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-
       if (error instanceof jwt.TokenExpiredError) {
         throw new UnauthorizedError('Token expired');
       }

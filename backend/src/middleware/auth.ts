@@ -48,16 +48,12 @@ export async function authMiddleware(c: Context, next: Next) {
   const token = extractToken(c);
 
   if (!token) {
-    console.log('[AUTH] No token provided');
     throw new UnauthorizedError(MESSAGES.UNAUTHORIZED);
   }
-
-  console.log('[AUTH] Token provided, length:', token.length);
 
   try {
     // Verify token
     const payload = authService.verifyToken(token);
-    console.log('[AUTH] Token verified successfully, payload:', { userId: payload.userId, tenantId: payload.tenantId, email: payload.email });
 
     // Get user from database
     const user = await prisma.user.findUnique({
@@ -67,28 +63,20 @@ export async function authMiddleware(c: Context, next: Next) {
     });
 
     if (!user) {
-      console.log('[AUTH] User not found for userId:', payload.userId);
       throw new UnauthorizedError('User not found');
     }
 
-    console.log('[AUTH] User found:', { id: user.id, email: user.email, status: user.status, tenantId: user.tenantId });
-
     // Check if user is active
     if (user.status !== 'active') {
-      console.log('[AUTH] User account is inactive, status:', user.status);
       throw new UnauthorizedError('User account is inactive');
     }
 
     // Verify tenant matches (if tenant is in context)
     const tenant = c.get('tenant');
-    console.log('[AUTH] Tenant from context:', tenant ? { id: tenant.id, name: tenant.name } : 'No tenant');
 
     if (tenant && user.tenantId !== tenant.id) {
-      console.log('[AUTH] Tenant mismatch: user.tenantId =', user.tenantId, 'tenant.id =', tenant.id);
       throw new ForbiddenError('User does not belong to this tenant');
     }
-
-    console.log('[AUTH] Authentication successful for user:', user.email);
 
     // Attach user to context
     c.set('user', user);
@@ -99,12 +87,6 @@ export async function authMiddleware(c: Context, next: Next) {
 
     await next();
   } catch (error) {
-    console.log('[AUTH] Authentication error:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-
     if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
       throw error;
     }
@@ -112,11 +94,9 @@ export async function authMiddleware(c: Context, next: Next) {
     // Handle JWT errors
     if (error instanceof Error) {
       if (error.name === 'JsonWebTokenError') {
-        console.log('[AUTH] JWT verification failed:', error.message);
         throw new UnauthorizedError(MESSAGES.INVALID_TOKEN);
       }
       if (error.name === 'TokenExpiredError') {
-        console.log('[AUTH] JWT token expired');
         throw new UnauthorizedError(MESSAGES.TOKEN_EXPIRED);
       }
     }
