@@ -343,37 +343,22 @@ export class SuperAdminService {
       ];
     }
 
-    // Exclude deleted tenants (tenants with deletedAt in settings)
-    const deletedFilter = {
-      OR: [
-        {
-          settings: {
-            path: ['deletedAt'],
-            equals: null
-          }
-        },
-        {
-          settings: {
-            not: {
-              path: ['deletedAt']
-            }
-          }
-        }
-      ]
-    };
+    // Exclude deleted tenants using raw SQL for reliable JSON filtering
+    // Prisma JSON path filtering is inconsistent, so we use $queryRaw
+    const deletedTenantsIds = await prisma.$queryRaw<Array<{id: number}>>`
+      SELECT id FROM tenants
+      WHERE settings->>'deletedAt' IS NOT NULL
+      AND settings ? 'deletedAt'
+    `;
 
-    // Combine with existing filters
-    if (where.OR) {
-      // If there's already an OR (from search), we need to combine with AND
-      where.AND = [
-        { ...where },
-        deletedFilter
-      ];
-      delete where.OR;
-    } else {
-      // No existing OR, just add the deleted filter
-      Object.assign(where, deletedFilter);
+    const deletedIds = deletedTenantsIds.map(t => t.id);
+
+    // Add NOT IN filter to exclude deleted tenants
+    if (deletedIds.length > 0) {
+      where.id = { notIn: deletedIds };
     }
+
+    // The deleted tenant filter is now applied via where.id.notIn above
 
     if (status) {
       where.status = status;
