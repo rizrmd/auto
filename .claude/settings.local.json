@@ -21,7 +21,9 @@
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdXBlckFkbWluSWQiOjMsImVtYWlsIjoiYWRtaW5AYXV0b2xlYWRzLmNvbSIsInJvbGUiOiJzdXBlcl9hZG1pbiIsImlhdCI6MTc2MTkwNTkzOCwiZXhwIjoxNzYxOTkyMzM4LCJhdWQiOiJhdXRvbGVhZHMtc3VwZXItYWRtaW4tY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLXN1cGVyLWFkbWluLWFwaSIsInN1YiI6IjMifQ.Uk8-d2-4SMpl_Tqb812Nez0c2Pyj7Ffpgjhm5rwpkKQ\")",
       "Bash(git push:*)",
       "Bash(pkill:*)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjAwNzUxNCwiZXhwIjoxNzYyNjEyMzE0LCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.JQhVwiZ33X3vJx2eSSH6RD9KzYjk2JXbCZemopAxLEE\")",
+      "Bash(NEW_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA1MDc3MCwiZXhwIjoxNzYyNjU1NTcwLCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.r2586q9pXNbl-cbLnhpOfUioKXAj2BlmNlN5s6tS_xo\")"
     ],
     "deny": [],
     "ask": []
