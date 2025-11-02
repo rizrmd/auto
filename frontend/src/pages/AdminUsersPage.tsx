@@ -26,10 +26,12 @@ export function AdminUsersPage() {
       setLoading(true);
       setError(null);
       const response = await adminAPI.getUsers();
-      setUsers(response.data || []);
+      const usersData = response?.data || [];
+      setUsers(Array.isArray(usersData) ? usersData : []);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load users';
       setError(errorMessage);
+      setUsers([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -45,13 +47,14 @@ export function AdminUsersPage() {
   };
 
   const getRoleStats = () => {
+    const usersArray = Array.isArray(users) ? users : [];
     const stats = {
-      total: users.length,
-      admin: users.filter(u => u.role === 'admin').length,
-      sales: users.filter(u => u.role === 'sales').length,
-      owner: users.filter(u => u.role === 'owner').length,
-      active: users.filter(u => u.status === 'active').length,
-      inactive: users.filter(u => u.status === 'inactive').length,
+      total: usersArray.length,
+      admin: usersArray.filter(u => u.role === 'admin').length,
+      sales: usersArray.filter(u => u.role === 'sales').length,
+      owner: usersArray.filter(u => u.role === 'owner').length,
+      active: usersArray.filter(u => u.status === 'active').length,
+      inactive: usersArray.filter(u => u.status === 'inactive').length,
     };
     return stats;
   };
