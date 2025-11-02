@@ -39,22 +39,11 @@ whatsappAdmin.get(
 
     console.log(`[WHATSAPP ADMIN] Status check for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
     
-    // Use tenant-specific WhatsApp instance via proxy
+    // Use tenant-specific WhatsApp instance directly
     try {
-      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
-      const healthResponse = await fetch(`${baseUrl}/api/wa/health`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
-        },
-      });
-
-      if (!healthResponse.ok) {
-        throw new Error(`Health check failed: ${healthResponse.status}`);
-      }
-
-      const health = await healthResponse.json();
+      // Get health status directly from WhatsApp client instead of HTTP request
+      const healthResponse = await whatsapp.healthCheck();
+      const health = healthResponse.data;
 
       // Get version information
       const version = await whatsapp.getVersion();
