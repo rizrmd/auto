@@ -16,6 +16,7 @@ import { AdminAuthProvider, useAdminAuth } from './src/context/AdminAuthContext'
 import { AdminLogin } from './src/components/AdminLogin';
 import { AdminLayout } from './src/components/admin/AdminLayout';
 import { AdminDashboardPage } from './src/pages/AdminDashboardPage';
+import { AdminAnalyticsPage } from './src/pages/AdminAnalyticsPage';
 import { AdminWhatsAppPage } from './src/pages/AdminWhatsAppPage';
 import { AdminUsersPage } from './src/pages/AdminUsersPage';
 
@@ -147,6 +148,8 @@ function AdminAppRouter({ currentPath }: { currentPath: string }) {
 
   if (currentPath === '/admin' || currentPath === '/admin/') {
     AdminPageComponent = AdminDashboardPage;
+  } else if (currentPath.startsWith('/admin/analytics')) {
+    AdminPageComponent = AdminAnalyticsPage;
   } else if (currentPath.startsWith('/admin/whatsapp')) {
     AdminPageComponent = AdminWhatsAppPage;
   } else if (currentPath.startsWith('/admin/users')) {

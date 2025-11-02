@@ -22,6 +22,12 @@ export function AdminSidebar({ currentPath, className = '' }: AdminSidebarProps)
       description: 'Status overview',
     },
     {
+      path: '/admin/analytics',
+      label: 'Analytics',
+      icon: '📈',
+      description: 'Search demand',
+    },
+    {
       path: '/admin/whatsapp',
       label: 'WhatsApp',
       icon: '📱',

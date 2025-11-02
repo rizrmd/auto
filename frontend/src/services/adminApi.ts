@@ -191,6 +191,41 @@ class AdminAPI {
       throw error;
     }
   }
+
+  // Analytics Data
+  async getDemandReport(startDate: string, endDate: string): Promise<{
+    success: boolean;
+    data: {
+      topCars: Array<{
+        carName: string;
+        brand: string;
+        model: string;
+        year: number | null;
+        searchCount: number;
+        searchDays: number;
+      }>;
+      topKeywords: Array<{
+        keyword: string;
+        searchCount: number;
+        searchDays: number;
+      }>;
+      summary: {
+        totalSearches: number;
+        uniqueCars: number;
+        avgSearchesPerDay: number;
+        dateRange: {
+          start: string;
+          end: string;
+          days: number;
+        };
+      };
+    };
+  }> {
+    const response = await fetch(`${this.baseURL}/analytics/demand-report?startDate=${startDate}&endDate=${endDate}`, {
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 // Export singleton instance

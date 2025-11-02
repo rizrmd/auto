@@ -72,6 +72,7 @@ model Tenant {
   messages           Message[]
   users              User[]
   conversationStates ConversationState[]
+  searchDemands      SearchDemand[]
 
   @@map("tenants")
 }
@@ -148,8 +149,9 @@ model Car {
   slug String @db.VarChar(200) // "avanza-2020-hitam-a01"
 
   // RELATIONS
-  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  leads  Lead[]
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads        Lead[]
+  searchDemands SearchDemand[]
 
   @@unique([tenantId, displayCode])
   @@unique([tenantId, slug])
@@ -382,4 +384,34 @@ enum UserType {
   customer
   admin
   sales
+}
+
+// ============================================
+// SEARCH DEMAND TRACKING
+// ============================================
+
+model SearchDemand {
+  id       Int @id @default(autoincrement())
+  tenantId Int @map("tenant_id")
+
+  // SEARCH DETAILS
+  carId   Int?   @map("car_id")     // NULL jika tidak ketemu spesifik
+  keyword String @db.VarChar(255) // "Toyota Avanza", "Honda Jazz", dll
+  searchDate DateTime @map("search_date") @db.Date
+
+  // METRICS
+  searchCount Int @default(1) @map("search_count")
+
+  // META
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // RELATIONS
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  car    Car?   @relation(fields: [carId], references: [id], onDelete: SetNull)
+
+  @@unique([tenantId, carId, searchDate])
+  @@index([tenantId, searchDate])
+  @@index([tenantId, keyword])
+  @@map("search_demand")
 }

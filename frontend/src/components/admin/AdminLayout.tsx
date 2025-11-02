@@ -27,6 +27,8 @@ export function AdminLayout({ currentPath, children }: AdminLayoutProps) {
   const getPageTitle = () => {
     if (currentPath === '/admin' || currentPath === '/admin/') {
       return 'Dashboard';
+    } else if (currentPath.startsWith('/admin/analytics')) {
+      return 'Analytics';
     } else if (currentPath.startsWith('/admin/whatsapp')) {
       return 'WhatsApp Management';
     } else if (currentPath.startsWith('/admin/users')) {
@@ -38,6 +40,8 @@ export function AdminLayout({ currentPath, children }: AdminLayoutProps) {
   const getPageDescription = () => {
     if (currentPath === '/admin' || currentPath === '/admin/') {
       return 'Overview of your tenant status';
+    } else if (currentPath.startsWith('/admin/analytics')) {
+      return 'Track customer search demand and trends';
     } else if (currentPath.startsWith('/admin/whatsapp')) {
       return 'Manage WhatsApp bot connection and settings';
     } else if (currentPath.startsWith('/admin/users')) {

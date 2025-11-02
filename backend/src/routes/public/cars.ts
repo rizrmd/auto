@@ -7,6 +7,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { CarService } from '../../services/car.service';
+import { SearchAnalyticsService } from '../../services/search-analytics.service';
 import { tenantMiddleware, getTenant } from '../../middleware/tenant';
 import { asyncHandler } from '../../middleware/error-handler';
 import { publicRateLimiter } from '../../middleware/rate-limiter';
@@ -179,6 +180,7 @@ publicCars.get(
 
     const tenant = getTenant(c);
     const carService = new CarService();
+    const searchAnalytics = new SearchAnalyticsService();
 
     console.log('[SEARCH] Autocomplete query:', query, 'limit:', limit);
 
@@ -207,6 +209,11 @@ publicCars.get(
     }));
 
     console.log('[SEARCH] Found', formattedCars.length, 'results');
+
+    // Log search analytics (async, don't wait)
+    searchAnalytics.logSearch(tenant.id, query, result.cars).catch(error => {
+      console.error('[SEARCH] Analytics logging failed:', error);
+    });
 
     const response: ApiResponse = {
       success: true,
