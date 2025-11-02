@@ -334,14 +334,6 @@ export class SuperAdminService {
 
     const where: any = {};
 
-    // Exclude deleted tenants (tenants with deletedAt in settings)
-    where.NOT = {
-      settings: {
-        path: ['deletedAt'],
-        equals: null
-      }
-    };
-
     // Apply filters
     if (search) {
       where.OR = [
@@ -349,6 +341,38 @@ export class SuperAdminService {
         { subdomain: { contains: search, mode: 'insensitive' } },
         { email: { contains: search, mode: 'insensitive' } },
       ];
+    }
+
+    // Exclude deleted tenants (tenants with deletedAt in settings)
+    const deletedFilter = {
+      OR: [
+        {
+          settings: {
+            path: ['deletedAt'],
+            equals: null
+          }
+        },
+        {
+          settings: {
+            not: {
+              path: ['deletedAt']
+            }
+          }
+        }
+      ]
+    };
+
+    // Combine with existing filters
+    if (where.OR) {
+      // If there's already an OR (from search), we need to combine with AND
+      where.AND = [
+        { ...where },
+        deletedFilter
+      ];
+      delete where.OR;
+    } else {
+      // No existing OR, just add the deleted filter
+      Object.assign(where, deletedFilter);
     }
 
     if (status) {
