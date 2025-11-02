@@ -1,5 +1,5 @@
 /**
- * Super Admin Analytics Page - Phase 2.4 Advanced Analytics
+ * Super Admin Analytics Page - Advanced Analytics
  *
  * Comprehensive analytics dashboard with charts, metrics,
  * and insights for the entire platform.
@@ -54,7 +54,7 @@ export default function AnalyticsPage() {
   });
   const [refreshing, setRefreshing] = useState(false);
 
-  console.log('📊 Analytics Page mounting with Phase 2.4 features...');
+  console.log('📊 Analytics Page mounting with advanced analytics features...');
 
   // Mock data generation
   const generateMockAnalytics = (): AnalyticsData => {
@@ -904,37 +904,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
 
-            {/* Phase 2.4 Info */}
-            <div style={{
-              marginTop: '32px',
-              padding: '16px',
-              backgroundColor: '#10b98120',
-              border: '1px solid #10b98140',
-              borderRadius: '8px'
-            }}>
-              <h3 style={{
-                fontSize: '16px',
-                fontWeight: 'bold',
-                color: '#10b981',
-                marginBottom: '8px'
-              }}>
-                📊 Phase 2.4 - Advanced Analytics Dashboard
-              </h3>
-              <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5', margin: '0 0 12px 0' }}>
-                Advanced analytics with real-time data fetching, interactive charts, and comprehensive platform metrics.
-                Features include customizable time periods, data export, and automated insights.
-              </p>
-              <div style={{
-                padding: '8px 12px',
-                backgroundColor: '#0f172a',
-                borderRadius: '6px',
-                fontSize: '12px',
-                color: '#64748b'
-              }}>
-                API Integration: Real-time data fetching • Export: CSV • Charts: Custom bar charts • Status: {loading ? 'Loading...' : 'Connected'}
-              </div>
-            </div>
-          </>
+                      </>
         ) : null}
       </div>
     </div>

@@ -1475,37 +1475,7 @@ export default function SecurityPage() {
           </div>
         )}
 
-        {/* Phase 3.1 Info */}
-        <div style={{
-          marginTop: '32px',
-          padding: '16px',
-          backgroundColor: '#3b82f620',
-          border: '1px solid #3b82f640',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: '#3b82f6',
-            marginBottom: '8px'
-          }}>
-            🔐 Phase 3.1 - Security Management System
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5', margin: '0 0 12px 0' }}>
-            Complete security management system with admin user management, session monitoring,
-            security audit logs, and comprehensive access control features.
-          </p>
-          <div style={{
-            padding: '8px 12px',
-            backgroundColor: '#0f172a',
-            borderRadius: '6px',
-            fontSize: '12px',
-            color: '#64748b'
-          }}>
-            Features: User CRUD • Session Management • Security Logs • Access Control • Status: {loading ? 'Loading...' : 'Connected'}
-          </div>
-        </div>
-      </div>
+              </div>
     </div>
   );
 }

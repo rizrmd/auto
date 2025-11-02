@@ -1,5 +1,5 @@
 /**
- * Tenants Page - Phase 2.1 Real Data Integration
+ * Tenants Page - Real Data Integration
  * Advanced tenant management with API integration and real-time data
  */
 
@@ -1251,63 +1251,7 @@ export default function TenantsPage() {
           </div>
         </div>
 
-        {/* Phase 2.1 - Real Data Integration Info */}
-        <div style={{
-          marginTop: '32px',
-          padding: '16px',
-          backgroundColor: '#10b98120',
-          border: '1px solid #10b98140',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            color: '#10b981',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            marginBottom: '8px'
-          }}>
-            🔄 Phase 2.1 - Real Data Integration
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Tenant management sekarang menggunakan data real-time dari API. Data tenant, statistik mobil,
-            lead, dan user diambil langsung dari database. Auto-refresh setiap 60 detik dengan error handling
-            dan fallback ke mock data jika API tidak tersedia.
-          </p>
-          <div style={{
-            marginTop: '12px',
-            display: 'flex',
-            gap: '16px',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              API: /api/super-admin/tenants
-            </div>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              Refresh: 60s | Manual: 🔄
-            </div>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              Status: {loading ? 'Loading...' : 'Connected'}
-            </div>
-          </div>
-        </div>
-
+  
         {/* Pagination Controls */}
         {totalPages > 1 && (
           <div style={{
@@ -1468,101 +1412,8 @@ export default function TenantsPage() {
           </div>
         )}
 
-        {/* Phase 2.3 - Search, Filtering & Pagination Info */}
-        <div style={{
-          marginTop: '16px',
-          padding: '16px',
-          backgroundColor: '#10b98120',
-          border: '1px solid #10b98140',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            color: '#10b981',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            marginBottom: '8px'
-          }}>
-            🔍 Phase 2.3 - Search, Filtering & Pagination
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Advanced tenant search with real-time filtering. Multi-criteria filtering by status, plan, and sorting.
-            Pagination with configurable items per page. Search debouncing for optimal performance.
-          </p>
-          <div style={{
-            marginTop: '12px',
-            display: 'flex',
-            gap: '16px',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              Search: Real-time (500ms)
-            </div>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              Filter: Status & Plan
-            </div>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              Sort: 5 fields
-            </div>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              Pagination: 10-100 items
-            </div>
-            <div style={{
-              padding: '6px 12px',
-              backgroundColor: '#0f172a',
-              borderRadius: '6px',
-              fontSize: '12px',
-              color: '#64748b'
-            }}>
-              API: Query parameters
-            </div>
-          </div>
-        </div>
-
-        {/* Phase Info */}
-        <div style={{
-          marginTop: '16px',
-          padding: '16px',
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            color: '#ffffff',
-            fontSize: '16px',
-            fontWeight: 'bold',
-            marginBottom: '8px'
-          }}>
-            📋 Phase 2.4 - Coming Next
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Bulk operations, advanced analytics, tenant health monitoring, and export functionality will be implemented in Phase 2.4.
-          </p>
-        </div>
-
+    
+      
         {/* Create/Edit Tenant Modal */}
         {(showCreateModal || showEditModal) && (
           <div style={{

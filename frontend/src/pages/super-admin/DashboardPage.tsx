@@ -1,5 +1,5 @@
 /**
- * Super Admin Dashboard - Phase 2.1 with Real Data Integration
+ * Super Admin Dashboard - Real Data Integration
  */
 
 import React, { useState, useEffect } from 'react';
@@ -130,7 +130,7 @@ export default function DashboardPage() {
     }
   };
 
-  // Generate mock activity data for Phase 1.2 compatibility
+  // Generate mock activity data for fallback compatibility
   const generateMockActivity = (): RecentActivity[] => [
     {
       id: '1',
@@ -340,87 +340,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Interactive Section */}
-        <div style={{
-          backgroundColor: '#1e293b',
-          border: '1px solid #334155',
-          borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '32px'
-        }}>
-          <h2 style={{
-            fontSize: '20px',
-            fontWeight: 'bold',
-            color: '#ffffff',
-            marginBottom: '16px'
-          }}>
-            Dashboard Controls
-          </h2>
-
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            <button
-              onClick={handleTestClick}
-              style={{
-                backgroundColor: '#3b82f6',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              Test Dashboard (Klik: {clickCount})
-            </button>
-
-            <button
-              onClick={handleRefresh}
-              style={{
-                backgroundColor: '#10b981',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              Refresh Data
-            </button>
-
-            <button
-              onClick={() => setMessage('System check complete! All functions working.')}
-              style={{
-                backgroundColor: '#8b5cf6',
-                color: '#ffffff',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '12px 24px',
-                fontSize: '16px',
-                cursor: 'pointer',
-                fontWeight: 'bold'
-              }}
-            >
-              System Check
-            </button>
-          </div>
-
-          <div style={{
-            marginTop: '16px',
-            padding: '12px',
-            backgroundColor: '#0f172a',
-            borderRadius: '8px'
-          }}>
-            <p style={{ color: '#94a3b8', fontSize: '14px' }}>
-              Status: <span style={{ color: '#10b981', fontWeight: 'bold' }}>● Online</span> |
-              Last Update: {new Date().toLocaleTimeString('id-ID')} |
-              Clicks: {clickCount}
-            </p>
-          </div>
-        </div>
-
+  
         {/* Activity Section */}
         <div style={{
           backgroundColor: '#1e293b',
@@ -485,39 +405,7 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Phase 2.1 - Real Data Integration Info */}
-        <div style={{
-          marginTop: '32px',
-          padding: '16px',
-          backgroundColor: '#10b98120',
-          border: '1px solid #10b98140',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: '#10b981',
-            marginBottom: '8px'
-          }}>
-            🔄 Phase 2.1 - Real Data Integration
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5' }}>
-            Dashboard sekarang menggunakan data real-time dari API. Statistik tenant, mobil, dan lead
-            diambil langsung dari database. Auto-refresh setiap 60 detik dengan error handling dan fallback
-            ke mock data jika API tidak tersedia.
-          </p>
-          <div style={{
-            marginTop: '12px',
-            padding: '8px 12px',
-            backgroundColor: '#0f172a',
-            borderRadius: '6px',
-            fontSize: '12px',
-            color: '#64748b'
-          }}>
-            API Endpoint: /api/super-admin/tenants | Refresh: 60s | Status: {loading ? 'Loading...' : 'Connected'}
-          </div>
-        </div>
-
+  
         {/* Debug Info */}
         <div style={{
           marginTop: '32px',

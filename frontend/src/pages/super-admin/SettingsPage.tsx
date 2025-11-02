@@ -2125,37 +2125,7 @@ export default function SettingsPage() {
           </>
         )}
 
-        {/* Phase 3.1 Info */}
-        <div style={{
-          marginTop: '32px',
-          padding: '16px',
-          backgroundColor: '#10b98120',
-          border: '1px solid #10b98140',
-          borderRadius: '8px'
-        }}>
-          <h3 style={{
-            fontSize: '16px',
-            fontWeight: 'bold',
-            color: '#10b981',
-            marginBottom: '8px'
-          }}>
-            ⚙️ Phase 3.1 - Complete Platform Settings Management
-          </h3>
-          <p style={{ color: '#94a3b8', fontSize: '14px', lineHeight: '1.5', margin: '0 0 12px 0' }}>
-            Comprehensive platform configuration system with WhatsApp setup, email/SMS providers,
-            backup management, maintenance mode, and security settings.
-          </p>
-          <div style={{
-            padding: '8px 12px',
-            backgroundColor: '#0f172a',
-            borderRadius: '6px',
-            fontSize: '12px',
-            color: '#64748b'
-          }}>
-            Features: 6 Settings Categories • Real-time Save • Test Functionality • Status: {loading ? 'Loading...' : 'Connected'}
-          </div>
-        </div>
-      </div>
+              </div>
     </div>
   );
 }
