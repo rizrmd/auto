@@ -158,44 +158,34 @@ class AdminAPI {
   async getDashboardData(): Promise<{
     success: boolean;
     data: {
-      totalUsers: number;
-      activeUsers: number;
-      whatsappStatus: string;
-      recentActivity: Array<{
-        id: number;
-        type: string;
-        description: string;
-        createdAt: string;
-      }>;
+      whatsapp: {
+        status: string;
+        phone: string;
+        connected: boolean;
+      };
+      leads: {
+        total: number;
+        thisMonth: number;
+        lastMonth: number;
+        growth: number;
+      };
+      classification: {
+        hot: number;
+        warm: number;
+        new: number;
+        percentages: {
+          hot: number;
+          warm: number;
+          new: number;
+        };
+      };
     };
   }> {
     try {
-      // Get users data (required)
-      const usersResponse = await this.getUsers();
-
-      // Get WhatsApp status (optional - handle gracefully if it fails)
-      let whatsappStatus = 'disconnected'; // Default status
-      try {
-        const whatsappResponse = await this.getWhatsAppStatus();
-        whatsappStatus = whatsappResponse.data?.health?.connected ? 'connected' : 'disconnected';
-      } catch (whatsappError) {
-        console.warn('WhatsApp status check failed:', whatsappError);
-        // Continue with default status if WhatsApp check fails
-        whatsappStatus = 'disconnected';
-      }
-
-      const totalUsers = usersResponse.data?.length || 0;
-      const activeUsers = usersResponse.data?.filter(u => u.status === 'active').length || 0;
-
-      return {
-        success: true,
-        data: {
-          totalUsers,
-          activeUsers,
-          whatsappStatus,
-          recentActivity: [], // Empty for MVP
-        },
-      };
+      const response = await fetch(`${this.baseURL}/dashboard`, {
+        headers: this.getAuthHeaders(),
+      });
+      return this.handleResponse(response);
     } catch (error) {
       console.error('Failed to load dashboard data:', error);
       throw error;

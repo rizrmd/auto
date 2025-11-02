@@ -37,87 +37,98 @@ dashboard.get(
     }
 
     try {
-      // Get user statistics
-      const totalUsers = await prisma.user.count({
-        where: { tenantId }
-      });
+      // Get WhatsApp status (priority - connection info)
+      let whatsappStatus = 'disconnected';
+      let whatsappPhone = 'Not configured';
+      try {
+        const tenant = await prisma.tenant.findUnique({
+          where: { id: tenantId },
+          select: {
+            whatsappBotEnabled: true,
+            whatsappStatus: true,
+            whatsappNumber: true
+          }
+        });
+        whatsappStatus = tenant?.whatsappBotEnabled ?
+          (tenant?.whatsappStatus || 'disconnected') : 'disabled';
+        whatsappPhone = tenant?.whatsappNumber || 'Not configured';
+      } catch (error) {
+        console.warn('WhatsApp status check failed:', error);
+      }
 
-      const activeUsers = await prisma.user.count({
-        where: {
-          tenantId,
-          status: 'active'
-        }
-      });
-
-      // Get lead statistics
+      // Get lead statistics with classification
       const totalLeads = await prisma.lead.count({
         where: { tenantId }
       });
 
-      const newLeadsThisMonth = await prisma.lead.count({
+      const hotLeads = await prisma.lead.count({
+        where: {
+          tenantId,
+          status: 'hot'
+        }
+      });
+
+      const warmLeads = await prisma.lead.count({
+        where: {
+          tenantId,
+          status: 'warm'
+        }
+      });
+
+      const newLeads = await prisma.lead.count({
+        where: {
+          tenantId,
+          status: 'new'
+        }
+      });
+
+      // Get monthly breakdown
+      const currentMonth = new Date();
+      const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+
+      const leadsThisMonth = await prisma.lead.count({
         where: {
           tenantId,
           createdAt: {
-            gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+            gte: firstDayOfMonth
           }
         }
       });
 
-      // Get car/catalog statistics
-      const totalCars = await prisma.car.count({
-        where: { tenantId }
-      });
-
-      const activeCars = await prisma.car.count({
+      const leadsLastMonth = await prisma.lead.count({
         where: {
           tenantId,
-          status: 'available'
+          createdAt: {
+            gte: new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1),
+            lt: firstDayOfMonth
+          }
         }
       });
-
-      // Get WhatsApp status (simplified version)
-      let whatsappStatus = 'disconnected';
-      try {
-        // Simple check - in real implementation this could check actual WhatsApp service status
-        const tenant = await prisma.tenant.findUnique({
-          where: { id: tenantId },
-          select: { whatsappBotEnabled: true, whatsappStatus: true }
-        });
-        whatsappStatus = tenant?.whatsappBotEnabled ?
-          (tenant?.whatsappStatus || 'connected') : 'disabled';
-      } catch (error) {
-        console.warn('WhatsApp status check failed:', error);
-        whatsappStatus = 'unknown';
-      }
 
       const response: ApiResponse = {
         success: true,
         data: {
-          users: {
-            total: totalUsers,
-            active: activeUsers,
-            inactive: totalUsers - activeUsers,
+          whatsapp: {
+            status: whatsappStatus,
+            phone: whatsappPhone,
+            connected: whatsappStatus === 'connected'
           },
           leads: {
             total: totalLeads,
-            thisMonth: newLeadsThisMonth,
+            thisMonth: leadsThisMonth,
+            lastMonth: leadsLastMonth,
+            growth: leadsLastMonth > 0 ?
+              Math.round(((leadsThisMonth - leadsLastMonth) / leadsLastMonth) * 100) : 0
           },
-          cars: {
-            total: totalCars,
-            active: activeCars,
-            sold: totalCars - activeCars,
-          },
-          whatsapp: {
-            status: whatsappStatus,
-          },
-          overview: {
-            totalUsers,
-            activeUsers,
-            totalLeads,
-            newLeadsThisMonth,
-            totalCars,
-            activeCars,
-            whatsappStatus,
+          classification: {
+            hot: hotLeads,
+            warm: warmLeads,
+            new: newLeads,
+            percentages: totalLeads > 0 ? {
+              hot: Math.round((hotLeads / totalLeads) * 100),
+              warm: Math.round((warmLeads / totalLeads) * 100),
+              new: Math.round((newLeads / totalLeads) * 100)
+            } : { hot: 0, warm: 0, new: 0 }
           }
         },
       };
