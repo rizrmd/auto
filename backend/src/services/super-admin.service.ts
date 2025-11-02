@@ -133,6 +133,11 @@ export class SuperAdminService {
       throw new NotFoundError('Tenant not found');
     }
 
+    // Check if tenant is deleted
+    if (tenant.settings && typeof tenant.settings === 'object' && 'deletedAt' in tenant.settings) {
+      throw new NotFoundError('Tenant has been deleted');
+    }
+
     // Get additional counts
     const [activeLeads, soldCars, lastActivity] = await Promise.all([
       prisma.lead.count({
@@ -328,6 +333,14 @@ export class SuperAdminService {
     } = filter;
 
     const where: any = {};
+
+    // Exclude deleted tenants (tenants with deletedAt in settings)
+    where.NOT = {
+      settings: {
+        path: ['deletedAt'],
+        not: null
+      }
+    };
 
     // Apply filters
     if (search) {
@@ -882,7 +895,13 @@ export class SuperAdminService {
     } : {};
 
     const tenants = await prisma.tenant.findMany({
-      where: { status: 'active' },
+      where: {
+        status: 'active',
+        settings: {
+          path: ['deletedAt'],
+          equals: null
+        }
+      },
       include: {
         _count: {
           select: {
