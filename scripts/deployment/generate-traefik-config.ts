@@ -44,8 +44,20 @@ interface TraefikConfig {
         scheme: string;
         permanent?: boolean;
       };
+      compress?: {
+        excludedContentTypes?: string[];
+        minResponseBodyBytes?: number;
+      };
+      buffering?: {
+        maxRequestBodyBytes?: number;
+        memRequestBodyBytes?: number;
+        maxResponseBodyBytes?: number;
+        memResponseBodyBytes?: number;
+        retryExpression?: string;
+      };
       headers?: {
         customRequestHeaders?: Record<string, string>;
+        customResponseHeaders?: Record<string, string>;
       };
     }>;
   };
@@ -89,6 +101,21 @@ async function generateTraefikConfig(): Promise<void> {
               permanent: true
             }
           },
+          "compression": {
+            compress: {
+              excludedContentTypes: ["text/event-stream", "application/grpc"],
+              minResponseBodyBytes: 1024
+            }
+          },
+          "buffering": {
+            buffering: {
+              maxRequestBodyBytes: 10485760,  // 10MB
+              memRequestBodyBytes: 1048576,   // 1MB
+              maxResponseBodyBytes: 10485760, // 10MB
+              memResponseBodyBytes: 1048576,  // 1MB
+              retryExpression: "IsNetworkError() && Attempts() < 3"
+            }
+          },
           "security-headers": {
             headers: {
               customRequestHeaders: {
@@ -96,6 +123,10 @@ async function generateTraefikConfig(): Promise<void> {
                 "X-Content-Type-Options": "nosniff",
                 "X-XSS-Protection": "1; mode=block",
                 "Referrer-Policy": "strict-origin-when-cross-origin"
+              },
+              customResponseHeaders: {
+                "Cache-Control": "public, max-age=31536000",
+                "X-Static-File": "true"
               }
             }
           }
@@ -134,12 +165,13 @@ async function generateTraefikConfig(): Promise<void> {
           middlewares: ['https-redirect']
         };
         
-        // HTTPS router (with TLS)
+        // HTTPS router (with TLS and middleware)
         const httpsRouterName = `autoleads-${tenant.slug}-${domain.type.replace('-', '')}-https`;
         config.http.routers[httpsRouterName] = {
           rule: `Host(\`${domain.host}\`)`,
           service: serviceName,
           entryPoints: ['https'],
+          middlewares: ['compression', 'buffering', 'security-headers'],
           tls: {
             certResolver: 'letsencrypt'
           }
@@ -246,11 +278,44 @@ function generateYaml(config: TraefikConfig): string {
           yaml += `        permanent: ${middleware.redirectScheme.permanent}\n`;
         }
       }
+      if (middleware.compress) {
+        yaml += '      compress:\n';
+        if (middleware.compress.excludedContentTypes) {
+          yaml += `        excludedContentTypes: [${middleware.compress.excludedContentTypes.map(t => `"${t}"`).join(', ')}]\n`;
+        }
+        if (middleware.compress.minResponseBodyBytes) {
+          yaml += `        minResponseBodyBytes: ${middleware.compress.minResponseBodyBytes}\n`;
+        }
+      }
+      if (middleware.buffering) {
+        yaml += '      buffering:\n';
+        if (middleware.buffering.maxRequestBodyBytes) {
+          yaml += `        maxRequestBodyBytes: ${middleware.buffering.maxRequestBodyBytes}\n`;
+        }
+        if (middleware.buffering.memRequestBodyBytes) {
+          yaml += `        memRequestBodyBytes: ${middleware.buffering.memRequestBodyBytes}\n`;
+        }
+        if (middleware.buffering.maxResponseBodyBytes) {
+          yaml += `        maxResponseBodyBytes: ${middleware.buffering.maxResponseBodyBytes}\n`;
+        }
+        if (middleware.buffering.memResponseBodyBytes) {
+          yaml += `        memResponseBodyBytes: ${middleware.buffering.memResponseBodyBytes}\n`;
+        }
+        if (middleware.buffering.retryExpression) {
+          yaml += `        retryExpression: "${middleware.buffering.retryExpression}"\n`;
+        }
+      }
       if (middleware.headers) {
         yaml += '      headers:\n';
         if (middleware.headers.customRequestHeaders) {
           yaml += '        customRequestHeaders:\n';
           for (const [key, value] of Object.entries(middleware.headers.customRequestHeaders)) {
+            yaml += `          ${key}: "${value}"\n`;
+          }
+        }
+        if (middleware.headers.customResponseHeaders) {
+          yaml += '        customResponseHeaders:\n';
+          for (const [key, value] of Object.entries(middleware.headers.customResponseHeaders)) {
             yaml += `          ${key}: "${value}"\n`;
           }
         }
