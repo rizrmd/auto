@@ -15,6 +15,7 @@ export function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showAddUser, setShowAddUser] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -79,7 +80,7 @@ export function AdminUsersPage() {
               Manage your tenant's admin and sales team members
             </p>
           </div>
-          <Button onClick={() => setShowAddUser(true)} className="bg-orange-500 hover:bg-orange-600">
+          <Button onClick={() => document.getElementById('userTable-add-btn')?.click()} className="bg-orange-500 hover:bg-orange-600">
             <span className="mr-2">➕</span>
             Add User
           </Button>
