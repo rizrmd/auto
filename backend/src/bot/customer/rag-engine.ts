@@ -7,7 +7,7 @@ import { PrismaClient } from '../../../../generated/prisma';
 import { ZaiClient } from '../../llm/zai';
 import { PromptBuilder } from '../../llm/prompt-builder';
 import { Intent } from './intent-recognizer';
-import { SearchAnalyticsService } from '../../../services/search-analytics.service';
+import { SearchAnalyticsService } from '../../services/search-analytics.service';
 
 export class RAGEngine {
   private prisma: PrismaClient;
