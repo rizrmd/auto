@@ -338,7 +338,7 @@ export class SuperAdminService {
     where.NOT = {
       settings: {
         path: ['deletedAt'],
-        not: null
+        equals: null
       }
     };
 
