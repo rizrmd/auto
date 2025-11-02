@@ -193,9 +193,10 @@ class AdminAPI {
   }
 
   // Analytics Data
-  async getDemandReport(startDate: string, endDate: string): Promise<{
+  async getDemandReport(startDate: string, endDate: string, source: 'all' | 'website' | 'whatsapp' | 'compare' = 'all'): Promise<{
     success: boolean;
     data: {
+      source: 'all' | 'website' | 'whatsapp' | 'compare';
       topCars: Array<{
         carName: string;
         brand: string;
@@ -209,19 +210,83 @@ class AdminAPI {
         searchCount: number;
         searchDays: number;
       }>;
+      topUnmetNeeds: Array<{
+        keyword: string;
+        requestCount: number;
+        source: string;
+      }>;
       summary: {
         totalSearches: number;
         uniqueCars: number;
         avgSearchesPerDay: number;
+        unmetNeeds?: number;
         dateRange: {
           start: string;
           end: string;
           days: number;
         };
+        websiteSearches?: number;
+        whatsappSearches?: number;
       };
+      sourceBreakdown?: {
+        website: number;
+        whatsapp: number;
+      };
+      comparison?: {
+        website: {
+          topCars: Array<{
+            carName: string;
+            brand: string;
+            model: string;
+            year: number | null;
+            searchCount: number;
+            searchDays: number;
+          }>;
+          topKeywords: Array<{
+            keyword: string;
+            searchCount: number;
+            searchDays: number;
+          }>;
+          dailyTrends: Array<{
+            date: string;
+            searchCount: number;
+            searchSessions: number;
+          }>;
+        };
+        whatsapp: {
+          topCars: Array<{
+            carName: string;
+            brand: string;
+            model: string;
+            year: number | null;
+            searchCount: number;
+            searchDays: number;
+          }>;
+          topKeywords: Array<{
+            keyword: string;
+            searchCount: number;
+            searchDays: number;
+          }>;
+          topUnmetNeeds: Array<{
+            keyword: string;
+            requestCount: number;
+            source: string;
+          }>;
+          dailyTrends: Array<{
+            date: string;
+            searchCount: number;
+            searchSessions: number;
+          }>;
+        };
+      };
+      dailyTrends: Array<{
+        date: string;
+        searchCount: number;
+        searchSessions: number;
+      }>;
     };
   }> {
-    const response = await fetch(`${this.baseURL}/analytics/demand-report?startDate=${startDate}&endDate=${endDate}`, {
+    const response = await fetch(`${this.baseURL}/analytics/demand-report?startDate=${startDate}&endDate=${endDate}&source=${source}`, {
       headers: this.getAuthHeaders(),
     });
     return this.handleResponse(response);

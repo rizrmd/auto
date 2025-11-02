@@ -399,6 +399,11 @@ model SearchDemand {
   keyword String @db.VarChar(255) // "Toyota Avanza", "Honda Jazz", dll
   searchDate DateTime @map("search_date") @db.Date
 
+  // SOURCE TRACKING
+  source        String @default("website") @db.VarChar(20) // "website" | "whatsapp"
+  customerPhone String? @map("customer_phone") @db.VarChar(20) // For WhatsApp tracking
+  unmetNeed     Boolean @default(false) @map("unmet_need") // True if tenant doesn't have requested car
+
   // METRICS
   searchCount Int @default(1) @map("search_count")
 
@@ -410,8 +415,9 @@ model SearchDemand {
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   car    Car?   @relation(fields: [carId], references: [id], onDelete: SetNull)
 
-  @@unique([tenantId, carId, searchDate])
+  @@unique([tenantId, carId, searchDate, source])
   @@index([tenantId, searchDate])
   @@index([tenantId, keyword])
+  @@index([tenantId, source])
   @@map("search_demand")
 }

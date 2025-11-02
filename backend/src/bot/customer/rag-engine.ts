@@ -7,16 +7,19 @@ import { PrismaClient } from '../../../../generated/prisma';
 import { ZaiClient } from '../../llm/zai';
 import { PromptBuilder } from '../../llm/prompt-builder';
 import { Intent } from './intent-recognizer';
+import { SearchAnalyticsService } from '../../../services/search-analytics.service';
 
 export class RAGEngine {
   private prisma: PrismaClient;
   private zai: ZaiClient;
   private promptBuilder: PromptBuilder;
+  private searchAnalytics: SearchAnalyticsService;
 
   constructor(prisma: PrismaClient) {
     this.prisma = prisma;
     this.zai = new ZaiClient();
     this.promptBuilder = new PromptBuilder();
+    this.searchAnalytics = new SearchAnalyticsService();
   }
 
   /**
@@ -26,7 +29,8 @@ export class RAGEngine {
     tenant: any,
     message: string,
     entities: Intent['entities'],
-    queryType: 'general' | 'price' = 'general'
+    queryType: 'general' | 'price' = 'general',
+    customerPhone?: string
   ): Promise<string> {
     try {
       // Check cache first for common queries
@@ -39,6 +43,18 @@ export class RAGEngine {
 
       // 1. Retrieval: Query database for relevant cars (with caching)
       const cars = await this.retrieveCarsWithCache(tenant.id, entities);
+
+      // Log search analytics for WhatsApp conversations
+      if (customerPhone) {
+        try {
+          // Extract search keyword from message
+          const keyword = this.extractSearchKeyword(message, entities);
+          await this.searchAnalytics.logSearch(tenant.id, keyword, cars, 'whatsapp', customerPhone);
+        } catch (error) {
+          console.error('[RAG ENGINE] Failed to log search analytics:', error);
+          // Don't let analytics errors break the main flow
+        }
+      }
 
       // 2. Get conversation history (with caching)
       const history = await this.getRecentHistoryWithCache(tenant.id, message);
@@ -402,5 +418,30 @@ export class RAGEngine {
       console.error('Error getting car by code:', error);
       return null;
     }
+  }
+
+  /**
+   * Extract search keyword from message and entities
+   * @private
+   */
+  private extractSearchKeyword(message: string, entities: Intent['entities']): string {
+    // If we have structured entities, build keyword from them
+    if (entities.brand || entities.model || entities.displayCode) {
+      const parts: string[] = [];
+      if (entities.brand) parts.push(entities.brand);
+      if (entities.model) parts.push(entities.model);
+      if (entities.year) parts.push(entities.year.toString());
+      if (entities.color) parts.push(entities.color);
+      if (entities.displayCode) parts.push(entities.displayCode);
+      return parts.join(' ');
+    }
+
+    // Otherwise, clean and use the original message
+    return message
+      .toLowerCase()
+      .replace(/[^\w\s]/g, ' ')  // Remove special characters
+      .replace(/\s+/g, ' ')      // Normalize spaces
+      .trim()
+      .substring(0, 100);       // Limit length
   }
 }

@@ -10,7 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button';
 import { Search, TrendingUp, Calendar, BarChart3 } from 'lucide-react';
 
+interface TopUnmetNeed {
+  keyword: string;
+  requestCount: number;
+  source: string;
+}
+
 interface AnalyticsData {
+  source: 'all' | 'website' | 'whatsapp' | 'compare';
   topCars: Array<{
     carName: string;
     brand: string;
@@ -24,16 +31,72 @@ interface AnalyticsData {
     searchCount: number;
     searchDays: number;
   }>;
+  topUnmetNeeds: TopUnmetNeed[];
   summary: {
     totalSearches: number;
     uniqueCars: number;
     avgSearchesPerDay: number;
+    unmetNeeds?: number;
     dateRange: {
       start: string;
       end: string;
       days: number;
     };
+    websiteSearches?: number;
+    whatsappSearches?: number;
   };
+  sourceBreakdown?: {
+    website: number;
+    whatsapp: number;
+  };
+  comparison?: {
+    website: {
+      topCars: Array<{
+        carName: string;
+        brand: string;
+        model: string;
+        year: number | null;
+        searchCount: number;
+        searchDays: number;
+      }>;
+      topKeywords: Array<{
+        keyword: string;
+        searchCount: number;
+        searchDays: number;
+      }>;
+      dailyTrends: Array<{
+        date: string;
+        searchCount: number;
+        searchSessions: number;
+      }>;
+    };
+    whatsapp: {
+      topCars: Array<{
+        carName: string;
+        brand: string;
+        model: string;
+        year: number | null;
+        searchCount: number;
+        searchDays: number;
+      }>;
+      topKeywords: Array<{
+        keyword: string;
+        searchCount: number;
+        searchDays: number;
+      }>;
+      topUnmetNeeds: TopUnmetNeed[];
+      dailyTrends: Array<{
+        date: string;
+        searchCount: number;
+        searchSessions: number;
+      }>;
+    };
+  };
+  dailyTrends: Array<{
+    date: string;
+    searchCount: number;
+    searchSessions: number;
+  }>;
 }
 
 export function AdminAnalyticsPage() {
@@ -41,6 +104,7 @@ export function AdminAnalyticsPage() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [source, setSource] = useState<'all' | 'website' | 'whatsapp' | 'compare'>('all');
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 30);
@@ -52,13 +116,13 @@ export function AdminAnalyticsPage() {
 
   useEffect(() => {
     loadAnalyticsData();
-  }, [startDate, endDate]);
+  }, [startDate, endDate, source]);
 
   const loadAnalyticsData = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await adminAPI.getDemandReport(startDate, endDate);
+      const data = await adminAPI.getDemandReport(startDate, endDate, source);
       setAnalyticsData(data.data);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load analytics data';
@@ -193,6 +257,43 @@ export function AdminAnalyticsPage() {
         </CardContent>
       </Card>
 
+      {/* Source Filter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5" />
+            Filter Sumber Data
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Sumber Pencarian
+              </label>
+              <select
+                value={source}
+                onChange={(e) => setSource(e.target.value as 'all' | 'website' | 'whatsapp' | 'compare')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="all">Semua Sumber</option>
+                <option value="website">Website</option>
+                <option value="whatsapp">WhatsApp</option>
+                <option value="compare">Bandingkan</option>
+              </select>
+            </div>
+            <div className="flex items-end">
+              <div className="text-sm text-gray-600">
+                {source === 'all' && 'Menampilkan data dari semua sumber'}
+                {source === 'website' && 'Hanya data pencarian dari website'}
+                {source === 'whatsapp' && 'Hanya data pencarian dari WhatsApp bot'}
+                {source === 'compare' && 'Bandingkan data website vs WhatsApp'}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
@@ -203,6 +304,12 @@ export function AdminAnalyticsPage() {
                 <p className="text-2xl font-bold text-gray-900">
                   {analyticsData.summary.totalSearches.toLocaleString('id-ID')}
                 </p>
+                {analyticsData.sourceBreakdown && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Website: {analyticsData.sourceBreakdown.website.toLocaleString('id-ID')} |
+                    WhatsApp: {analyticsData.sourceBreakdown.whatsapp.toLocaleString('id-ID')}
+                  </p>
+                )}
               </div>
               <Search className="h-8 w-8 text-blue-600" />
             </div>
@@ -334,6 +441,46 @@ export function AdminAnalyticsPage() {
         </Card>
       </div>
 
+      {/* Unmet Needs - WhatsApp Analysis */}
+      {analyticsData.topUnmetNeeds && analyticsData.topUnmetNeeds.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Kebutuhan Yang Belum Terpenuhi (WhatsApp)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {analyticsData.topUnmetNeeds.slice(0, 10).map((unmetNeed, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-lg font-bold text-red-500">#{index + 1}</span>
+                      <h4 className="font-medium text-gray-900 capitalize">{unmetNeed.keyword}</h4>
+                    </div>
+                    <p className="text-sm text-red-600">
+                      Permintaan tidak bisa dipenuhi - mobil tidak tersedia
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-lg font-bold text-red-600">
+                      {unmetNeed.requestCount.toLocaleString('id-ID')}
+                    </p>
+                    <p className="text-xs text-gray-500">kali</p>
+                  </div>
+                </div>
+              ))}
+              <div className="mt-4 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                <p className="text-sm text-yellow-800">
+                  <strong>💡 Peluang Bisnis:</strong> Pertimbangkan untuk menambah stok mobil yang sering dicari tapi tidak tersedia.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Business Insights */}
       <Card>
         <CardHeader>
@@ -343,7 +490,7 @@ export function AdminAnalyticsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <h4 className="font-medium text-gray-900 mb-3">💡 Rekomendasi Stok</h4>
               {analyticsData.topCars.length > 0 ? (
@@ -373,6 +520,27 @@ export function AdminAnalyticsPage() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">Mulai pencarian untuk melihat tren</p>
+              )}
+            </div>
+
+            <div>
+              <h4 className="font-medium text-gray-900 mb-3">📱 Peluang WhatsApp</h4>
+              {analyticsData.topUnmetNeeds && analyticsData.topUnmetNeeds.length > 0 ? (
+                <div className="space-y-2">
+                  <p className="text-sm text-gray-600">
+                    <strong>{analyticsData.topUnmetNeeds[0].keyword}</strong> ({analyticsData.topUnmetNeeds[0].requestCount} permintaan)
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    Customer WA cari ini tapi tidak tersedia
+                  </p>
+                  {analyticsData.summary.unmetNeeds && (
+                    <p className="text-xs text-red-600">
+                      Total {analyticsData.summary.unmetNeeds} kebutuhan tidak terpenuhi
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Belum ada kebutuhan tidak terpenuhi dari WhatsApp</p>
               )}
             </div>
           </div>

@@ -24,6 +24,7 @@ analytics.use('*', requireAdmin);
 const dateRangeSchema = z.object({
   startDate: z.string().min(10).max(10), // YYYY-MM-DD format
   endDate: z.string().min(10).max(10),   // YYYY-MM-DD format
+  source: z.enum(['all', 'website', 'whatsapp', 'compare']).optional().default('all'),
 });
 
 /**
@@ -46,7 +47,7 @@ analytics.get(
       }, 400);
     }
 
-    const { startDate, endDate } = c.req.valid('query');
+    const { startDate, endDate, source } = c.req.valid('query');
 
     // Validate date range
     const start = new Date(startDate);
@@ -87,7 +88,7 @@ analytics.get(
 
     try {
       const searchAnalytics = new SearchAnalyticsService();
-      const report = await searchAnalytics.getDemandReport(tenantId, startDate, endDate);
+      const report = await searchAnalytics.getDemandReport(tenantId, startDate, endDate, source);
 
       const response: ApiResponse = {
         success: true,

@@ -69,7 +69,7 @@ export class CustomerBotHandler {
           break;
 
         case 'price':
-          response = await this.handlePriceQuery(tenant, message, intent);
+          response = await this.handlePriceQuery(tenant, message, intent, customerPhone);
           break;
 
         case 'location':
@@ -90,7 +90,7 @@ export class CustomerBotHandler {
 
         case 'unknown':
         default:
-          response = await this.handleUnknown(tenant, message);
+          response = await this.handleUnknown(tenant, message, customerPhone);
           break;
       }
 
@@ -121,7 +121,9 @@ export class CustomerBotHandler {
     const response = await this.ragEngine.generateResponse(
       tenant,
       message,
-      intent.entities
+      intent.entities,
+      'general',
+      customerPhone
     );
 
     return response;
@@ -133,14 +135,16 @@ export class CustomerBotHandler {
   private async handlePriceQuery(
     tenant: any,
     message: string,
-    intent: Intent
+    intent: Intent,
+    customerPhone?: string
   ): Promise<string> {
     // Extract car identifier from message
     const response = await this.ragEngine.generateResponse(
       tenant,
       message,
       intent.entities,
-      'price'
+      'price',
+      customerPhone
     );
 
     return response;
@@ -177,9 +181,9 @@ export class CustomerBotHandler {
   /**
    * Handle unknown intent
    */
-  private async handleUnknown(tenant: any, message: string): Promise<string> {
+  private async handleUnknown(tenant: any, message: string, customerPhone?: string): Promise<string> {
     // Fall back to RAG for general response
-    const response = await this.ragEngine.generateResponse(tenant, message, {});
+    const response = await this.ragEngine.generateResponse(tenant, message, {}, 'general', customerPhone);
     return response;
   }
 
