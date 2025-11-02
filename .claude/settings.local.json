@@ -1,31 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(ssh:*)",
-      "mcp__zai-mcp-server__analyze_image",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
-      "Bash(git push)",
-      "Bash(curl:*)",
-      "Bash(bun run:*)",
-      "Bash(bunx prisma format:*)",
-      "Bash(bun list:*)",
-      "Bash(bun add:*)",
-      "Bash(timeout:*)",
-      "Bash(bun build:*)",
-      "Bash(git pull:*)",
-      "Bash(git stash:*)",
-      "Bash(python:*)",
-      "Read(//c/tmp/**)",
-      "Bash(scp:*)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdXBlckFkbWluSWQiOjMsImVtYWlsIjoiYWRtaW5AYXV0b2xlYWRzLmNvbSIsInJvbGUiOiJzdXBlcl9hZG1pbiIsImlhdCI6MTc2MTkwNTkzOCwiZXhwIjoxNzYxOTkyMzM4LCJhdWQiOiJhdXRvbGVhZHMtc3VwZXItYWRtaW4tY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLXN1cGVyLWFkbWluLWFwaSIsInN1YiI6IjMifQ.Uk8-d2-4SMpl_Tqb812Nez0c2Pyj7Ffpgjhm5rwpkKQ\")",
-      "Bash(git push:*)",
-      "Bash(pkill:*)",
-      "WebFetch(domain:github.com)",
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjAwNzUxNCwiZXhwIjoxNzYyNjEyMzE0LCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.JQhVwiZ33X3vJx2eSSH6RD9KzYjk2JXbCZemopAxLEE\")",
-      "Bash(NEW_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA1MDc3MCwiZXhwIjoxNzYyNjU1NTcwLCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.r2586q9pXNbl-cbLnhpOfUioKXAj2BlmNlN5s6tS_xo\")",
-      "Bash(LATEST_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA1MDkyNCwiZXhwIjoxNzYyNjU1NzI0LCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.eNfScWzxAoxVvWlUCz0LCGXY5GiXxHheCAGw6MXeTZg\")",
-      "Bash(python3 -c \"import sys, json, base64; print(json.dumps(json.loads(base64.b64decode(sys.stdin.read() + ''''=='''')), indent=2))\")"
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA3MzIzMiwiZXhwIjoxNzYyNjc4MDMyLCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.yAoYqVIwA2jMl8hkcp452YskLPWxClY4OT7rmYOhlk4\")",
+      "Bash(NEW_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA3MzU0NCwiZXhwIjoxNzYyNjc4MzQ0LCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.A1OfOzcOv4mTOLQq1mlVzf9A-GyxkUhxikddMi6iDpY\")"
     ],
     "deny": [],
     "ask": []

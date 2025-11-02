@@ -180,18 +180,24 @@ export class SearchAnalyticsService {
         searchSessions: item._count.searchCount,
       }));
 
+      // Calculate total searches from all keywords (including those without cars)
+      const totalSearches = formattedKeywords.reduce((sum, item) => sum + item.searchCount, 0);
+      const daysInRange = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+      const avgSearchesPerDay = daysInRange > 0 ? Math.round(totalSearches / daysInRange * 10) / 10 : 0;
+
       return {
         topCars: topCarsWithDetails,
         topKeywords: formattedKeywords,
         dailyTrends: formattedTrends,
         summary: {
-          totalSearches: topCarsWithDetails.reduce((sum, item) => sum + item.searchCount, 0),
+          totalSearches,
           uniqueCars: topCarsWithDetails.length,
           uniqueKeywords: formattedKeywords.length,
+          avgSearchesPerDay,
           dateRange: {
             start: startDate,
             end: endDate,
-            days: Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1,
+            days: daysInRange,
           },
         },
       };
