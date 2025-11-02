@@ -47,6 +47,8 @@ export default function TenantsPage() {
   const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null);
   const [modalLoading, setModalLoading] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState<number | null>(null);
+  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   // Search, Filter, and Pagination states
   const [searchQuery, setSearchQuery] = useState('');
@@ -503,11 +505,15 @@ export default function TenantsPage() {
 
     const token = localStorage.getItem('super_admin_token');
     if (!token) {
-      alert('Authentication required');
+      setActionMessage('Authentication required. Please log in again.');
+      setTimeout(() => setActionMessage(null), 3000);
       return;
     }
 
     try {
+      setDeleteLoading(tenant.id);
+      setActionMessage(`Deleting ${tenant.name}...`);
+
       const response = await fetch(`/api/super-admin/tenants/${tenant.id}`, {
         method: 'DELETE',
         headers: {
@@ -519,18 +525,32 @@ export default function TenantsPage() {
       if (response.ok) {
         const result = await response.json();
         if (result.success) {
-          console.log('✅ Tenant deleted successfully');
-          fetchTenantsData(); // Refresh list
+          console.log('✅ Tenant deleted successfully:', tenant.name);
+          setActionMessage(`Successfully deleted ${tenant.name}`);
+
+          // Immediately remove tenant from UI
+          setTenants(prev => prev.filter(t => t.id !== tenant.id));
+
+          // Refresh the full data to ensure consistency
+          setTimeout(() => {
+            fetchTenantsData();
+            setActionMessage(null);
+          }, 1000);
         } else {
-          alert(result.message || 'Failed to delete tenant');
+          setActionMessage(result.message || 'Failed to delete tenant');
+          setTimeout(() => setActionMessage(null), 3000);
         }
       } else {
         const errorData = await response.json();
-        alert(errorData.message || 'Failed to delete tenant');
+        setActionMessage(errorData.message || 'Failed to delete tenant');
+        setTimeout(() => setActionMessage(null), 3000);
       }
     } catch (error) {
       console.error('❌ Error deleting tenant:', error);
-      alert('Network error occurred');
+      setActionMessage('Network error occurred. Please try again.');
+      setTimeout(() => setActionMessage(null), 3000);
+    } finally {
+      setDeleteLoading(null);
     }
   };
 
@@ -620,6 +640,29 @@ export default function TenantsPage() {
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <span style={{ color: '#dc2626', marginRight: '8px' }}>⚠️</span>
                 <span style={{ color: '#ef4444' }}>{error}</span>
+              </div>
+            </div>
+          )}
+          {actionMessage && (
+            <div style={{
+              backgroundColor: actionMessage.includes('Successfully') ? '#10b98120' : '#f59e0b20',
+              border: actionMessage.includes('Successfully') ? '1px solid #10b98140' : '1px solid #f59e0b40',
+              borderRadius: '8px',
+              padding: '12px 16px',
+              marginTop: '12px'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center' }}>
+                <span style={{
+                  color: actionMessage.includes('Successfully') ? '#10b981' : '#f59e0b',
+                  marginRight: '8px'
+                }}>
+                  {actionMessage.includes('Successfully') ? '✅' : '⚡'}
+                </span>
+                <span style={{
+                  color: actionMessage.includes('Successfully') ? '#10b981' : '#f59e0b'
+                }}>
+                  {actionMessage}
+                </span>
               </div>
             </div>
           )}
@@ -1230,17 +1273,38 @@ export default function TenantsPage() {
                         </button>
                         <button
                           onClick={() => handleDeleteTenant(tenant)}
+                          disabled={deleteLoading === tenant.id}
                           style={{
-                            backgroundColor: '#ef4444',
+                            backgroundColor: deleteLoading === tenant.id ? '#6b7280' : '#ef4444',
                             color: '#ffffff',
                             border: 'none',
                             borderRadius: '6px',
                             padding: '6px 12px',
                             fontSize: '12px',
-                            cursor: 'pointer'
+                            cursor: deleteLoading === tenant.id ? 'not-allowed' : 'pointer',
+                            opacity: deleteLoading === tenant.id ? 0.6 : 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            minWidth: '80px',
+                            justifyContent: 'center'
                           }}
                         >
-                          Delete
+                          {deleteLoading === tenant.id ? (
+                            <>
+                              <div style={{
+                                width: '12px',
+                                height: '12px',
+                                border: '2px solid #ffffff',
+                                borderTop: '2px solid transparent',
+                                borderRadius: '50%',
+                                animation: 'spin 1s linear infinite'
+                              }}></div>
+                              Deleting...
+                            </>
+                          ) : (
+                            'Delete'
+                          )}
                         </button>
                       </div>
                     </td>
