@@ -42,11 +42,12 @@ whatsappAdmin.get(
     // Use tenant-specific WhatsApp instance directly
     try {
       // Get health status directly from WhatsApp client instead of HTTP request
-      const healthResponse = await whatsapp.healthCheck();
+      const whatsappClient = new WhatsAppClient();
+      const healthResponse = await whatsappClient.healthCheck();
       const health = healthResponse.data;
 
       // Get version information
-      const version = await whatsapp.getVersion();
+      const version = await whatsappClient.getVersion();
 
       // Get webhook configuration
       const webhookUrl = `${process.env.APP_URL || 'https://auto.lumiku.com'}/webhook/whatsapp`;
