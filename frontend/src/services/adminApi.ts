@@ -169,25 +169,37 @@ class AdminAPI {
       }>;
     };
   }> {
-    // Since there's no dedicated dashboard endpoint, we'll get users and WhatsApp status
-    const [usersResponse, whatsappResponse] = await Promise.all([
-      this.getUsers(),
-      this.getWhatsAppStatus(),
-    ]);
+    try {
+      // Get users data (required)
+      const usersResponse = await this.getUsers();
 
-    const totalUsers = usersResponse.data?.length || 0;
-    const activeUsers = usersResponse.data?.filter(u => u.status === 'active').length || 0;
-    const whatsappStatus = whatsappResponse.data?.health?.connected ? 'connected' : 'disconnected';
+      // Get WhatsApp status (optional - handle gracefully if it fails)
+      let whatsappStatus = 'disconnected'; // Default status
+      try {
+        const whatsappResponse = await this.getWhatsAppStatus();
+        whatsappStatus = whatsappResponse.data?.health?.connected ? 'connected' : 'disconnected';
+      } catch (whatsappError) {
+        console.warn('WhatsApp status check failed:', whatsappError);
+        // Continue with default status if WhatsApp check fails
+        whatsappStatus = 'disconnected';
+      }
 
-    return {
-      success: true,
-      data: {
-        totalUsers,
-        activeUsers,
-        whatsappStatus,
-        recentActivity: [], // Empty for MVP
-      },
-    };
+      const totalUsers = usersResponse.data?.length || 0;
+      const activeUsers = usersResponse.data?.filter(u => u.status === 'active').length || 0;
+
+      return {
+        success: true,
+        data: {
+          totalUsers,
+          activeUsers,
+          whatsappStatus,
+          recentActivity: [], // Empty for MVP
+        },
+      };
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+      throw error;
+    }
   }
 }
 
