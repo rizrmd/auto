@@ -183,10 +183,10 @@ export const CONVERSATION_STATE_TTL_HOURS = 24;
  * Default Admin User
  */
 export const DEFAULT_ADMIN = {
-  EMAIL: 'admin@localhost',
-  PASSWORD: 'admin123', // Should be changed on first login
-  NAME: 'System Admin',
-  ROLE: 'owner',
+  EMAIL: process.env.DEFAULT_ADMIN_EMAIL || 'admin@localhost',
+  PASSWORD: process.env.DEFAULT_ADMIN_PASSWORD || 'admin123',
+  NAME: process.env.DEFAULT_ADMIN_NAME || 'System Admin',
+  ROLE: process.env.DEFAULT_ADMIN_ROLE || 'owner',
 } as const;
 
 /**
