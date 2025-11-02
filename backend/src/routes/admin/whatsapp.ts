@@ -76,7 +76,7 @@ whatsappAdmin.get(
         },
       };
 
-      return c.json(response);
+      return c.json(apiResponse);
     } catch (error) {
       console.error('[WHATSAPP ADMIN] Error getting status:', error);
 
