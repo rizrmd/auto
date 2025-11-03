@@ -77,50 +77,75 @@ app.use(
  * Production: Strict CSP to prevent XSS attacks
  * Development: More permissive to allow HMR and hot reload
  */
-const cspConfig = env.NODE_ENV === 'production' ? {
-  defaultSrc: ["'self'"],
-  scriptSrc: ["'self'"],  // No unsafe-inline in production
-  styleSrc: ["'self'"],   // No unsafe-inline in production
-  imgSrc: ["'self'", 'https://auto.lumiku.com', 'https://primamobil.id', 'data:'],
-  connectSrc: ["'self'", 'https://auto.lumiku.com', 'https://primamobil.id'],
-  fontSrc: ["'self'"],
-  objectSrc: ["'none'"],
-  mediaSrc: ["'self'"],
-  frameSrc: ["'none'"],
-  upgradeInsecureRequests: [],
-} : {
-  // Development CSP (more permissive for hot reload)
-  defaultSrc: ["'self'"],
-  scriptSrc: ["'self'", "'unsafe-inline'"],  // Required for Vite HMR
-  styleSrc: ["'self'", "'unsafe-inline'"],   // Required for Tailwind JIT
-  imgSrc: ["'self'", 'data:', 'http:', 'https:'],
-  connectSrc: ["'self'", 'ws:', 'wss:'],  // Required for WebSocket (HMR)
-  fontSrc: ["'self'"],
-  objectSrc: ["'none'"],
-  mediaSrc: ["'self'"],
-  frameSrc: ["'none'"],
+const getCspConfig = (hostname: string) => {
+  const isProduction = env.NODE_ENV === 'production';
+
+  if (isProduction) {
+    // Dynamic CSP based on hostname to support multi-tenancy
+    const allowedDomains = [
+      'https://auto.lumiku.com',  // Primary domain
+      `https://${hostname}`,      // Current tenant domain
+    ];
+
+    // Add subdomain variants for tenants with subdomains
+    if (hostname.includes('.autoleads.id')) {
+      allowedDomains.push(`https://${hostname}`);
+    }
+
+    return {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],  // No unsafe-inline in production
+      styleSrc: ["'self'"],   // No unsafe-inline in production
+      imgSrc: ["'self'", ...allowedDomains, 'data:'],
+      connectSrc: ["'self'", ...allowedDomains],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+      upgradeInsecureRequests: [],
+    };
+  } else {
+    // Development CSP (more permissive for hot reload)
+    return {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'"],  // Required for Vite HMR
+      styleSrc: ["'self'", "'unsafe-inline'"],   // Required for Tailwind JIT
+      imgSrc: ["'self'", 'data:', 'http:', 'https:'],
+      connectSrc: ["'self'", 'ws:', 'wss:'],  // Required for WebSocket (HMR)
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    };
+  }
 };
 
 /**
  * Apply comprehensive security headers
  *
  * Headers include:
- * - Content-Security-Policy: Prevents XSS attacks
+ * - Content-Security-Policy: Prevents XSS attacks (dynamic for multi-tenant)
  * - X-Frame-Options: Prevents clickjacking
  * - X-Content-Type-Options: Prevents MIME-sniffing attacks
  * - Referrer-Policy: Protects sensitive URL parameters
  * - Strict-Transport-Security: Forces HTTPS (production only)
  */
-app.use('*', secureHeaders({
-  contentSecurityPolicy: cspConfig,
-  crossOriginEmbedderPolicy: false, // Needed for image loading from different origins
-  xFrameOptions: 'DENY',
-  xContentTypeOptions: 'nosniff',
-  referrerPolicy: 'strict-origin-when-cross-origin',
-  strictTransportSecurity: env.NODE_ENV === 'production'
-    ? 'max-age=31536000; includeSubDomains; preload'  // 1 year in production
-    : false,  // Disabled in development (no HTTPS locally)
-}));
+app.use('*', async (c, next) => {
+  const hostname = c.req.header('Host') || 'auto.lumiku.com';
+  const cspConfig = getCspConfig(hostname);
+
+  // Apply security headers with dynamic CSP
+  return secureHeaders({
+    contentSecurityPolicy: cspConfig,
+    crossOriginEmbedderPolicy: false, // Needed for image loading from different origins
+    xFrameOptions: 'DENY',
+    xContentTypeOptions: 'nosniff',
+    referrerPolicy: 'strict-origin-when-cross-origin',
+    strictTransportSecurity: env.NODE_ENV === 'production'
+      ? 'max-age=31536000; includeSubDomains; preload'  // 1 year in production
+      : false,  // Disabled in development (no HTTPS locally)
+  })(c, next);
+});
 
 // Request logging (only in development)
 if (isDevelopment) {
@@ -246,6 +271,8 @@ app.get('/api', (c) => {
 app.get('/pairing.html', async (c) => {
   try {
     const html = await readFile('/app/public/pairing.html', 'utf-8');
+    const hostname = c.req.header('Host') || 'auto.lumiku.com';
+    const cspConfig = getCspConfig(hostname);
 
     // Override CSP for this specific route to allow inline scripts
     // This is necessary for the auto-login and QR generation functionality
@@ -258,8 +285,8 @@ app.get('/pairing.html', async (c) => {
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline'",
           "style-src 'self' 'unsafe-inline'",
-          "img-src 'self' https://auto.lumiku.com https://primamobil.id data:",
-          "connect-src 'self' https://auto.lumiku.com https://primamobil.id",
+          `img-src 'self' ${cspConfig.imgSrc.filter(src => src !== "'self'").join(' ')}`,
+          `connect-src 'self' ${cspConfig.connectSrc.filter(src => src !== "'self'").join(' ')}`,
           "font-src 'self'",
           "object-src 'none'",
           "media-src 'self'",
