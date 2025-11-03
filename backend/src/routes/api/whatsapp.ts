@@ -22,7 +22,7 @@ app.get('/pair', logger(), async (c) => {
       }
     });
 
-    if (!tenant || !tenant.whatsappPort) {
+    if (!tenant) {
       return c.json({
         success: false,
         error: {
@@ -32,9 +32,10 @@ app.get('/pair', logger(), async (c) => {
       }, 404);
     }
 
-    console.log(`[WHATSAPP PAIR] Pairing for tenant: ${tenant.name} (${tenant.slug}) on port ${tenant.whatsappPort}`);
+    console.log(`[WHATSAPP PAIR] Pairing for tenant: ${tenant.name} (${tenant.slug})`);
 
-    const response = await fetch(`http://localhost:${tenant.whatsappPort}/pair`, {
+    // Use single WhatsApp API instance with tenant identifier
+    const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
       method: 'GET',
       headers: {
         'User-Agent': 'AutoLeads-Proxy/1.0',
@@ -123,7 +124,7 @@ app.get('/health', logger(), async (c) => {
       }
     });
 
-    if (!tenant || !tenant.whatsappPort) {
+    if (!tenant) {
       return c.json({
         success: false,
         error: {
@@ -133,7 +134,7 @@ app.get('/health', logger(), async (c) => {
       }, 404);
     }
 
-    const response = await fetch(`http://localhost:${tenant.whatsappPort}/health`, {
+    const response = await fetch(`http://localhost:8080/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -175,7 +176,7 @@ app.get('/health', logger(), async (c) => {
 app.post('/send', logger(), async (c) => {
   try {
     const body = await c.req.json();
-    
+
     // Get tenant from domain/subdomain
     const host = c.req.header('host') || '';
     const tenant = await prisma.tenant.findFirst({
@@ -188,7 +189,7 @@ app.post('/send', logger(), async (c) => {
       }
     });
 
-    if (!tenant || !tenant.whatsappPort) {
+    if (!tenant) {
       return c.json({
         success: false,
         error: {
@@ -198,15 +199,22 @@ app.post('/send', logger(), async (c) => {
       }, 404);
     }
 
-    console.log(`[WHATSAPP SEND] Sending via tenant: ${tenant.name} (${tenant.slug}) on port ${tenant.whatsappPort}`);
+    console.log(`[WHATSAPP SEND] Sending via tenant: ${tenant.name} (${tenant.slug})`);
 
-    const response = await fetch(`http://localhost:${tenant.whatsappPort}/send`, {
+    // Add tenant info to request body for multi-tenant support
+    const requestBody = {
+      ...body,
+      tenant_id: tenant.id,
+      instance: tenant.whatsappInstanceId
+    };
+
+    const response = await fetch(`http://localhost:8080/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'AutoLeads-Proxy/1.0',
       },
-      body: JSON.stringify(body),
+      body: JSON.stringify(requestBody),
     });
 
     if (!response.ok) {
