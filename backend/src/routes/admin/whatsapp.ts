@@ -117,13 +117,12 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
     
     try {
-      // Use tenant-specific WhatsApp instance via proxy
-      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
-      const response = await fetch(`${baseUrl}/api/wa/pair`, {
+      // Use internal WhatsApp API directly (no external calls)
+      const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Host': tenant.subdomain, // This ensures proxy routes to correct tenant
+          'User-Agent': 'AutoLeads-Proxy/1.0',
         },
       });
 
@@ -131,33 +130,50 @@ whatsappAdmin.get(
         throw new Error(`QR generation failed: ${response.status}`);
       }
 
-      if (format === 'image') {
-        // Return image directly
-        const imageBuffer = await response.arrayBuffer();
-        
-        return new Response(imageBuffer, {
-          status: 200,
-          headers: {
-            'Content-Type': 'image/png',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0',
-          },
-        });
-      } else {
-        // Return JSON response
-        const result = await response.json();
-      
-      const qrResponse: ApiResponse = {
-        success: result.success,
-        data: result.success ? result.data : null,
-        error: result.success ? undefined : {
-          code: 'QR_ERROR',
-          message: result.error || 'Failed to generate QR code',
-        },
-      };
+      const contentType = response.headers.get('content-type') || '';
 
-      return c.json(qrResponse);
+      if (contentType.includes('image/png')) {
+        // WhatsApp API returns PNG image directly
+        const imageBuffer = await response.arrayBuffer();
+        const base64Image = 'data:image/png;base64,' + Buffer.from(imageBuffer).toString('base64');
+
+        if (format === 'image') {
+          // Return image directly
+          return new Response(imageBuffer, {
+            status: 200,
+            headers: {
+              'Content-Type': 'image/png',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache',
+              'Expires': '0',
+            },
+          });
+        } else {
+          // Return JSON with base64 image
+          const qrResponse: ApiResponse = {
+            success: true,
+            data: {
+              qr: base64Image,
+              expires: Date.now() + 30000, // 30 seconds
+              device_id: tenant.whatsappInstanceId || 'unknown',
+            },
+          };
+          return c.json(qrResponse);
+        }
+      } else {
+        // Fallback for JSON response (unlikely with new API)
+        const result = await response.json();
+
+        const qrResponse: ApiResponse = {
+          success: result.success,
+          data: result.success ? result.data : null,
+          error: result.success ? undefined : {
+            code: 'QR_ERROR',
+            message: result.error || 'Failed to generate QR code',
+          },
+        };
+
+        return c.json(qrResponse);
       }
     } catch (error) {
       console.error('[WHATSAPP ADMIN] Error generating QR:', error);
