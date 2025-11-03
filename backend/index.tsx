@@ -81,8 +81,8 @@ const cspConfig = env.NODE_ENV === 'production' ? {
   defaultSrc: ["'self'"],
   scriptSrc: ["'self'"],  // No unsafe-inline in production
   styleSrc: ["'self'"],   // No unsafe-inline in production
-  imgSrc: ["'self'", 'https://auto.lumiku.com', 'data:'],
-  connectSrc: ["'self'", 'https://auto.lumiku.com'],
+  imgSrc: ["'self'", 'https://auto.lumiku.com', 'https://primamobil.id', 'data:'],
+  connectSrc: ["'self'", 'https://auto.lumiku.com', 'https://primamobil.id'],
   fontSrc: ["'self'"],
   objectSrc: ["'none'"],
   mediaSrc: ["'self'"],
@@ -258,8 +258,8 @@ app.get('/pairing.html', async (c) => {
           "default-src 'self'",
           "script-src 'self' 'unsafe-inline'",
           "style-src 'self' 'unsafe-inline'",
-          "img-src 'self' https://auto.lumiku.com data:",
-          "connect-src 'self' https://auto.lumiku.com",
+          "img-src 'self' https://auto.lumiku.com https://primamobil.id data:",
+          "connect-src 'self' https://auto.lumiku.com https://primamobil.id",
           "font-src 'self'",
           "object-src 'none'",
           "media-src 'self'",
