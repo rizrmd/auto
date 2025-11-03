@@ -20,9 +20,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const [qrRefreshing, setQrRefreshing] = useState(false);
   const [connectionTestLoading, setConnectionTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number>(0);
 
   const qrRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const statusRefreshInterval = useRef<NodeJS.Timeout | null>(null);
+  const countdownInterval = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     loadWhatsAppStatus();
@@ -34,6 +36,9 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       }
       if (statusRefreshInterval.current) {
         clearInterval(statusRefreshInterval.current);
+      }
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
       }
     };
   }, []);
@@ -53,12 +58,17 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       if (!statusData.data.health.connected) {
         await loadQRCode();
       } else {
-        // Stop QR refresh if connected
+        // Stop all QR-related intervals if connected
         if (qrRefreshInterval.current) {
           clearInterval(qrRefreshInterval.current);
           qrRefreshInterval.current = null;
         }
+        if (countdownInterval.current) {
+          clearInterval(countdownInterval.current);
+          countdownInterval.current = null;
+        }
         setQrData(null);
+        setTimeLeft(0);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load WhatsApp status';
@@ -73,6 +83,27 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       const qrData = await adminAPI.getWhatsAppQR();
       setQrData(qrData);
 
+      // Set initial countdown
+      const initialTimeLeft = Math.floor((qrData.data.expires - Date.now()) / 1000);
+      setTimeLeft(Math.max(0, initialTimeLeft));
+
+      // Clear existing countdown interval
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
+      }
+
+      // Start countdown timer
+      countdownInterval.current = setInterval(() => {
+        setTimeLeft((prev) => {
+          const newTime = Math.max(0, prev - 1);
+          if (newTime === 0) {
+            // QR expired, trigger refresh
+            setTimeout(loadQRCode, 1000);
+          }
+          return newTime;
+        });
+      }, 1000);
+
       // Start QR refresh interval (every 30 seconds)
       if (qrRefreshInterval.current) {
         clearInterval(qrRefreshInterval.current);
@@ -81,20 +112,35 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load QR code';
       setError(errorMessage);
+      // Clear countdown on error
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
+        countdownInterval.current = null;
+      }
+      setTimeLeft(0);
     } finally {
       setQrRefreshing(false);
     }
   };
 
   const startStatusPolling = () => {
-    // Poll status every 10 seconds
+    // Poll status every 3 seconds for faster response
     if (statusRefreshInterval.current) {
       clearInterval(statusRefreshInterval.current);
     }
-    statusRefreshInterval.current = setInterval(loadWhatsAppStatus, 10000);
+    statusRefreshInterval.current = setInterval(loadWhatsAppStatus, 3000);
   };
 
   const refreshQR = async () => {
+    // Clear existing intervals before refresh
+    if (qrRefreshInterval.current) {
+      clearInterval(qrRefreshInterval.current);
+      qrRefreshInterval.current = null;
+    }
+    if (countdownInterval.current) {
+      clearInterval(countdownInterval.current);
+      countdownInterval.current = null;
+    }
     await loadQRCode();
   };
 
@@ -253,7 +299,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                         <li>4. Point your camera at the QR code</li>
                       </ol>
                       <div className="text-xs text-orange-600 font-medium">
-                        QR code expires in {Math.floor((qrData.data.expires - Date.now()) / 1000)} seconds
+                        QR code expires in {timeLeft} {timeLeft === 1 ? 'second' : 'seconds'}
                       </div>
                     </div>
                   </div>

@@ -12,7 +12,10 @@
       "Bash(curl:*)",
       "Bash(ssh:*)",
       "Bash(python3:*)",
-      "Bash(scp:*)"
+      "Bash(scp:*)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "Bash(bun run build:frontend:*)"
     ],
     "deny": [],
     "ask": []
