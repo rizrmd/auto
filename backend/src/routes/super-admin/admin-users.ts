@@ -8,14 +8,14 @@ import { Hono } from 'hono';
 import { z } from 'zod';
 import { prisma } from '../../db';
 import { asyncHandler } from '../../middleware/error-handler';
-import { superAdminAuth, requireSuperAdmin } from '../../middleware/super-admin-auth';
+import { superAdminAuthMiddleware, requireSuperAdmin } from '../../middleware/super-admin-auth';
 import { HTTP_STATUS, MESSAGES } from '../../config/constants';
 import type { ApiResponse, SuperAdminContext } from '../../types/super-admin';
 
 const adminUsers = new Hono();
 
 // Apply super admin authentication
-adminUsers.use('*', superAdminAuth);
+adminUsers.use('*', superAdminAuthMiddleware);
 adminUsers.use('*', requireSuperAdmin);
 
 /**
