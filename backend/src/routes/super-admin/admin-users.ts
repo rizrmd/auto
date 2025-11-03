@@ -299,13 +299,14 @@ adminUsers.put(
 
 /**
  * DELETE /api/super-admin/admin-users/:id
- * Delete an admin user (soft delete by setting status to inactive)
+ * Delete an admin user (soft delete by default, permanent delete with ?permanent=true)
  */
 adminUsers.delete(
   '/:id',
   asyncHandler(async (c: SuperAdminContext) => {
     const userId = parseInt(c.req.param('id'));
     const superAdmin = c.get('superAdmin');
+    const permanent = c.req.query('permanent') === 'true';
 
     // Prevent self-deletion
     if (userId === superAdmin.id) {
@@ -340,18 +341,54 @@ adminUsers.delete(
       return c.json(response, HTTP_STATUS.NOT_FOUND);
     }
 
-    // Soft delete by setting status to inactive
-    await prisma.user.update({
-      where: { id: userId },
-      data: { status: 'inactive' },
-    });
+    if (permanent) {
+      // Check for associated data before permanent delete
+      const associatedLeads = await prisma.lead.count({
+        where: { assignedToUserId: userId }
+      });
 
-    const response: ApiResponse = {
-      success: true,
-      data: { message: 'Admin user deleted successfully' },
-    };
+      if (associatedLeads > 0) {
+        const response: ApiResponse = {
+          success: false,
+          error: {
+            code: 'HAS_ASSOCIATED_DATA',
+            message: `Cannot permanently delete user with ${associatedLeads} associated leads. Reassign leads first or use soft delete.`,
+          },
+        };
+        return c.json(response, HTTP_STATUS.CONFLICT);
+      }
 
-    return c.json(response);
+      // Permanent delete
+      await prisma.user.delete({
+        where: { id: userId },
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          message: 'Admin user permanently deleted',
+          type: 'permanent'
+        },
+      };
+
+      return c.json(response);
+    } else {
+      // Soft delete by setting status to inactive
+      await prisma.user.update({
+        where: { id: userId },
+        data: { status: 'inactive' },
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          message: 'Admin user deactivated successfully',
+          type: 'soft'
+        },
+      };
+
+      return c.json(response);
+    }
   })
 );
 

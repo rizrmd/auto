@@ -79,7 +79,8 @@ app.get('/docs', async (c) => {
         'GET /:id': 'Get specific admin user',
         'POST /': 'Create new admin user',
         'PUT /:id': 'Update admin user',
-        'DELETE /:id': 'Delete admin user',
+        'DELETE /:id': 'Soft delete admin user (sets status to inactive)',
+        'DELETE /:id?permanent=true': 'Permanently delete admin user (requires no associated data)',
       },
       tenants: {
         'GET /': 'List all tenants',

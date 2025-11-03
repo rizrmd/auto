@@ -78,6 +78,7 @@ export default function SecurityPage() {
   const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deletingUser, setDeletingUser] = useState<AdminUser | null>(null);
+  const [permanentDelete, setPermanentDelete] = useState(false);
 
   // Form state
   const [userForm, setUserForm] = useState<UserFormData>({
@@ -355,11 +356,16 @@ export default function SecurityPage() {
       setUsers(prev => prev.filter(u => u.id !== deletingUser!.id));
       setShowDeleteConfirm(false);
       setDeletingUser(null);
+      setPermanentDelete(false);
       return;
     }
 
     try {
-      const response = await fetch(`/api/super-admin/admin-users/${deletingUser.id}`, {
+      const deleteUrl = permanentDelete
+        ? `/api/super-admin/admin-users/${deletingUser.id}?permanent=true`
+        : `/api/super-admin/admin-users/${deletingUser.id}`;
+
+      const response = await fetch(deleteUrl, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -368,14 +374,20 @@ export default function SecurityPage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        console.log(`🔐 User ${permanentDelete ? 'permanently deleted' : 'deactivated'}:`, result);
         await fetchSecurityData();
         setShowDeleteConfirm(false);
         setDeletingUser(null);
+        setPermanentDelete(false);
       } else {
-        console.error('Failed to delete user');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Failed to delete user:', errorData);
+        alert(`Failed to delete user: ${errorData.error?.message || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error deleting user:', error);
+      alert('Error deleting user. Please try again.');
     }
   };
 
@@ -1445,12 +1457,99 @@ export default function SecurityPage() {
               <p style={{
                 fontSize: '14px',
                 color: '#cbd5e1',
-                marginBottom: '24px',
+                marginBottom: '16px',
                 lineHeight: '1.5'
               }}>
                 Are you sure you want to delete <strong>{deletingUser.name}</strong> ({deletingUser.email})?
-                This action cannot be undone.
               </p>
+
+              {/* Delete Type Selection */}
+              <div style={{
+                marginBottom: '20px'
+              }}>
+                <label style={{
+                  fontSize: '12px',
+                  color: '#94a3b8',
+                  marginBottom: '8px',
+                  display: 'block',
+                  fontWeight: '500'
+                }}>
+                  Delete Type:
+                </label>
+
+                <div style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '8px'
+                }}>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '12px',
+                    border: permanentDelete ? '1px solid #ef4444' : '1px solid #334155',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    backgroundColor: permanentDelete ? '#1e1b1b' : '#0f172a'
+                  }}>
+                    <input
+                      type="radio"
+                      name="deleteType"
+                      checked={!permanentDelete}
+                      onChange={() => setPermanentDelete(false)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#ffffff', marginBottom: '2px' }}>
+                        Soft Delete (Recommended)
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.3' }}>
+                        User will be deactivated but data preserved for audit trail
+                      </div>
+                    </div>
+                  </label>
+
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '12px',
+                    border: permanentDelete ? '1px solid #ef4444' : '1px solid #334155',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    backgroundColor: permanentDelete ? '#1e1b1b' : '#0f172a'
+                  }}>
+                    <input
+                      type="radio"
+                      name="deleteType"
+                      checked={permanentDelete}
+                      onChange={() => setPermanentDelete(true)}
+                      style={{ marginRight: '8px' }}
+                    />
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '14px', fontWeight: '500', color: '#ffffff', marginBottom: '2px' }}>
+                        Permanent Delete
+                      </div>
+                      <div style={{ fontSize: '12px', color: '#f87171', lineHeight: '1.3' }}>
+                        User and all data will be permanently removed (cannot be undone)
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              <div style={{
+                fontSize: '12px',
+                color: permanentDelete ? '#f87171' : '#fbbf24',
+                marginBottom: '20px',
+                padding: '8px 12px',
+                backgroundColor: permanentDelete ? '#1e1b1b' : '#1e1e1e',
+                borderRadius: '4px',
+                borderLeft: `3px solid ${permanentDelete ? '#ef4444' : '#f59e0b'}`
+              }}>
+                {permanentDelete
+                  ? '⚠️ Warning: This action cannot be undone and will permanently remove all user data.'
+                  : 'ℹ️ User will be marked as inactive but can be reactivated later.'
+                }
+              </div>
 
               <div style={{
                 display: 'flex',
@@ -1461,6 +1560,7 @@ export default function SecurityPage() {
                   onClick={() => {
                     setShowDeleteConfirm(false);
                     setDeletingUser(null);
+                    setPermanentDelete(false);
                   }}
                   style={{
                     backgroundColor: '#6b7280',
@@ -1478,17 +1578,24 @@ export default function SecurityPage() {
                 <button
                   onClick={handleConfirmDelete}
                   style={{
-                    backgroundColor: '#ef4444',
+                    backgroundColor: permanentDelete ? '#dc2626' : '#f59e0b',
                     color: '#ffffff',
                     border: 'none',
                     borderRadius: '6px',
                     padding: '10px 20px',
                     fontSize: '14px',
                     cursor: 'pointer',
-                    fontWeight: '500'
+                    fontWeight: '500',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = permanentDelete ? '#b91c1c' : '#d97706';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = permanentDelete ? '#dc2626' : '#f59e0b';
                   }}
                 >
-                  Delete
+                  {permanentDelete ? 'Delete Permanently' : 'Deactivate User'}
                 </button>
               </div>
             </div>
