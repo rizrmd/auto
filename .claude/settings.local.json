@@ -10,7 +10,9 @@
       "Bash(git commit:*)",
       "Bash(git push:*)",
       "Bash(curl:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(python3:*)",
+      "Bash(scp:*)"
     ],
     "deny": [],
     "ask": []

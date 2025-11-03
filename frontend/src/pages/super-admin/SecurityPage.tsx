@@ -208,14 +208,34 @@ export default function SecurityPage() {
 
       console.log('🔐 Fetching security data with token:', actualToken.substring(0, 20) + '...');
 
-      // Use mock data for now since admin-users endpoint doesn't exist
-      // In the future, this could use auth endpoints for user management
-      console.log('🔐 Using mock security data (admin-users endpoint not available)');
-      setUsers(generateMockUsers());
-      setSessions(generateMockSessions());
-      setSecurityLogs(generateMockSecurityLogs());
+      // Fetch admin users from the real API
+      const usersResponse = await fetch('/api/super-admin/admin-users', {
+        headers: {
+          'Authorization': `Bearer ${actualToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
 
-      // For now, use mock data for sessions and logs
+      if (usersResponse.ok) {
+        const usersData = await usersResponse.json();
+        console.log('🔐 Users API response:', usersData);
+
+        if (usersData.success && usersData.data?.users) {
+          // Transform API data to match frontend interface
+          const transformedUsers = usersData.data.users.map((user: any) => ({
+            ...user,
+            lastLogin: user.lastLoginAt,
+            permissions: [], // TODO: Add permissions logic later
+          }));
+          setUsers(transformedUsers);
+        } else {
+          throw new Error('Invalid users API response');
+        }
+      } else {
+        throw new Error(`Users API returned ${usersResponse.status}`);
+      }
+
+      // For now, use mock data for sessions and logs (these endpoints don't exist yet)
       setSessions(generateMockSessions());
       setSecurityLogs(generateMockSecurityLogs());
 

@@ -13,6 +13,7 @@ import { rateLimiter } from '../../middleware/rate-limiter';
 // Import route modules
 import authRoutes from './auth';
 import tenantRoutes from './tenants';
+import adminUsersRoutes from './admin-users';
 import analyticsRoutes from './analytics';
 import monitoringRoutes from './monitoring';
 import settingsRoutes from './settings';
@@ -72,6 +73,13 @@ app.get('/docs', async (c) => {
         'GET /verify-token': 'Verify JWT token',
         'POST /setup': 'Initial system setup',
         'GET /setup-status': 'Check setup status',
+      },
+      adminUsers: {
+        'GET /': 'List all admin users across all tenants',
+        'GET /:id': 'Get specific admin user',
+        'POST /': 'Create new admin user',
+        'PUT /:id': 'Update admin user',
+        'DELETE /:id': 'Delete admin user',
       },
       tenants: {
         'GET /': 'List all tenants',
@@ -205,12 +213,14 @@ app.post('/cache/invalidate', async (c) => {
 // Mount route modules with caching
 app.route('/auth', authRoutes);
 app.route('/tenants', tenantRoutes);
+app.route('/admin-users', adminUsersRoutes);
 app.route('/analytics', analyticsRoutes);
 app.route('/monitoring', monitoringRoutes);
 app.route('/settings', settingsRoutes);
 
 // Apply cache invalidation for write operations
 app.use('/tenants/*', invalidateCache('tenant_'));
+app.use('/admin-users/*', invalidateCache('admin_users_'));
 app.use('/analytics/*', invalidateCache('analytics_'));
 app.use('/monitoring/*', invalidateCache('monitoring_'));
 app.use('/settings/*', invalidateCache('settings_'));
