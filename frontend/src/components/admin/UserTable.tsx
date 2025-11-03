@@ -84,7 +84,7 @@ export function UserTable({ users, onUsersChange, onError }: UserTableProps) {
       {/* Add User Button */}
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium text-gray-900">Team Members ({users.length})</h3>
-        <Button onClick={() => setShowAddUser(true)} className="bg-orange-500 hover:bg-orange-600">
+        <Button onClick={() => setShowAddForm(true)} className="bg-orange-500 hover:bg-orange-600">
           <span className="mr-2">➕</span>
           Add User
         </Button>
@@ -98,7 +98,7 @@ export function UserTable({ users, onUsersChange, onError }: UserTableProps) {
               <div className="text-6xl mb-4">👥</div>
               <h3 className="text-lg font-medium text-gray-900 mb-2">No team members yet</h3>
               <p className="text-gray-500 mb-4">Add your first team member to get started</p>
-              <Button onClick={() => setShowAddUser(true)} className="bg-orange-500 hover:bg-orange-600">
+              <Button onClick={() => setShowAddForm(true)} className="bg-orange-500 hover:bg-orange-600">
                 Add First User
               </Button>
             </div>
