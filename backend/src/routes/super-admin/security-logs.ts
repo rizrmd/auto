@@ -20,13 +20,13 @@ securityLogs.use('*', requireSuperAdmin);
 
 // Query schema for filtering logs
 const LogsQuerySchema = z.object({
-  page: z.string().transform(Number).pipe(z.number().min(1).default(1)),
-  limit: z.string().transform(Number).pipe(z.number().min(1).max(100).default(50)),
+  page: z.preprocess((val) => val === undefined ? 1 : Number(val), z.number().min(1).default(1)),
+  limit: z.preprocess((val) => val === undefined ? 50 : Number(val), z.number().min(1).max(100).default(50)),
   severity: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).optional(),
   action: z.string().optional(),
-  userId: z.string().transform(Number).pipe(z.number().positive()).optional(),
-  superAdminId: z.string().transform(Number).pipe(z.number().positive()).optional(),
-  tenantId: z.string().transform(Number).pipe(z.number().positive()).optional(),
+  userId: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().positive().optional()),
+  superAdminId: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().positive().optional()),
+  tenantId: z.preprocess((val) => val === undefined ? undefined : Number(val), z.number().positive().optional()),
   startDate: z.string().datetime().optional(),
   endDate: z.string().datetime().optional(),
   ipAddress: z.string().optional(),
