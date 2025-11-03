@@ -15,6 +15,7 @@ import authRoutes from './auth';
 import tenantRoutes from './tenants';
 import adminUsersRoutes from './admin-users';
 import sessionsRoutes from './sessions';
+import securityLogsRoutes from './security-logs';
 import analyticsRoutes from './analytics';
 import monitoringRoutes from './monitoring';
 import settingsRoutes from './settings';
@@ -88,6 +89,13 @@ app.get('/docs', async (c) => {
         'GET /summary': 'Get session statistics and summary',
         'DELETE /:id': 'Terminate a specific session',
         'POST /:id/extend': 'Extend session expiration time',
+      },
+      securityLogs: {
+        'GET /': 'List security logs with filtering and pagination',
+        'GET /stats': 'Get security statistics for different timeframes',
+        'GET /summary': 'Get security logs summary with critical events',
+        'POST /': 'Create custom security log entry',
+        'GET /export': 'Export security logs as CSV',
       },
       tenants: {
         'GET /': 'List all tenants',
@@ -223,6 +231,7 @@ app.route('/auth', authRoutes);
 app.route('/tenants', tenantRoutes);
 app.route('/admin-users', adminUsersRoutes);
 app.route('/sessions', sessionsRoutes);
+app.route('/security-logs', securityLogsRoutes);
 app.route('/analytics', analyticsRoutes);
 app.route('/monitoring', monitoringRoutes);
 app.route('/settings', settingsRoutes);
@@ -231,6 +240,7 @@ app.route('/settings', settingsRoutes);
 app.use('/tenants/*', invalidateCache('tenant_'));
 app.use('/admin-users/*', invalidateCache('admin_users_'));
 app.use('/sessions/*', invalidateCache('sessions_'));
+app.use('/security-logs/*', invalidateCache('security_logs_'));
 app.use('/analytics/*', invalidateCache('analytics_'));
 app.use('/monitoring/*', invalidateCache('monitoring_'));
 app.use('/settings/*', invalidateCache('settings_'));

@@ -264,8 +264,38 @@ export default function SecurityPage() {
         throw new Error(`Sessions API returned ${sessionsResponse.status}`);
       }
 
-      // For now, use mock data for security logs (this endpoint doesn't exist yet)
-      setSecurityLogs(generateMockSecurityLogs());
+    // Fetch security logs from the API
+      const securityLogsResponse = await fetch('/api/super-admin/security-logs?limit=50', {
+        headers: {
+          'Authorization': `Bearer ${actualToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (securityLogsResponse.ok) {
+        const securityLogsData = await securityLogsResponse.json();
+        console.log('🔐 Security logs API response:', securityLogsData);
+
+        if (securityLogsData.success && securityLogsData.data?.logs) {
+          // Transform API data to match frontend interface
+          const transformedSecurityLogs = securityLogsData.data.logs.map((log: any) => ({
+            id: log.id,
+            userId: log.userId || 0,
+            userName: log.userName || 'System',
+            action: log.action,
+            details: log.details,
+            ipAddress: log.ipAddress,
+            userAgent: log.userAgent || 'Unknown',
+            timestamp: log.timestamp,
+            severity: log.severity.toLowerCase(),
+          }));
+          setSecurityLogs(transformedSecurityLogs);
+        } else {
+          throw new Error('Invalid security logs API response');
+        }
+      } else {
+        throw new Error(`Security logs API returned ${securityLogsResponse.status}`);
+      }
 
       console.log('✅ Security data loaded successfully');
 

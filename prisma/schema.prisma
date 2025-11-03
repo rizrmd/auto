@@ -73,6 +73,7 @@ model Tenant {
   users              User[]
   conversationStates ConversationState[]
   searchDemands      SearchDemand[]
+  securityLogs       SecurityLog[]
 
   @@map("tenants")
 }
@@ -286,6 +287,9 @@ model SuperAdmin {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  // RELATIONS
+  securityLogs SecurityLog[]
+
   @@index([email])
   @@index([role, status])
   @@map("super_admins")
@@ -320,6 +324,7 @@ model User {
   // RELATIONS
   tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedLeads Lead[]
+  securityLogs SecurityLog[]
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -420,4 +425,66 @@ model SearchDemand {
   @@index([tenantId, keyword])
   @@index([tenantId, source])
   @@map("search_demand")
+}
+
+// ============================================
+// SECURITY LOGS
+// ============================================
+
+model SecurityLog {
+  id Int @id @default(autoincrement())
+
+  // USER INFORMATION
+  userId Int? @map("user_id") // NULL untuk system-generated logs
+  superAdminId Int? @map("super_admin_id") // Jika dilakukan oleh super admin
+  userName String @map("user_name") @db.VarChar(200)
+  userEmail String? @map("user_email") @db.VarChar(200)
+
+  // ACTION DETAILS
+  action String @db.VarChar(100) // LOGIN_SUCCESS, USER_CREATED, etc.
+  details String @db.Text
+
+  // REQUEST INFORMATION
+  ipAddress String @map("ip_address") @db.VarChar(45) // IPv6 support
+  userAgent String? @map("user_agent") @db.Text
+  endpoint String? @db.VarChar(255) // API endpoint yang diakses
+  method String? @db.VarChar(10) // GET, POST, PUT, DELETE
+
+  // SEVERITY & STATUS
+  severity SecurityLogSeverity @default(MEDIUM)
+  status SecurityLogStatus @default(SUCCESS)
+
+  // CONTEXT
+  tenantId Int? @map("tenant_id") // Jika terkait tenant tertentu
+  metadata Json? // Data tambahan dalam format JSON
+
+  // META
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // RELATIONS
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  superAdmin SuperAdmin? @relation(fields: [superAdminId], references: [id], onDelete: SetNull)
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId, createdAt])
+  @@index([superAdminId, createdAt])
+  @@index([tenantId, createdAt])
+  @@index([severity, createdAt])
+  @@index([action, createdAt])
+  @@index([ipAddress, createdAt])
+  @@map("security_logs")
+}
+
+enum SecurityLogSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum SecurityLogStatus {
+  SUCCESS
+  FAILED
+  WARNING
 }
