@@ -14,6 +14,7 @@ import { rateLimiter } from '../../middleware/rate-limiter';
 import authRoutes from './auth';
 import tenantRoutes from './tenants';
 import adminUsersRoutes from './admin-users';
+import sessionsRoutes from './sessions';
 import analyticsRoutes from './analytics';
 import monitoringRoutes from './monitoring';
 import settingsRoutes from './settings';
@@ -81,6 +82,12 @@ app.get('/docs', async (c) => {
         'PUT /:id': 'Update admin user',
         'DELETE /:id': 'Soft delete admin user (sets status to inactive)',
         'DELETE /:id?permanent=true': 'Permanently delete admin user (requires no associated data)',
+      },
+      sessions: {
+        'GET /': 'List all active sessions',
+        'GET /summary': 'Get session statistics and summary',
+        'DELETE /:id': 'Terminate a specific session',
+        'POST /:id/extend': 'Extend session expiration time',
       },
       tenants: {
         'GET /': 'List all tenants',
@@ -215,6 +222,7 @@ app.post('/cache/invalidate', async (c) => {
 app.route('/auth', authRoutes);
 app.route('/tenants', tenantRoutes);
 app.route('/admin-users', adminUsersRoutes);
+app.route('/sessions', sessionsRoutes);
 app.route('/analytics', analyticsRoutes);
 app.route('/monitoring', monitoringRoutes);
 app.route('/settings', settingsRoutes);
@@ -222,6 +230,7 @@ app.route('/settings', settingsRoutes);
 // Apply cache invalidation for write operations
 app.use('/tenants/*', invalidateCache('tenant_'));
 app.use('/admin-users/*', invalidateCache('admin_users_'));
+app.use('/sessions/*', invalidateCache('sessions_'));
 app.use('/analytics/*', invalidateCache('analytics_'));
 app.use('/monitoring/*', invalidateCache('monitoring_'));
 app.use('/settings/*', invalidateCache('settings_'));

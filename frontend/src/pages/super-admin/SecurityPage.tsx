@@ -42,6 +42,7 @@ interface ActiveSession {
   loginTime: string;
   lastActivity: string;
   isActive: boolean;
+  tenant?: string;
 }
 
 interface UserFormData {
@@ -236,8 +237,34 @@ export default function SecurityPage() {
         throw new Error(`Users API returned ${usersResponse.status}`);
       }
 
-      // For now, use mock data for sessions and logs (these endpoints don't exist yet)
-      setSessions(generateMockSessions());
+      // Fetch session data from the API
+      const sessionsResponse = await fetch('/api/super-admin/sessions', {
+        headers: {
+          'Authorization': `Bearer ${actualToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (sessionsResponse.ok) {
+        const sessionsData = await sessionsResponse.json();
+        console.log('🔐 Sessions API response:', sessionsData);
+
+        if (sessionsData.success && sessionsData.data?.sessions) {
+          // Transform API data to match frontend interface
+          const transformedSessions = sessionsData.data.sessions.map((session: any) => ({
+            ...session,
+            location: session.location || 'Unknown',
+            device: session.device || 'Unknown Device',
+          }));
+          setSessions(transformedSessions);
+        } else {
+          throw new Error('Invalid sessions API response');
+        }
+      } else {
+        throw new Error(`Sessions API returned ${sessionsResponse.status}`);
+      }
+
+      // For now, use mock data for security logs (this endpoint doesn't exist yet)
       setSecurityLogs(generateMockSecurityLogs());
 
       console.log('✅ Security data loaded successfully');
@@ -245,6 +272,8 @@ export default function SecurityPage() {
     } catch (error) {
       console.error('❌ Error fetching security data:', error);
       setError('Failed to load security data, showing cached data');
+
+      // Fallback to mock data with error message
       setUsers(generateMockUsers());
       setSessions(generateMockSessions());
       setSecurityLogs(generateMockSecurityLogs());
