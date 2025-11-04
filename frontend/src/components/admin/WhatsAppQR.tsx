@@ -141,6 +141,12 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       clearInterval(countdownInterval.current);
       countdownInterval.current = null;
     }
+
+    // Reset states
+    setError(null);
+    setQrData(null);
+    setTimeLeft(0);
+
     await loadQRCode();
   };
 
@@ -158,17 +164,53 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     }
   };
 
-  const disconnect = async () => {
-    if (!confirm('Are you sure you want to disconnect WhatsApp? You will need to scan QR code again to reconnect.')) {
+  const forceReconnect = async () => {
+    if (!confirm('Are you sure you want to force reconnect WhatsApp? This will clear the current connection and generate a new QR code.')) {
       return;
     }
 
     try {
       setLoading(true);
-      // For MVP, we'll just reload status
-      await loadWhatsAppStatus();
+      setError(null);
+
+      // Call API to force disconnect
+      const reconnectResult = await adminAPI.forceReconnectWhatsApp();
+
+      if (!reconnectResult.success) {
+        throw new Error(reconnectResult.message || 'Force reconnect failed');
+      }
+
+      // Clear all intervals
+      if (qrRefreshInterval.current) {
+        clearInterval(qrRefreshInterval.current);
+        qrRefreshInterval.current = null;
+      }
+      if (statusRefreshInterval.current) {
+        clearInterval(statusRefreshInterval.current);
+        statusRefreshInterval.current = null;
+      }
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
+        countdownInterval.current = null;
+      }
+
+      // Reset all states
+      setQrData(null);
+      setStatus(null);
+      setTimeLeft(0);
+      setTestResult(null);
+
+      // Show success message
+      setTestResult(reconnectResult.message || 'WhatsApp disconnected successfully. Please scan the new QR code.');
+
+      // Reload everything after a short delay
+      setTimeout(async () => {
+        await loadWhatsAppStatus();
+        startStatusPolling();
+      }, 2000);
+
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Disconnect failed';
+      const errorMessage = err instanceof Error ? err.message : 'Force reconnect failed';
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -187,9 +229,19 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         <CardContent>
           <div className="space-y-4">
             <p className="text-red-600">{error}</p>
-            <Button onClick={loadWhatsAppStatus} variant="outline" className="w-full">
-              Retry Connection
-            </Button>
+            <div className="flex space-x-2">
+              <Button onClick={loadWhatsAppStatus} variant="outline" className="flex-1">
+                🔄 Retry Connection
+              </Button>
+              <Button onClick={forceReconnect} variant="destructive" className="flex-1" disabled={loading}>
+                {loading ? '🔄 Reconnecting...' : '🔄 Force Reconnect'}
+              </Button>
+            </div>
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <p className="text-sm text-yellow-700">
+                <strong>💡 Tip:</strong> If the connection keeps failing, try "Force Reconnect" to clear everything and start fresh.
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -247,7 +299,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                   {connectionTestLoading ? 'Testing...' : '🧪 Test Connection'}
                 </Button>
                 <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
-                  🔄 Refresh
+                  🔄 Refresh Status
+                </Button>
+                <Button onClick={forceReconnect} variant="destructive" disabled={loading}>
+                  🔄 Force Reconnect
                 </Button>
               </div>
             )}
@@ -301,6 +356,20 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                       <div className="text-xs text-orange-600 font-medium">
                         QR code expires in {timeLeft} {timeLeft === 1 ? 'second' : 'seconds'}
                       </div>
+                    </div>
+                  </div>
+                ) : error ? (
+                  <div className="py-8">
+                    <div className="text-6xl mb-4">⚠️</div>
+                    <p className="text-red-600 mb-4">Failed to load QR code</p>
+                    <p className="text-sm text-gray-600 mb-4">{error}</p>
+                    <div className="flex space-x-2 justify-center">
+                      <Button onClick={refreshQR} variant="outline" disabled={qrRefreshing}>
+                        {qrRefreshing ? '🔄 Refreshing...' : '🔄 Refresh QR'}
+                      </Button>
+                      <Button onClick={forceReconnect} variant="destructive" disabled={loading}>
+                        {loading ? '🔄 Reconnecting...' : '🔄 Force Reconnect'}
+                      </Button>
                     </div>
                   </div>
                 ) : (

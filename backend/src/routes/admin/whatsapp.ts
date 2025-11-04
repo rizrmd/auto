@@ -337,6 +337,71 @@ whatsappAdmin.get(
 );
 
 /**
+ * POST /api/admin/whatsapp/force-reconnect
+ * Force disconnect and reconnect WhatsApp
+ */
+whatsappAdmin.post(
+  '/force-reconnect',
+  asyncHandler(async (c) => {
+    const tenant = c.get('tenant');
+    const user = c.get('user');
+
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
+
+    console.log(`[WHATSAPP ADMIN] Force reconnect for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+
+    try {
+      // Call WhatsApp API to disconnect/reconnect
+      const disconnectResponse = await fetch(`http://localhost:8080/disconnect?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'AutoLeads-Proxy/1.0',
+        },
+      });
+
+      // Wait a moment for disconnect to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          reconnected: true,
+          message: 'WhatsApp disconnected successfully. Please scan QR code to reconnect.',
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+          }
+        },
+      };
+
+      return c.json(response);
+    } catch (error) {
+      console.error('[WHATSAPP ADMIN] Error during force reconnect:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: 'FORCE_RECONNECT_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to force reconnect WhatsApp',
+        },
+      };
+
+      return c.json(response, 500);
+    }
+  })
+);
+
+/**
  * POST /api/admin/whatsapp/mark-read
  * Mark messages as read (test endpoint)
  */

@@ -120,6 +120,14 @@ class AdminAPI {
     return this.handleResponse(response);
   }
 
+  async forceReconnectWhatsApp(): Promise<{ success: boolean; message: string; data?: any }> {
+    const response = await fetch(`${this.baseURL}/whatsapp/force-reconnect`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+    });
+    return this.handleResponse(response);
+  }
+
   // Users Management
   async getUsers(): Promise<{ success: boolean; data: User[] }> {
     const response = await fetch(`${this.baseURL}/users`, {
