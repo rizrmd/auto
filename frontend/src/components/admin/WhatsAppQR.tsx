@@ -30,7 +30,6 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   // Initialize only once
   useEffect(() => {
     loadWhatsAppStatus();
-    startStatusPolling();
 
     return () => {
       if (qrRefreshInterval.current) {
@@ -54,21 +53,34 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     try {
       setError(null);
       const statusData = await adminAPI.getWhatsAppStatus();
+      const wasConnected = status?.data?.health?.connected || false;
+      const isConnected = statusData.data?.health?.connected || false;
+
       setStatus(statusData);
 
-      // Simple logic: only load QR if not connected AND no QR exists
-      if (!statusData.data.health.connected && !qrData) {
-        await loadQRCode();
-      } else if (statusData.data.health.connected) {
-        // Clear QR if connected
+      // Handle connection state change
+      if (isConnected && !wasConnected) {
+        console.log('[WHATSAPP QR] Status changed to connected! Clearing QR...');
+        // Connection established - clear QR immediately
         if (countdownInterval.current) {
           clearInterval(countdownInterval.current);
           countdownInterval.current = null;
         }
+        if (statusRefreshInterval.current) {
+          clearInterval(statusRefreshInterval.current);
+          statusRefreshInterval.current = null;
+        }
         setQrData(null);
         setTimeLeft(0);
+        setError(null);
+        setTestResult('🎉 WhatsApp connected successfully!');
+
+        // Start normal polling
+        startNormalStatusPolling();
+      } else if (!isConnected && !qrData && !wasConnected) {
+        // Not connected and no QR - load QR
+        await loadQRCode();
       }
-      // IMPORTANT: Don't do anything else - keep QR if it exists
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load WhatsApp status';
       setError(errorMessage);
@@ -82,16 +94,16 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       const qrData = await adminAPI.getWhatsAppQR();
       setQrData(qrData);
 
-      // Set initial countdown
-      const initialTimeLeft = Math.floor((qrData.data.expires - Date.now()) / 1000);
-      setTimeLeft(Math.max(0, initialTimeLeft));
+      // Set fixed 120 seconds countdown for consistency
+      const initialTimeLeft = 120;
+      setTimeLeft(initialTimeLeft);
 
       // Clear existing countdown interval
       if (countdownInterval.current) {
         clearInterval(countdownInterval.current);
       }
 
-      // Start countdown timer with longer expiry and gentle refresh
+      // Start countdown timer with exactly 120 seconds
       countdownInterval.current = setInterval(() => {
         setTimeLeft((prev) => {
           const newTime = Math.max(0, prev - 1);
@@ -112,8 +124,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         });
       }, 1000);
 
-      // Don't auto-refresh QR codes - let user manually refresh to prevent disappearing
-      // This gives user full control over when to refresh
+      // Start rapid status polling after QR is generated to detect scan immediately
+      startRapidStatusPolling();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load QR code';
       setError(errorMessage);
@@ -128,16 +140,73 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     }
   };
 
-  const startStatusPolling = () => {
-    // Poll status every 10 seconds (reduced frequency to prevent QR interference)
+  const startRapidStatusPolling = () => {
+    // Clear existing status polling
+    if (statusRefreshInterval.current) {
+      clearInterval(statusRefreshInterval.current);
+    }
+
+    // Rapid polling every 2 seconds when QR is displayed to detect scan immediately
+    statusRefreshInterval.current = setInterval(async () => {
+      try {
+        const statusData = await adminAPI.getWhatsAppStatus();
+        setStatus(statusData);
+
+        // Check if connection established
+        if (statusData.data?.health?.connected) {
+          console.log('[WHATSAPP QR] Connection detected! Hiding QR code...');
+
+          // Clear all intervals
+          if (statusRefreshInterval.current) {
+            clearInterval(statusRefreshInterval.current);
+            statusRefreshInterval.current = null;
+          }
+          if (countdownInterval.current) {
+            clearInterval(countdownInterval.current);
+            countdownInterval.current = null;
+          }
+          if (qrRefreshInterval.current) {
+            clearInterval(qrRefreshInterval.current);
+            qrRefreshInterval.current = null;
+          }
+
+          // Clear QR data and reset states
+          setQrData(null);
+          setTimeLeft(0);
+          setError(null);
+
+          // Restart normal polling
+          startNormalStatusPolling();
+
+          // Show success feedback
+          setTestResult('🎉 WhatsApp connected successfully!');
+
+        }
+      } catch (err) {
+        console.error('[WHATSAPP QR] Error checking status:', err);
+      }
+    }, 2000); // Poll every 2 seconds for immediate detection
+  };
+
+  const startNormalStatusPolling = () => {
+    // Normal polling every 10 seconds when connected
     if (statusRefreshInterval.current) {
       clearInterval(statusRefreshInterval.current);
     }
     statusRefreshInterval.current = setInterval(loadWhatsAppStatus, 10000);
   };
 
+  const startStatusPolling = () => {
+    // Check current state and start appropriate polling
+    if (qrData) {
+      startRapidStatusPolling();
+    } else {
+      startNormalStatusPolling();
+    }
+  };
+
   const refreshQR = async () => {
-    // Clear existing intervals before refresh
+    // Clear all intervals before refresh
     if (qrRefreshInterval.current) {
       clearInterval(qrRefreshInterval.current);
       qrRefreshInterval.current = null;
@@ -146,12 +215,18 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       clearInterval(countdownInterval.current);
       countdownInterval.current = null;
     }
+    if (statusRefreshInterval.current) {
+      clearInterval(statusRefreshInterval.current);
+      statusRefreshInterval.current = null;
+    }
 
     // Reset states
     setError(null);
     setQrData(null);
     setTimeLeft(0);
+    setTestResult(null);
 
+    console.log('[WHATSAPP QR] Refreshing QR code...');
     await loadQRCode();
   };
 
@@ -351,11 +426,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                         <li>3. Tap "Link a device"</li>
                         <li>4. Point your camera at the QR code</li>
                       </ol>
-                      <div className={`text-xs font-medium ${
+                      <div className={`text-sm font-medium ${
                           timeLeft <= 30 ? 'text-red-600 animate-pulse' : 'text-orange-600'
                         }`}>
-                        {timeLeft <= 30 && '⚠️ '}QR code expires in {timeLeft} {timeLeft === 1 ? 'second' : 'seconds'}
-                        {timeLeft <= 30 && ' - Click Refresh QR to extend!'}
+                        {timeLeft <= 30 && '⚠️ '}QR code expires in {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
+                        {timeLeft <= 30 && '\nClick Refresh QR to extend!'}
                       </div>
                     </div>
                   </div>
@@ -386,8 +461,9 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                 <h4 className="font-medium text-blue-900 mb-2">📋 Important Notes:</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Keep this page open until the connection is established</li>
-                  <li>• QR code expires in {timeLeft} seconds - click "Refresh QR" when expired</li>
-                  <li>• QR code will NOT auto-refresh to prevent disappearing</li>
+                  <li>• QR code expires in 2 minutes - click "Refresh QR" when expired</li>
+                  <li>• Status updates automatically every 2 seconds after QR appears</li>
+                  <li>• QR code will auto-hide immediately after successful pairing</li>
                   <li>• Only one WhatsApp device can be connected per tenant</li>
                   <li>• Make sure your phone has an active internet connection</li>
                 </ul>
