@@ -154,7 +154,7 @@ whatsappAdmin.get(
             success: true,
             data: {
               qr: base64Image,
-              expires: Date.now() + 30000, // 30 seconds
+              expires: Date.now() + 120000, // 120 seconds (2 minutes)
               device_id: tenant.whatsappInstanceId || 'unknown',
             },
           };

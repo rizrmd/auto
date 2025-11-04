@@ -54,10 +54,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       const statusData = await adminAPI.getWhatsAppStatus();
       setStatus(statusData);
 
-      // If not connected, try to get QR code
-      if (!statusData.data.health.connected) {
+      // Only load QR if we don't already have one (to prevent clearing existing QR)
+      if (!statusData.data.health.connected && !qrData) {
         await loadQRCode();
-      } else {
+      } else if (statusData.data.health.connected) {
         // Stop all QR-related intervals if connected
         if (qrRefreshInterval.current) {
           clearInterval(qrRefreshInterval.current);
@@ -70,6 +70,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         setQrData(null);
         setTimeLeft(0);
       }
+      // If not connected but we already have QR data, don't reload it
+      // This prevents QR from disappearing due to status polling
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load WhatsApp status';
       setError(errorMessage);
@@ -130,11 +132,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   };
 
   const startStatusPolling = () => {
-    // Poll status every 3 seconds for faster response
+    // Poll status every 10 seconds (reduced frequency to prevent QR interference)
     if (statusRefreshInterval.current) {
       clearInterval(statusRefreshInterval.current);
     }
-    statusRefreshInterval.current = setInterval(loadWhatsAppStatus, 3000);
+    statusRefreshInterval.current = setInterval(loadWhatsAppStatus, 10000);
   };
 
   const refreshQR = async () => {
@@ -359,8 +361,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                         <li>3. Tap "Link a device"</li>
                         <li>4. Point your camera at the QR code</li>
                       </ol>
-                      <div className="text-xs text-orange-600 font-medium">
-                        QR code expires in {timeLeft} {timeLeft === 1 ? 'second' : 'seconds'}
+                      <div className={`text-xs font-medium ${
+                          timeLeft <= 30 ? 'text-red-600 animate-pulse' : 'text-orange-600'
+                        }`}>
+                        {timeLeft <= 30 && '⚠️ '}QR code expires in {timeLeft} {timeLeft === 1 ? 'second' : 'seconds'}
+                        {timeLeft <= 30 && ' - Click Refresh QR to extend!'}
                       </div>
                     </div>
                   </div>
