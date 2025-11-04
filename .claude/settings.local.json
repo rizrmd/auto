@@ -15,7 +15,8 @@
       "Bash(scp:*)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "Bash(bun run build:frontend:*)"
+      "Bash(bun run build:frontend:*)",
+      "Bash(\")"
     ],
     "deny": [],
     "ask": []
