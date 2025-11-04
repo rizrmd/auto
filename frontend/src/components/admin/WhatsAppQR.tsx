@@ -92,23 +92,29 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         clearInterval(countdownInterval.current);
       }
 
-      // Start countdown timer
+      // Start countdown timer with longer expiry and gentle refresh
       countdownInterval.current = setInterval(() => {
         setTimeLeft((prev) => {
           const newTime = Math.max(0, prev - 1);
           if (newTime === 0) {
-            // QR expired, trigger refresh
-            setTimeout(loadQRCode, 1000);
+            // QR expired, show expired state instead of immediate refresh
+            setError('QR code expired. Please click "Refresh QR" to generate a new one.');
+            // Clear intervals when expired
+            if (qrRefreshInterval.current) {
+              clearInterval(qrRefreshInterval.current);
+              qrRefreshInterval.current = null;
+            }
+            if (countdownInterval.current) {
+              clearInterval(countdownInterval.current);
+              countdownInterval.current = null;
+            }
           }
           return newTime;
         });
       }, 1000);
 
-      // Start QR refresh interval (every 30 seconds)
-      if (qrRefreshInterval.current) {
-        clearInterval(qrRefreshInterval.current);
-      }
-      qrRefreshInterval.current = setInterval(loadQRCode, 30000);
+      // Don't auto-refresh QR codes - let user manually refresh to prevent disappearing
+      // This gives user full control over when to refresh
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load QR code';
       setError(errorMessage);
@@ -201,13 +207,13 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       setTestResult(null);
 
       // Show success message
-      setTestResult(reconnectResult.message || 'WhatsApp disconnected successfully. Please scan the new QR code.');
+      setTestResult(reconnectResult.message || 'WhatsApp disconnected successfully. Generating new QR code...');
 
-      // Reload everything after a short delay
-      setTimeout(async () => {
-        await loadWhatsAppStatus();
-        startStatusPolling();
-      }, 2000);
+      // Load QR code immediately without delay to prevent disappearing
+      await loadQRCode();
+
+      // Start status polling after QR is loaded
+      startStatusPolling();
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Force reconnect failed';
@@ -385,7 +391,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                 <h4 className="font-medium text-blue-900 mb-2">📋 Important Notes:</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Keep this page open until the connection is established</li>
-                  <li>• The QR code will automatically refresh when expired</li>
+                  <li>• QR code expires in {timeLeft} seconds - click "Refresh QR" when expired</li>
+                  <li>• QR code will NOT auto-refresh to prevent disappearing</li>
                   <li>• Only one WhatsApp device can be connected per tenant</li>
                   <li>• Make sure your phone has an active internet connection</li>
                 </ul>
