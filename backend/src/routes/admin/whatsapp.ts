@@ -103,7 +103,7 @@ whatsappAdmin.get(
     const format = c.req.query('format') as 'json' | 'image' || 'json';
     const tenant = c.get('tenant');
     const user = c.get('user');
-    
+
     if (!tenant) {
       return c.json({
         success: false,
@@ -115,10 +115,10 @@ whatsappAdmin.get(
     }
 
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
-    
+
     try {
-      // Use internal WhatsApp API directly (no external calls)
-      const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+      // Use WhatsApp internal API directly
+      const response = await fetch(`http://localhost:8080/pair`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -161,7 +161,7 @@ whatsappAdmin.get(
           return c.json(qrResponse);
         }
       } else {
-        // Fallback for JSON response (unlikely with new API)
+        // Fallback for JSON response
         const result = await response.json();
 
         const qrResponse: ApiResponse = {

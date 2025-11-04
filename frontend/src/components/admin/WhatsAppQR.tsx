@@ -22,18 +22,12 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const [testResult, setTestResult] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
-  // Use refs to prevent React re-renders from clearing state
+  // Simple refs for intervals
   const qrRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const statusRefreshInterval = useRef<NodeJS.Timeout | null>(null);
   const countdownInterval = useRef<NodeJS.Timeout | null>(null);
-  const qrDataRef = useRef<WhatsAppQRType | null>(null);
-  const isManualRefresh = useRef(false);
 
-  // Sync qrData with ref for persistence across re-renders
-  useEffect(() => {
-    qrDataRef.current = qrData;
-  }, [qrData]);
-
+  // Initialize only once
   useEffect(() => {
     loadWhatsAppStatus();
     startStatusPolling();
@@ -49,7 +43,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         clearInterval(countdownInterval.current);
       }
     };
-  }, []);
+  }, []); // Empty dependency array - run only once
 
   useEffect(() => {
     const isConnected = status?.data?.health?.connected || false;
@@ -62,15 +56,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       const statusData = await adminAPI.getWhatsAppStatus();
       setStatus(statusData);
 
-      // Only load QR if we don't already have one AND not currently loading (to prevent race conditions)
-      if (!statusData.data.health.connected && !qrData && !qrRefreshing) {
+      // Simple logic: only load QR if not connected AND no QR exists
+      if (!statusData.data.health.connected && !qrData) {
         await loadQRCode();
       } else if (statusData.data.health.connected) {
-        // Stop all QR-related intervals if connected
-        if (qrRefreshInterval.current) {
-          clearInterval(qrRefreshInterval.current);
-          qrRefreshInterval.current = null;
-        }
+        // Clear QR if connected
         if (countdownInterval.current) {
           clearInterval(countdownInterval.current);
           countdownInterval.current = null;
@@ -78,8 +68,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         setQrData(null);
         setTimeLeft(0);
       }
-      // If not connected but we already have QR data, don't reload it
-      // This prevents QR from disappearing due to status polling
+      // IMPORTANT: Don't do anything else - keep QR if it exists
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load WhatsApp status';
       setError(errorMessage);
@@ -188,7 +177,6 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     try {
       setLoading(true);
       setError(null);
-      isManualRefresh.current = true; // Mark as manual operation
 
       // Call API to force disconnect
       const reconnectResult = await adminAPI.forceReconnectWhatsApp();
@@ -197,23 +185,18 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         throw new Error(reconnectResult.message || 'Force reconnect failed');
       }
 
-      // Clear all intervals
+      // Clear intervals
       if (qrRefreshInterval.current) {
         clearInterval(qrRefreshInterval.current);
         qrRefreshInterval.current = null;
-      }
-      if (statusRefreshInterval.current) {
-        clearInterval(statusRefreshInterval.current);
-        statusRefreshInterval.current = null;
       }
       if (countdownInterval.current) {
         clearInterval(countdownInterval.current);
         countdownInterval.current = null;
       }
 
-      // Reset all states
+      // Reset states
       setQrData(null);
-      qrDataRef.current = null;
       setStatus(null);
       setTimeLeft(0);
       setTestResult(null);
@@ -221,21 +204,14 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       // Show success message
       setTestResult(reconnectResult.message || 'WhatsApp disconnected successfully. Generating new QR code...');
 
-      // Load QR code immediately without delay to prevent disappearing
+      // Load QR code immediately
       await loadQRCode();
-
-      // Start status polling after QR is loaded with longer delay to avoid interference
-      setTimeout(() => {
-        if (!qrDataRef.current) return; // Don't start if QR failed to load
-        startStatusPolling();
-      }, 3000); // Wait 3 seconds before starting polling
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Force reconnect failed';
       setError(errorMessage);
     } finally {
       setLoading(false);
-      isManualRefresh.current = false;
     }
   };
 
