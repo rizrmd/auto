@@ -82,7 +82,22 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         await loadQRCode();
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load WhatsApp status';
+      console.error('[WHATSAPP QR] Error loading status:', err);
+
+      // Better error handling for authentication issues
+      let errorMessage = 'Failed to load WhatsApp status';
+      if (err instanceof Error) {
+        if (err.message.includes('401') || err.message.includes('UNAUTHORIZED')) {
+          errorMessage = 'Authentication required. Please refresh the page and login again.';
+        } else if (err.message.includes('403')) {
+          errorMessage = 'Access denied. You do not have permission to access WhatsApp settings.';
+        } else if (err.message.includes('TENANT_REQUIRED')) {
+          errorMessage = 'Tenant context required. Please contact administrator.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
       setError(errorMessage);
     }
   };
@@ -127,7 +142,22 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       // Start rapid status polling after QR is generated to detect scan immediately
       startRapidStatusPolling();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load QR code';
+      console.error('[WHATSAPP QR] Error loading QR code:', err);
+
+      // Better error handling for authentication issues
+      let errorMessage = 'Failed to load QR code';
+      if (err instanceof Error) {
+        if (err.message.includes('401') || err.message.includes('UNAUTHORIZED')) {
+          errorMessage = 'Authentication required. Please refresh the page and login again.';
+        } else if (err.message.includes('403')) {
+          errorMessage = 'Access denied. You do not have permission to access WhatsApp settings.';
+        } else if (err.message.includes('TENANT_REQUIRED')) {
+          errorMessage = 'Tenant context required. Please contact administrator.';
+        } else {
+          errorMessage = err.message;
+        }
+      }
+
       setError(errorMessage);
       // Clear countdown on error
       if (countdownInterval.current) {
