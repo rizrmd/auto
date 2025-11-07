@@ -7,6 +7,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { adminAPI, WhatsAppQR as WhatsAppQRType, WhatsAppStatus } from '../../services/adminApi';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import { WhatsAppErrorDisplay } from './WhatsAppErrorDisplay';
 
 interface WhatsAppQRProps {
   onConnectionChange?: (isConnected: boolean) => void;
@@ -17,6 +18,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const [status, setStatus] = useState<WhatsAppStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [interpretedError, setInterpretedError] = useState<any>(null);
   const [qrRefreshing, setQrRefreshing] = useState(false);
   const [connectionTestLoading, setConnectionTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
@@ -52,7 +54,18 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const loadWhatsAppStatus = async () => {
     try {
       setError(null);
-      const statusData = await adminAPI.getWhatsAppStatus();
+      setInterpretedError(null);
+
+      // Use enhanced error-aware status check
+      const statusResult = await adminAPI.getWhatsAppStatusWithInterpretation();
+
+      if (!statusResult.success) {
+        console.error('[WHATSAPP QR] Status check failed:', statusResult.interpretedError);
+        setInterpretedError(statusResult.interpretedError);
+        return;
+      }
+
+      const statusData = statusResult.data!;
       const wasConnected = status?.data?.health?.connected || false;
       const isConnected = statusData.data?.health?.connected || false;
 
@@ -73,6 +86,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         setQrData(null);
         setTimeLeft(0);
         setError(null);
+        setInterpretedError(null);
         setTestResult('🎉 WhatsApp connected successfully!');
 
         // Start normal polling
@@ -82,23 +96,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         await loadQRCode();
       }
     } catch (err) {
-      console.error('[WHATSAPP QR] Error loading status:', err);
-
-      // Better error handling for authentication issues
-      let errorMessage = 'Failed to load WhatsApp status';
-      if (err instanceof Error) {
-        if (err.message.includes('401') || err.message.includes('UNAUTHORIZED')) {
-          errorMessage = 'Authentication required. Please refresh the page and login again.';
-        } else if (err.message.includes('403')) {
-          errorMessage = 'Access denied. You do not have permission to access WhatsApp settings.';
-        } else if (err.message.includes('TENANT_REQUIRED')) {
-          errorMessage = 'Tenant context required. Please contact administrator.';
-        } else {
-          errorMessage = err.message;
-        }
-      }
-
-      setError(errorMessage);
+      console.error('[WHATSAPP QR] Unexpected error loading status:', err);
+      setError('Unexpected error occurred while checking WhatsApp status');
     }
   };
 
@@ -106,7 +105,25 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     try {
       setQrRefreshing(true);
       setError(null);
-      const qrData = await adminAPI.getWhatsAppQR();
+      setInterpretedError(null);
+
+      // Use enhanced error-aware QR generation
+      const qrResult = await adminAPI.getWhatsAppQRWithInterpretation();
+
+      if (!qrResult.success) {
+        console.error('[WHATSAPP QR] QR generation failed:', qrResult.interpretedError);
+        setInterpretedError(qrResult.interpretedError);
+
+        // Clear countdown on error
+        if (countdownInterval.current) {
+          clearInterval(countdownInterval.current);
+          countdownInterval.current = null;
+        }
+        setTimeLeft(0);
+        return;
+      }
+
+      const qrData = qrResult.data!;
       setQrData(qrData);
 
       // Set fixed 120 seconds countdown for consistency
@@ -123,8 +140,12 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         setTimeLeft((prev) => {
           const newTime = Math.max(0, prev - 1);
           if (newTime === 0) {
-            // QR expired, show expired state instead of immediate refresh
-            setError('QR code expired. Please click "Refresh QR" to generate a new one.');
+            // QR expired, show expired state with specific error
+            setInterpretedError({
+              message: '⏰ QR code has expired after 2 minutes',
+              action: 'Click "Refresh QR" to generate a new QR code',
+              severity: 'warning'
+            });
             // Clear intervals when expired
             if (qrRefreshInterval.current) {
               clearInterval(qrRefreshInterval.current);
@@ -142,23 +163,9 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       // Start rapid status polling after QR is generated to detect scan immediately
       startRapidStatusPolling();
     } catch (err) {
-      console.error('[WHATSAPP QR] Error loading QR code:', err);
+      console.error('[WHATSAPP QR] Unexpected error loading QR code:', err);
+      setError('Unexpected error occurred while generating QR code');
 
-      // Better error handling for authentication issues
-      let errorMessage = 'Failed to load QR code';
-      if (err instanceof Error) {
-        if (err.message.includes('401') || err.message.includes('UNAUTHORIZED')) {
-          errorMessage = 'Authentication required. Please refresh the page and login again.';
-        } else if (err.message.includes('403')) {
-          errorMessage = 'Access denied. You do not have permission to access WhatsApp settings.';
-        } else if (err.message.includes('TENANT_REQUIRED')) {
-          errorMessage = 'Tenant context required. Please contact administrator.';
-        } else {
-          errorMessage = err.message;
-        }
-      }
-
-      setError(errorMessage);
       // Clear countdown on error
       if (countdownInterval.current) {
         clearInterval(countdownInterval.current);
@@ -265,10 +272,19 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       setConnectionTestLoading(true);
       setTestResult(null);
       const result = await adminAPI.testWhatsApp();
-      setTestResult(result.message || 'Test completed successfully');
+
+      if (result.success) {
+        setTestResult('🎉 Test completed successfully - WhatsApp connection is working!');
+      } else if (result.interpretedError) {
+        // Show interpreted error from WhatsApp API
+        setInterpretedError(result.interpretedError);
+        setTestResult(result.message);
+      } else {
+        setTestResult(result.message || 'Test completed successfully');
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Test failed';
-      setTestResult(errorMessage);
+      setTestResult(`❌ Test failed: ${errorMessage}`);
     } finally {
       setConnectionTestLoading(false);
     }
@@ -282,12 +298,18 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     try {
       setLoading(true);
       setError(null);
+      setInterpretedError(null);
 
       // Call API to force disconnect
       const reconnectResult = await adminAPI.forceReconnectWhatsApp();
 
       if (!reconnectResult.success) {
-        throw new Error(reconnectResult.message || 'Force reconnect failed');
+        if (reconnectResult.interpretedError) {
+          setInterpretedError(reconnectResult.interpretedError);
+        } else {
+          setError(reconnectResult.message || 'Force reconnect failed');
+        }
+        return;
       }
 
       // Clear intervals
@@ -307,14 +329,14 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       setTestResult(null);
 
       // Show success message
-      setTestResult(reconnectResult.message || 'WhatsApp disconnected successfully. Generating new QR code...');
+      setTestResult('🔄 WhatsApp disconnected successfully. Generating new QR code...');
 
       // Load QR code immediately
       await loadQRCode();
 
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Force reconnect failed';
-      setError(errorMessage);
+      setError(`❌ Force reconnect failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -323,36 +345,71 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const isConnected = status?.data?.health?.connected || false;
   const isPaired = status?.data?.health?.paired || false;
 
+  // Enhanced error display takes priority
+  if (interpretedError) {
+    return (
+      <div className="space-y-6">
+        <WhatsAppErrorDisplay
+          interpretedError={interpretedError}
+          onRetry={loadWhatsAppStatus}
+          onForceReconnect={forceReconnect}
+          onRefreshQR={refreshQR}
+        />
+
+        {/* Show basic connection status if available */}
+        {status && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Status</p>
+                  <p className="text-lg font-semibold text-red-600">Disconnected</p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">Device Number</p>
+                  <p className="text-lg font-semibold text-gray-900">
+                    {status?.data?.tenant?.whatsappNumber || 'Not set'}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    );
+  }
+
+  // Fallback for generic errors
   if (error && !status) {
     return (
-      <Card className="border-red-200">
-        <CardHeader>
-          <CardTitle className="text-red-600">Connection Error</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-red-600">{error}</p>
-            <div className="flex space-x-2">
-              <Button onClick={loadWhatsAppStatus} variant="outline" className="flex-1">
-                🔄 Retry Connection
-              </Button>
-              <Button onClick={forceReconnect} variant="destructive" className="flex-1" disabled={loading}>
-                {loading ? '🔄 Reconnecting...' : '🔄 Force Reconnect'}
-              </Button>
-            </div>
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-              <p className="text-sm text-yellow-700">
-                <strong>💡 Tip:</strong> If the connection keeps failing, try "Force Reconnect" to clear everything and start fresh.
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <WhatsAppErrorDisplay
+        interpretedError={{
+          message: error,
+          action: 'Try refreshing the page or contact support',
+          severity: 'error'
+        }}
+        onRetry={loadWhatsAppStatus}
+        onForceReconnect={forceReconnect}
+        onRefreshQR={refreshQR}
+      />
     );
   }
 
   return (
     <div className="space-y-6">
+      {/* Enhanced Error Display */}
+      {interpretedError && (
+        <WhatsAppErrorDisplay
+          interpretedError={interpretedError}
+          onRetry={loadWhatsAppStatus}
+          onForceReconnect={forceReconnect}
+          onRefreshQR={refreshQR}
+        />
+      )}
+
       {/* Connection Status */}
       <Card>
         <CardHeader>
@@ -410,11 +467,24 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
               </div>
             )}
 
+            {!isConnected && (
+              <div className="flex space-x-2">
+                <Button onClick={forceReconnect} variant="destructive" disabled={loading}>
+                  🔄 Force Reconnect
+                </Button>
+                <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
+                  🔄 Refresh Status
+                </Button>
+              </div>
+            )}
+
             {testResult && (
               <div className={`p-3 rounded-lg text-sm ${
                 testResult.includes('success') || testResult.includes('successfully')
                   ? 'bg-green-50 text-green-700 border border-green-200'
-                  : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                  : testResult.includes('failed') || testResult.includes('error')
+                    ? 'bg-red-50 text-red-700 border border-red-200'
+                    : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
               }`}>
                 <strong>Test Result:</strong> {testResult}
               </div>
