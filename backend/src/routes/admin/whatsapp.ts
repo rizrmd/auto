@@ -167,9 +167,9 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // For disconnected tenants, return a success response with instructions instead of generating QR
+      // For disconnected tenants, return empty QR response without calling WhatsApp API
       if (tenant.whatsappStatus === 'disconnected') {
-        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, providing reconnection instructions`);
+        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, returning empty QR response`);
 
         const qrResponse: ApiResponse = {
           success: true,
