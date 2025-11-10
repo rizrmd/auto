@@ -376,7 +376,7 @@ whatsappAdmin.get(
 
 /**
  * POST /api/admin/whatsapp/force-reconnect
- * Force disconnect and reconnect WhatsApp
+ * Disconnect WhatsApp device (for reconnection with new QR)
  */
 whatsappAdmin.post(
   '/force-reconnect',
@@ -399,10 +399,12 @@ whatsappAdmin.post(
       }, 400);
     }
 
-    console.log(`[WHATSAPP ADMIN] Force reconnect for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+    console.log(`[WHATSAPP ADMIN] Disconnect request for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // Call WhatsApp API to disconnect/reconnect
+      // Call WhatsApp API to disconnect
+      console.log(`[WHATSAPP ADMIN] Disconnecting WhatsApp instance: ${tenant.whatsappInstanceId} for tenant: ${tenant.id}`);
+
       const disconnectResponse = await fetch(`http://localhost:8080/disconnect?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
         method: 'POST',
         headers: {
@@ -411,14 +413,23 @@ whatsappAdmin.post(
         },
       });
 
-      // Wait a moment for disconnect to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      if (!disconnectResponse.ok) {
+        console.error(`[WHATSAPP ADMIN] Disconnect API failed: ${disconnectResponse.status} ${disconnectResponse.statusText}`);
+        throw new Error(`Disconnect API failed: ${disconnectResponse.status}`);
+      }
+
+      const disconnectResult = await disconnectResponse.text();
+      console.log(`[WHATSAPP ADMIN] Disconnect response: ${disconnectResult}`);
+
+      // Wait longer for disconnect to complete and prevent immediate reconnection
+      console.log('[WHATSAPP ADMIN] Waiting for device to fully disconnect...');
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
       const response: ApiResponse = {
         success: true,
         data: {
-          reconnected: true,
-          message: 'WhatsApp disconnected successfully. Please scan QR code to reconnect.',
+          disconnected: true,
+          message: 'WhatsApp device disconnected successfully. The device is now offline and ready for new QR code pairing.',
           tenant: {
             id: tenant.id,
             name: tenant.name,
@@ -429,13 +440,13 @@ whatsappAdmin.post(
 
       return c.json(response);
     } catch (error) {
-      console.error('[WHATSAPP ADMIN] Error during force reconnect:', error);
+      console.error('[WHATSAPP ADMIN] Error during disconnect:', error);
 
       const response: ApiResponse = {
         success: false,
         error: {
-          code: 'FORCE_RECONNECT_ERROR',
-          message: error instanceof Error ? error.message : 'Failed to force reconnect WhatsApp',
+          code: 'DISCONNECT_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to disconnect WhatsApp device',
         },
       };
 
