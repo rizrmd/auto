@@ -304,7 +304,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   };
 
   const forceReconnect = async () => {
-    if (!confirm('Are you sure you want to force reconnect WhatsApp? This will clear the current connection and generate a new QR code.')) {
+    const confirmMessage = isConnected && isPaired
+      ? 'Are you sure you want to disconnect this WhatsApp device? This will end the current connection and generate a new QR code for pairing.'
+      : 'Are you sure you want to force reconnect WhatsApp? This will clear any partial connection and generate a new QR code.';
+
+    if (!confirm(confirmMessage)) {
       return;
     }
 
@@ -342,7 +346,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       setTestResult(null);
 
       // Show success message
-      setTestResult('🔄 WhatsApp disconnected successfully. Generating new QR code...');
+      setTestResult(isConnected && isPaired
+        ? '🔄 WhatsApp disconnected successfully. Generating new QR code for pairing...'
+        : '🔄 Connection cleared. Generating new QR code for pairing...'
+      );
 
       // Load QR code immediately
       await loadQRCode();
@@ -468,9 +475,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
 
             {isConnected && (
               <div className="flex space-x-2">
-                <Button onClick={testConnection} disabled={connectionTestLoading} className="flex-1">
-                  {connectionTestLoading ? 'Testing...' : '🧪 Test Connection'}
-                </Button>
+                {isPaired && (
+                  <Button onClick={testConnection} disabled={connectionTestLoading} className="flex-1">
+                    {connectionTestLoading ? 'Testing...' : '🧪 Test Connection'}
+                  </Button>
+                )}
                 <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
                   🔄 Refresh Status
                 </Button>
@@ -480,11 +489,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
               </div>
             )}
 
-            {(!isConnected || !isPaired) && (
+            {!isConnected && (
               <div className="flex space-x-2">
-                <Button onClick={forceReconnect} variant="destructive" disabled={loading}>
-                  🔄 Force Reconnect
-                </Button>
                 <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
                   🔄 Refresh Status
                 </Button>
