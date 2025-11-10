@@ -68,14 +68,16 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
 
       const statusData = statusResult.data!;
       const wasConnected = status?.data?.health?.connected || false;
+      const wasPaired = status?.data?.health?.paired || false;
       const isConnected = statusData.data?.health?.connected || false;
+      const isPaired = statusData.data?.health?.paired || false;
 
       setStatus(statusData);
 
-      // Handle connection state change
-      if (isConnected && !wasConnected) {
-        console.log('[WHATSAPP QR] Status changed to connected! Clearing QR...');
-        // Connection established - clear QR immediately
+      // Handle pairing state change
+      if (isPaired && !wasPaired) {
+        console.log('[WHATSAPP QR] Device paired! Clearing QR...');
+        // Device paired - clear QR immediately
         if (countdownInterval.current) {
           clearInterval(countdownInterval.current);
           countdownInterval.current = null;
@@ -89,10 +91,13 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         setError(null);
         setInterpretedError(null);
         setShowQR(false);
-        setTestResult('🎉 WhatsApp connected successfully!');
+        setTestResult('🎉 WhatsApp paired successfully!');
 
         // Start normal polling
         startNormalStatusPolling();
+      } else if (isConnected && !wasConnected) {
+        console.log('[WHATSAPP QR] WhatsApp service connected, waiting for device pairing...');
+        setTestResult('⏳ WhatsApp service connected, waiting for device pairing...');
       } else if (shouldShowQR && !qrData) {
         // Disconnected and no QR - load QR
         await loadQRCode();
@@ -191,9 +196,9 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         const statusData = await adminAPI.getWhatsAppStatus();
         setStatus(statusData);
 
-        // Check if connection established
-        if (statusData.data?.health?.connected) {
-          console.log('[WHATSAPP QR] Connection detected! Hiding QR code...');
+        // Check if device is paired (not just connected)
+        if (statusData.data?.health?.paired) {
+          console.log('[WHATSAPP QR] Device paired! Hiding QR code...');
 
           // Clear all intervals
           if (statusRefreshInterval.current) {
@@ -218,7 +223,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
           startNormalStatusPolling();
 
           // Show success feedback
-          setTestResult('🎉 WhatsApp connected successfully!');
+          setTestResult('🎉 WhatsApp paired successfully!');
 
         }
       } catch (err) {
@@ -358,11 +363,63 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     }
   };
 
-  const isConnected = status?.data?.health?.connected || false;
-  const isPaired = status?.data?.health?.paired || false;
+  const forceReconnect = async () => {
+    if (!confirm('Are you sure you want to force reconnect? This will disconnect the current device and allow you to scan a new QR code.')) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+      setInterpretedError(null);
+
+      // Call API to force reconnect
+      const reconnectResult = await adminAPI.forceReconnectWhatsApp();
+
+      if (!reconnectResult.success) {
+        if (reconnectResult.interpretedError) {
+          setInterpretedError(reconnectResult.interpretedError);
+        } else {
+          setError(reconnectResult.message || 'Force reconnect failed');
+        }
+        return;
+      }
+
+      // Clear intervals
+      if (qrRefreshInterval.current) {
+        clearInterval(qrRefreshInterval.current);
+        qrRefreshInterval.current = null;
+      }
+      if (countdownInterval.current) {
+        clearInterval(countdownInterval.current);
+        countdownInterval.current = null;
+      }
+
+      // Reset states
+      setQrData(null);
+      setStatus(null);
+      setTimeLeft(0);
+      setTestResult(null);
+      setShowQR(false);
+
+      // Show success message
+      setTestResult('🔄 Force reconnection completed. Click "Connect WhatsApp" to generate a new QR code.');
+
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Force reconnect failed';
+      setError(`❌ Force reconnect failed: ${errorMessage}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const whatsappStatus = status?.data?.tenant?.whatsappStatus || 'unknown';
   const isDisconnected = whatsappStatus === 'disconnected' || whatsappStatus === 'connecting';
   const shouldShowQR = isDisconnected && showQR;
+
+  // Health status from WhatsApp API
+  const isConnected = status?.data?.health?.connected || false;
+  const isPaired = status?.data?.health?.paired || false;
 
   // Handle Connect button click
   const handleConnectClick = () => {
@@ -597,10 +654,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <h4 className="font-medium text-blue-900 mb-2">📋 Important Notes:</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Keep this page open until the connection is established</li>
+                  <li>• Keep this page open until the device is paired</li>
                   <li>• QR code expires in 30 seconds - click "Refresh QR" when expired</li>
                   <li>• Status updates automatically every 2 seconds after QR appears</li>
-                  <li>• QR code will auto-hide immediately after successful pairing</li>
+                  <li>• QR code will auto-hide immediately after successful device pairing</li>
                   <li>• Only one WhatsApp device can be connected per tenant</li>
                   <li>• Make sure your phone has an active internet connection</li>
                 </ul>
