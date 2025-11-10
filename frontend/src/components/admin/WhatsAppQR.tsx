@@ -698,34 +698,6 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         </Card>
       )}
 
-      {/* Webhook Status */}
-      {status && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Webhook Configuration</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <p className="text-sm font-medium text-gray-700">Status</p>
-                  <p className={`text-lg font-semibold ${
-                    status.data.webhook.configured ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {status.data.webhook.configured ? 'Configured' : 'Not Configured'}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-gray-700">URL</p>
-                  <p className="text-sm font-mono text-gray-900 break-all">
-                    {status.data.webhook.url}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-    </div>
+      </div>
   );
 }
