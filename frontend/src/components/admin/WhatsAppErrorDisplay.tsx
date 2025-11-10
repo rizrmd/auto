@@ -4,8 +4,8 @@
  */
 
 import React from 'react';
-import { Card, CardContent } from './card';
-import { Button } from './button';
+import { Card, CardContent } from '../ui/card';
+import { Button } from '../ui/button';
 
 interface WhatsAppErrorDisplayProps {
   interpretedError?: {
