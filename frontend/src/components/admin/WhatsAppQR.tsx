@@ -361,7 +361,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const isConnected = status?.data?.health?.connected || false;
   const isPaired = status?.data?.health?.paired || false;
   const whatsappStatus = status?.data?.tenant?.whatsappStatus || 'unknown';
-  const isDisconnected = whatsappStatus === 'disconnected';
+  const isDisconnected = whatsappStatus === 'disconnected' || whatsappStatus === 'connecting';
   const shouldShowQR = isDisconnected && showQR;
 
   // Handle Connect button click
