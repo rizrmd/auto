@@ -60,11 +60,11 @@ whatsappAdmin.get(
       if (!isDbDisconnected) {
         try {
           // Get health status from WhatsApp API service directly
-          const whatsappHealthResponse = await fetch('http://localhost:3000/api/wa/health', {
+          const whatsappHealthResponse = await fetch('http://localhost:8081/health', {
             method: 'GET',
             headers: {
-              'Host': tenant.subdomain || tenant.customDomain,
               'Content-Type': 'application/json',
+              'User-Agent': 'AutoLeads-Proxy/1.0',
             },
           });
 
@@ -184,12 +184,11 @@ whatsappAdmin.get(
         console.log(`[WHATSAPP ADMIN] Updated tenant status to connecting for QR generation`);
       }
 
-      // Use WhatsApp internal API for QR generation
-      const response = await fetch('http://localhost:3000/api/wa/pair', {
+      // Use WhatsApp API service for QR generation
+      const response = await fetch(`http://localhost:8081/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
         method: 'GET',
         headers: {
-          'Host': tenant.subdomain || tenant.customDomain,
-          'Content-Type': 'application/json',
+          'User-Agent': 'AutoLeads-Proxy/1.0',
         },
       });
 
@@ -469,11 +468,11 @@ whatsappAdmin.post(
       let finalVerificationPassed = false;
 
       try {
-        const verifyResponse = await fetch('http://localhost:3000/api/wa/health', {
+        const verifyResponse = await fetch(`http://localhost:8081/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
           method: 'GET',
           headers: {
-            'Host': tenant.subdomain || tenant.customDomain,
             'Content-Type': 'application/json',
+            'User-Agent': 'AutoLeads-Proxy/1.0',
           },
         });
 

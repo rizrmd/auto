@@ -35,7 +35,7 @@ app.get('/pair', logger(), async (c) => {
     console.log(`[WHATSAPP PAIR] Pairing for tenant: ${tenant.name} (${tenant.slug})`);
 
     // Use single WhatsApp API instance with tenant identifier
-    const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+    const response = await fetch(`http://localhost:8081/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
       method: 'GET',
       headers: {
         'User-Agent': 'AutoLeads-Proxy/1.0',
@@ -134,7 +134,7 @@ app.get('/health', logger(), async (c) => {
       }, 404);
     }
 
-    const response = await fetch(`http://localhost:8080/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+    const response = await fetch(`http://localhost:8081/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ app.post('/send', logger(), async (c) => {
       instance: tenant.whatsappInstanceId
     };
 
-    const response = await fetch(`http://localhost:8080/send`, {
+    const response = await fetch(`http://localhost:8081/send`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -251,7 +251,7 @@ app.post('/send', logger(), async (c) => {
 app.get('/version', async (c) => {
   try {
     // Try to get version from WhatsApp API
-    const response = await fetch('http://localhost:8080/', {
+    const response = await fetch('http://localhost:8081/', {
       method: 'GET',
       headers: {
         'User-Agent': 'AutoLeads-Proxy/1.0',
@@ -295,7 +295,7 @@ app.get('/version', async (c) => {
 app.get('/debug', async (c) => {
   try {
     // Try to get debug info from WhatsApp API
-    const response = await fetch('http://localhost:8080/health', {
+    const response = await fetch('http://localhost:8081/health', {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
