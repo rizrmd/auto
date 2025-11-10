@@ -39,15 +39,29 @@ whatsappAdmin.get(
 
     console.log(`[WHATSAPP ADMIN] Status check for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
     
-    // Use tenant-specific WhatsApp instance directly
+    // Use tenant-specific WhatsApp instance through proxy
     try {
-      // Get health status directly from WhatsApp client instead of HTTP request
-      const whatsappClient = new WhatsAppClient();
-      const healthResponse = await whatsappClient.healthCheck();
-      const health = healthResponse.data;
+      // Get health status through proxy to ensure tenant-specific routing
+      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
+      const healthUrl = `${baseUrl.replace(/https?:\/\//, '')}/api/wa/health`;
 
-      // Get version information
-      const version = await whatsappClient.getVersion();
+      const response = await fetch(`http://localhost:3000/api/wa/health`, {
+        method: 'GET',
+        headers: {
+          'Host': tenant.subdomain || tenant.customDomain,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Health check failed: ${response.status}`);
+      }
+
+      const healthData = await response.json();
+      const health = healthData.data?.data || healthData.data;
+
+      // Get version information from health response
+      const version = health?.version || 'v1.7.0';
 
       // Get webhook configuration
       const webhookUrl = `${process.env.APP_URL || 'https://auto.lumiku.com'}/webhook/whatsapp`;
@@ -117,12 +131,12 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // Use WhatsApp internal API directly
-      const response = await fetch(`http://localhost:8080/pair`, {
+      // Use WhatsApp internal API through proxy for tenant-specific routing
+      const response = await fetch(`http://localhost:3000/api/wa/pair`, {
         method: 'GET',
         headers: {
+          'Host': tenant.subdomain || tenant.customDomain,
           'Content-Type': 'application/json',
-          'User-Agent': 'AutoLeads-Proxy/1.0',
         },
       });
 

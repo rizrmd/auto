@@ -1,22 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA3MzIzMiwiZXhwIjoxNzYyNjc4MDMyLCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.yAoYqVIwA2jMl8hkcp452YskLPWxClY4OT7rmYOhlk4\")",
-      "Bash(NEW_TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOjcsInRlbmFudElkIjozLCJlbWFpbCI6Im93bmVyQGF1dG8ubHVtaWt1LmNvbSIsInJvbGUiOiJvd25lciIsImlhdCI6MTc2MjA3MzU0NCwiZXhwIjoxNzYyNjc4MzQ0LCJhdWQiOiJhdXRvbGVhZHMtY2xpZW50IiwiaXNzIjoiYXV0b2xlYWRzLWFwaSIsInN1YiI6IjcifQ.A1OfOzcOv4mTOLQq1mlVzf9A-GyxkUhxikddMi6iDpY\")",
-      "Bash(tree:*)",
-      "Bash(git reset:*)",
-      "Bash(git checkout:*)",
-      "Bash(git add:*)",
-      "Bash(git commit:*)",
+      "Bash(chmod:*)",
       "Bash(git push:*)",
-      "Bash(curl:*)",
-      "Bash(ssh:*)",
-      "Bash(python3:*)",
-      "Bash(scp:*)",
       "WebSearch",
-      "WebFetch(domain:github.com)",
-      "Bash(bun run build:frontend:*)",
-      "Bash(\")"
+      "Bash(git pull:*)",
+      "Bash(ssh:*)",
+      "Bash(git add:*)"
     ],
     "deny": [],
     "ask": []
