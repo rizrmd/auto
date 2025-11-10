@@ -6,9 +6,17 @@
       "WebSearch",
       "Bash(git pull:*)",
       "Bash(ssh:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(npx:chrome-devtools-mcp@latest)",
+      "Bash(npx:*)",
+      "Bash(chrome:*)",
+      "Bash(google-chrome:*)"
     ],
     "deny": [],
     "ask": []
-  }
+  },
+  "enableAllProjectMcpServers": true
 }

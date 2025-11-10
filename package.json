@@ -12,7 +12,9 @@
     "db:seed": "bun run seed.ts",
     "traefik:generate": "bun run scripts/deployment/generate-traefik-config.ts",
     "traefik:update": "bun run scripts/deployment/update-traefik.ts",
-    "traefik:health": "bun run scripts/deployment/traefik-health-check.ts"
+    "traefik:health": "bun run scripts/deployment/traefik-health-check.ts",
+    "devtools:start": "bash scripts/devtools/setup-chrome-devtools.sh",
+    "devtools:cleanup": "bash scripts/devtools/cleanup-chrome-devtools.sh"
   },
   "dependencies": {
     "@hono/node-server": "^1.19.5",
