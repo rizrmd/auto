@@ -600,6 +600,69 @@ whatsappAdmin.post(
 );
 
 /**
+ * POST /api/admin/whatsapp/reset-status
+ * Reset tenant status to connected for testing purposes
+ */
+whatsappAdmin.post(
+  '/reset-status',
+  asyncHandler(async (c) => {
+    const tenant = c.get('tenant');
+    const user = c.get('user');
+
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
+
+    console.log(`[WHATSAPP ADMIN] Reset status request for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+
+    try {
+      // Reset tenant status to connected
+      await prisma.tenant.update({
+        where: { id: tenant.id },
+        data: {
+          whatsappStatus: 'connected',
+          whatsappBotEnabled: false,
+        },
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          reset: true,
+          message: 'Tenant status reset to connected. Page should now load properly.',
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            whatsappStatus: 'connected',
+          }
+        },
+      };
+
+      return c.json(response);
+    } catch (error) {
+      console.error('[WHATSAPP ADMIN] Error resetting status:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: 'RESET_STATUS_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to reset status',
+        },
+      };
+
+      return c.json(response, 500);
+    }
+  })
+);
+
+/**
  * POST /api/admin/whatsapp/force-reconnect
  * Force reconnection and generate QR code after disconnect
  */
