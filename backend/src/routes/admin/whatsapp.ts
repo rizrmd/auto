@@ -158,20 +158,18 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // If tenant is marked as disconnected, update status to allow reconnection
+      // For disconnected tenants, return a message to click "Refresh QR" instead of auto-generating
       if (tenant.whatsappStatus === 'disconnected') {
-        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, updating status to allow reconnection...`);
-        try {
-          await prisma.tenant.update({
-            where: { id: tenant.id },
-            data: {
-              whatsappStatus: 'connecting', // Set to connecting state
-            },
-          });
-          console.log(`[WHATSAPP ADMIN] Updated tenant status from disconnected to connecting`);
-        } catch (dbError) {
-          console.error('[WHATSAPP ADMIN] Failed to update tenant status:', dbError);
-        }
+        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, requiring manual QR generation request`);
+
+        const qrResponse: ApiResponse = {
+          success: false,
+          error: {
+            code: 'TENANT_DISCONNECTED',
+            message: 'Tenant is disconnected. Click "Refresh QR" to reconnect.',
+          },
+        };
+        return c.json(qrResponse, 200);
       }
 
       // Use WhatsApp internal API through proxy for tenant-specific routing
@@ -405,7 +403,7 @@ whatsappAdmin.get(
 );
 
 /**
- * POST /api/admin/whatsapp/force-reconnect
+ * POST /api/admin/whatsapp/disconnect
  * Disconnect WhatsApp device (for reconnection with new QR)
  */
 whatsappAdmin.post(
@@ -581,6 +579,76 @@ whatsappAdmin.post(
         error: {
           code: 'DISCONNECT_ERROR',
           message: error instanceof Error ? error.message : 'Failed to disconnect WhatsApp device',
+        },
+      };
+
+      return c.json(response, 500);
+    }
+  })
+);
+
+/**
+ * POST /api/admin/whatsapp/force-reconnect
+ * Force reconnection and generate QR code after disconnect
+ */
+whatsappAdmin.post(
+  '/force-reconnect',
+  asyncHandler(async (c) => {
+    // Set no-cache headers for reconnection operations
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
+
+    const tenant = c.get('tenant');
+    const user = c.get('user');
+
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
+
+    console.log(`[WHATSAPP ADMIN] Force reconnect request for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+
+    try {
+      // Update tenant status to allow reconnection
+      console.log(`[WHATSAPP ADMIN] Updating tenant status to allow reconnection...`);
+      await prisma.tenant.update({
+        where: { id: tenant.id },
+        data: {
+          whatsappStatus: 'connecting',
+          whatsappBotEnabled: false,
+        },
+      });
+      console.log(`[WHATSAPP ADMIN] Updated tenant status from disconnected to connecting`);
+
+      const response: ApiResponse = {
+        success: true,
+        data: {
+          reconnected: true,
+          message: 'Tenant status updated. You can now generate QR code for reconnection.',
+          tenant: {
+            id: tenant.id,
+            name: tenant.name,
+            slug: tenant.slug,
+            whatsappStatus: 'connecting',
+          }
+        },
+      };
+
+      return c.json(response);
+    } catch (error) {
+      console.error('[WHATSAPP ADMIN] Error during force reconnect:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: {
+          code: 'FORCE_RECONNECT_ERROR',
+          message: error instanceof Error ? error.message : 'Failed to force reconnect',
         },
       };
 
