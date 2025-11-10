@@ -158,6 +158,22 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
+      // If tenant is marked as disconnected, update status to allow reconnection
+      if (tenant.whatsappStatus === 'disconnected') {
+        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, updating status to allow reconnection...`);
+        try {
+          await prisma.tenant.update({
+            where: { id: tenant.id },
+            data: {
+              whatsappStatus: 'connecting', // Set to connecting state
+            },
+          });
+          console.log(`[WHATSAPP ADMIN] Updated tenant status from disconnected to connecting`);
+        } catch (dbError) {
+          console.error('[WHATSAPP ADMIN] Failed to update tenant status:', dbError);
+        }
+      }
+
       // Use WhatsApp internal API through proxy for tenant-specific routing
       const response = await fetch(`http://localhost:8080/api/wa/pair`, {
         method: 'GET',
