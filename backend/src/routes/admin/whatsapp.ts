@@ -60,7 +60,7 @@ whatsappAdmin.get(
       if (!isDbDisconnected) {
         try {
           // Get health status through proxy to ensure tenant-specific routing
-          const response = await fetch(`http://localhost:3000/api/wa/health`, {
+          const response = await fetch(`http://localhost:8080/api/wa/health`, {
             method: 'GET',
             headers: {
               'Host': tenant.subdomain || tenant.customDomain,
@@ -159,7 +159,7 @@ whatsappAdmin.get(
 
     try {
       // Use WhatsApp internal API through proxy for tenant-specific routing
-      const response = await fetch(`http://localhost:3000/api/wa/pair`, {
+      const response = await fetch(`http://localhost:8080/api/wa/pair`, {
         method: 'GET',
         headers: {
           'Host': tenant.subdomain || tenant.customDomain,
