@@ -126,8 +126,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       const qrData = qrResult.data!;
       setQrData(qrData);
 
-      // Set fixed 120 seconds countdown for consistency
-      const initialTimeLeft = 120;
+      // Set fixed 30 seconds countdown for better UX
+      const initialTimeLeft = 30;
       setTimeLeft(initialTimeLeft);
 
       // Clear existing countdown interval
@@ -142,7 +142,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
           if (newTime === 0) {
             // QR expired, show expired state with specific error
             setInterpretedError({
-              message: '⏰ QR code has expired after 2 minutes',
+              message: '⏰ QR code has expired after 30 seconds',
               action: 'Click "Refresh QR" to generate a new QR code',
               severity: 'warning'
             });
@@ -303,10 +303,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     }
   };
 
-  const forceReconnect = async () => {
+  const disconnectDevice = async () => {
     const confirmMessage = isConnected && isPaired
-      ? 'Are you sure you want to disconnect this WhatsApp device? This will end the current connection and generate a new QR code for pairing.'
-      : 'Are you sure you want to force reconnect WhatsApp? This will clear any partial connection and generate a new QR code.';
+      ? 'Are you sure you want to disconnect this WhatsApp device? After disconnection, you can scan a new QR code to reconnect.'
+      : 'Are you sure you want to disconnect this partially connected device?';
 
     if (!confirm(confirmMessage)) {
       return;
@@ -317,14 +317,14 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       setError(null);
       setInterpretedError(null);
 
-      // Call API to force disconnect
-      const reconnectResult = await adminAPI.forceReconnectWhatsApp();
+      // Call API to disconnect device
+      const disconnectResult = await adminAPI.forceReconnectWhatsApp();
 
-      if (!reconnectResult.success) {
-        if (reconnectResult.interpretedError) {
-          setInterpretedError(reconnectResult.interpretedError);
+      if (!disconnectResult.success) {
+        if (disconnectResult.interpretedError) {
+          setInterpretedError(disconnectResult.interpretedError);
         } else {
-          setError(reconnectResult.message || 'Force reconnect failed');
+          setError(disconnectResult.message || 'Disconnect failed');
         }
         return;
       }
@@ -345,18 +345,12 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       setTimeLeft(0);
       setTestResult(null);
 
-      // Show success message
-      setTestResult(isConnected && isPaired
-        ? '🔄 WhatsApp disconnected successfully. Generating new QR code for pairing...'
-        : '🔄 Connection cleared. Generating new QR code for pairing...'
-      );
-
-      // Load QR code immediately
-      await loadQRCode();
+      // Show success message - device is now disconnected
+      setTestResult('🔌 WhatsApp device disconnected successfully. Click "Refresh QR" to generate a new QR code for pairing.');
 
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Force reconnect failed';
-      setError(`❌ Force reconnect failed: ${errorMessage}`);
+      const errorMessage = err instanceof Error ? err.message : 'Disconnect failed';
+      setError(`❌ Disconnect failed: ${errorMessage}`);
     } finally {
       setLoading(false);
     }
@@ -483,8 +477,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                 <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
                   🔄 Refresh Status
                 </Button>
-                <Button onClick={forceReconnect} variant="destructive" disabled={loading}>
-                  🔄 Force Reconnect
+                <Button onClick={disconnectDevice} variant="destructive" disabled={loading}>
+                  🔌 Disconnect
                 </Button>
               </div>
             )}
@@ -551,10 +545,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                         <li>4. Point your camera at the QR code</li>
                       </ol>
                       <div className={`text-sm font-medium ${
-                          timeLeft <= 30 ? 'text-red-600 animate-pulse' : 'text-orange-600'
+                          timeLeft <= 10 ? 'text-red-600 animate-pulse' : 'text-orange-600'
                         }`}>
-                        {timeLeft <= 30 && '⚠️ '}QR code expires in {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, '0')}
-                        {timeLeft <= 30 && '\nClick Refresh QR to extend!'}
+                        {timeLeft <= 10 && '⚠️ '}QR code expires in {timeLeft} second{timeLeft !== 1 ? 's' : ''}
+                        {timeLeft <= 10 && '\nClick Refresh QR to extend!'}
                       </div>
                     </div>
                   </div>
@@ -585,7 +579,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                 <h4 className="font-medium text-blue-900 mb-2">📋 Important Notes:</h4>
                 <ul className="text-sm text-blue-700 space-y-1">
                   <li>• Keep this page open until the connection is established</li>
-                  <li>• QR code expires in 2 minutes - click "Refresh QR" when expired</li>
+                  <li>• QR code expires in 30 seconds - click "Refresh QR" when expired</li>
                   <li>• Status updates automatically every 2 seconds after QR appears</li>
                   <li>• QR code will auto-hide immediately after successful pairing</li>
                   <li>• Only one WhatsApp device can be connected per tenant</li>
