@@ -23,6 +23,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const [connectionTestLoading, setConnectionTestLoading] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
+  const [showQR, setShowQR] = useState(false);
 
   // Simple refs for intervals
   const qrRefreshInterval = useRef<NodeJS.Timeout | null>(null);
@@ -87,6 +88,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         setTimeLeft(0);
         setError(null);
         setInterpretedError(null);
+        setShowQR(false);
         setTestResult('🎉 WhatsApp connected successfully!');
 
         // Start normal polling
@@ -359,7 +361,14 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
   const isConnected = status?.data?.health?.connected || false;
   const isPaired = status?.data?.health?.paired || false;
   const whatsappStatus = status?.data?.tenant?.whatsappStatus || 'unknown';
-  const shouldShowQR = whatsappStatus === 'disconnected';
+  const isDisconnected = whatsappStatus === 'disconnected';
+  const shouldShowQR = isDisconnected && showQR;
+
+  // Handle Connect button click
+  const handleConnectClick = () => {
+    setShowQR(true);
+    loadQRCode();
+  };
 
   // Enhanced error display takes priority
   if (interpretedError) {
@@ -485,11 +494,17 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
               </div>
             )}
 
-            {!isConnected && (
+            {isDisconnected && (
               <div className="flex space-x-2">
-                <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
-                  🔄 Refresh Status
-                </Button>
+                {!showQR ? (
+                  <Button onClick={handleConnectClick} disabled={loading} className="flex-1">
+                    {loading ? '🔄 Connecting...' : '📱 Connect WhatsApp'}
+                  </Button>
+                ) : (
+                  <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
+                    🔄 Refresh Status
+                  </Button>
+                )}
               </div>
             )}
 
@@ -516,9 +531,14 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
               <span>
                 Connect WhatsApp Bot
               </span>
-              <Button onClick={refreshQR} variant="outline" size="sm" disabled={qrRefreshing}>
-                {qrRefreshing ? '🔄' : '🔄'} Refresh QR
-              </Button>
+              <div className="flex space-x-2">
+                <Button onClick={refreshQR} variant="outline" size="sm" disabled={qrRefreshing}>
+                  {qrRefreshing ? '🔄' : '🔄'} Refresh QR
+                </Button>
+                <Button onClick={() => setShowQR(false)} variant="outline" size="sm">
+                  ❌ Cancel
+                </Button>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
