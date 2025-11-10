@@ -492,11 +492,11 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
         />
       )}
 
-      {/* Connection Status */}
+      {/* WhatsApp Server Status */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
-            <span>WhatsApp Connection Status</span>
+            <span>WhatsApp Server Status</span>
             <div className={`w-3 h-3 rounded-full ${
               isConnected ? 'bg-green-500' : 'bg-red-500'
             }`}></div>
@@ -506,7 +506,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <p className="text-sm font-medium text-gray-700">Status</p>
+                <p className="text-sm font-medium text-gray-700">Server Connection</p>
                 <p className={`text-lg font-semibold ${
                   isConnected ? 'text-green-600' : 'text-red-600'
                 }`}>
@@ -514,11 +514,53 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                 </p>
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-700">Paired</p>
+                <p className="text-sm font-medium text-gray-700">API Version</p>
+                <p className="text-lg font-semibold text-gray-900">
+                  {status?.data?.health?.version || 'Unknown'}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p className="text-sm text-blue-700">
+                <strong>ℹ️ Info:</strong> Server status menunjukkan koneksi ke WhatsApp API.
+                {isConnected ? ' Server terhubung dan siap menerima pairing device.' : ' Server tidak terhubung. Periksa konfigurasi API.'}
+              </p>
+            </div>
+
+            {isConnected && (
+              <div className="flex space-x-2">
+                <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
+                  🔄 Refresh Server
+                </Button>
+                <Button onClick={disconnectDevice} variant="destructive" disabled={loading}>
+                  🔌 Disconnect Server
+                </Button>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Device Connection Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <span>Device Connection Status</span>
+            <div className={`w-3 h-3 rounded-full ${
+              isPaired ? 'bg-green-500' : 'bg-orange-500'
+            }`}></div>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm font-medium text-gray-700">Device Status</p>
                 <p className={`text-lg font-semibold ${
-                  isPaired ? 'text-green-600' : 'text-gray-600'
+                  isPaired ? 'text-green-600' : 'text-orange-600'
                 }`}>
-                  {isPaired ? 'Yes' : 'No'}
+                  {isPaired ? 'Paired' : 'Not Paired'}
                 </p>
               </div>
               <div>
@@ -527,43 +569,32 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                   {status?.data?.tenant?.whatsappNumber || 'Not set'}
                 </p>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-700">Version</p>
-                <p className="text-lg font-semibold text-gray-900">
-                  {status?.data?.health?.version || 'Unknown'}
-                </p>
-              </div>
             </div>
 
-            {isConnected && (
-              <div className="flex space-x-2">
-                {isPaired && (
-                  <Button onClick={testConnection} disabled={connectionTestLoading} className="flex-1">
-                    {connectionTestLoading ? 'Testing...' : '🧪 Test Connection'}
-                  </Button>
-                )}
-                <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
-                  🔄 Refresh Status
-                </Button>
-                <Button onClick={disconnectDevice} variant="destructive" disabled={loading}>
-                  🔌 Disconnect
-                </Button>
-              </div>
-            )}
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-sm text-orange-700">
+                <strong>📱 Info:</strong> Device status menunjukkan apakah HP sudah dipairing.
+                {isPaired ? ' Device sudah ter-pair dan siap digunakan untuk kirim pesan.' : ' Device belum ter-pair. Klik tombol "Pair Device" untuk mulai pairing.'}
+              </p>
+            </div>
 
-            {isDisconnected && (
-              <div className="flex space-x-2">
-                {!showQR ? (
-                  <Button onClick={handleConnectClick} disabled={loading} className="flex-1">
-                    {loading ? '🔄 Connecting...' : '📱 Connect WhatsApp'}
+            {/* Device Actions */}
+            <div className="flex space-x-2">
+              {!isPaired ? (
+                <Button onClick={handleConnectClick} disabled={loading} className="flex-1">
+                  {loading ? '🔄 Generating QR...' : '📱 Pair Device'}
+                </Button>
+              ) : (
+                <>
+                  <Button onClick={testConnection} disabled={connectionTestLoading} className="flex-1">
+                    {connectionTestLoading ? 'Testing...' : '🧪 Test Device'}
                   </Button>
-                ) : (
                   <Button onClick={loadWhatsAppStatus} variant="outline" disabled={loading}>
                     🔄 Refresh Status
                   </Button>
-                )}
-              </div>
-            )}
+                </>
+              )}
+            </div>
 
             {testResult && (
               <div className={`p-3 rounded-lg text-sm ${
