@@ -197,15 +197,30 @@ class AdminAPI {
 
   // WhatsApp Management
   async getWhatsAppStatus(): Promise<WhatsAppStatus> {
-    const response = await fetch(`${this.baseURL}/whatsapp/status`, {
-      headers: this.getAuthHeaders(),
+    // Add cache-busting parameter for real-time status updates
+    const timestamp = Date.now();
+
+    const response = await fetch(`${this.baseURL}/whatsapp/status?t=${timestamp}`, {
+      headers: {
+        ...this.getAuthHeaders(),
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
     });
     return this.handleResponse(response);
   }
 
   async getWhatsAppQR(): Promise<WhatsAppQR> {
-    const response = await fetch(`${this.baseURL}/whatsapp/qr`, {
-      headers: this.getAuthHeaders(),
+    // Add cache-busting parameter to ensure fresh QR codes
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substring(7);
+
+    const response = await fetch(`${this.baseURL}/whatsapp/qr?t=${timestamp}&r=${random}`, {
+      headers: {
+        ...this.getAuthHeaders(),
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      },
     });
     return this.handleResponse(response);
   }

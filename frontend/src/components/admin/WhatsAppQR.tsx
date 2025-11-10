@@ -263,7 +263,20 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
     setTimeLeft(0);
     setTestResult(null);
 
-    console.log('[WHATSAPP QR] Refreshing QR code...');
+    console.log('[WHATSAPP QR] Refreshing QR code with cache-busting...');
+
+    // Force cache invalidation by clearing any cached images
+    if (typeof window !== 'undefined') {
+      // Clear any cached QR images
+      if (window.caches) {
+        window.caches.keys().then(cacheNames => {
+          cacheNames.forEach(cacheName => {
+            window.caches.delete(cacheName);
+          });
+        });
+      }
+    }
+
     await loadQRCode();
   };
 

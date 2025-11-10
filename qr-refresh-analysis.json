@@ -1,0 +1,491 @@
+{
+  "timestamp": "2025-11-10T06:43:55.006Z",
+  "networkRequests": [
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:26.752Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:26.763Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:27.512Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:27.516Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:27.518Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:27.536Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:27.765Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:27.769Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:29.794Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:29.801Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:30.523Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:30.527Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:30.528Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:30.538Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:30.794Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:30.797Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:32.821Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:32.833Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:33.517Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:33.521Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:33.522Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:33.530Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:33.818Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:33.827Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:35.849Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:35.859Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:36.514Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:36.518Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:36.520Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:36.530Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:36.848Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:36.858Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:38.861Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:38.872Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:39.522Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:39.526Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:39.527Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:39.539Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:39.870Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:39.881Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:41.886Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:41.897Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:42.518Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:42.522Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:42.523Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:42.533Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:42.900Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:42.903Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:44.926Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:44.937Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:45.510Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:45.514Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:45.515Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:45.525Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:45.923Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:45.936Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:47.953Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:47.966Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:48.522Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:48.526Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:48.527Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:48.537Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:48.946Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:48.957Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:50.962Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:50.974Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:51.515Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:51.518Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:51.519Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:51.529Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:51.961Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:51.972Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:53.998Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:54.009Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:54.520Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/status",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:54.523Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:54.525Z"
+    },
+    {
+      "type": "response",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "status": 200,
+      "timestamp": "2025-11-10T06:43:54.531Z"
+    },
+    {
+      "type": "request",
+      "url": "https://primamobil.id/api/admin/whatsapp/qr",
+      "method": "GET",
+      "timestamp": "2025-11-10T06:43:54.996Z"
+    }
+  ],
+  "consoleMessages": [
+    {
+      "level": "log",
+      "text": "🔍 Starting QR Refresh Debug Analysis...",
+      "timestamp": "2025-11-10T06:43:26.044Z"
+    }
+  ],
+  "summary": {
+    "totalRequests": 79,
+    "errorCount": 0,
+    "warningCount": 0
+  }
+}

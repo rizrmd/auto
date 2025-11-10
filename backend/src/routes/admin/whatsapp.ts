@@ -24,6 +24,12 @@ whatsappAdmin.use('*', authMiddleware);
 whatsappAdmin.get(
   '/status',
   asyncHandler(async (c) => {
+    // Set no-cache headers for real-time status
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
+    c.header('Vary', 'Authorization, Accept-Encoding');
+
     const tenant = c.get('tenant');
     const user = c.get('user');
     
@@ -114,6 +120,13 @@ whatsappAdmin.get(
 whatsappAdmin.get(
   '/qr',
   asyncHandler(async (c) => {
+    // Set no-cache headers to ensure fresh QR codes
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
+    c.header('Vary', 'Authorization, Accept-Encoding');
+    c.header('X-Content-Type-Options', 'nosniff');
+
     const format = c.req.query('format') as 'json' | 'image' || 'json';
     const tenant = c.get('tenant');
     const user = c.get('user');
@@ -152,14 +165,16 @@ whatsappAdmin.get(
         const base64Image = 'data:image/png;base64,' + Buffer.from(imageBuffer).toString('base64');
 
         if (format === 'image') {
-          // Return image directly
+          // Return image directly with no-cache headers
           return new Response(imageBuffer, {
             status: 200,
             headers: {
               'Content-Type': 'image/png',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Cache-Control': 'no-cache, no-store, must-revalidate, private',
               'Pragma': 'no-cache',
               'Expires': '0',
+              'X-Content-Type-Options': 'nosniff',
+              'Vary': 'Authorization',
             },
           });
         } else {
@@ -212,6 +227,11 @@ whatsappAdmin.get(
 whatsappAdmin.post(
   '/test',
   asyncHandler(async (c) => {
+    // Set no-cache headers for test endpoints
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
+
     const body = await c.req.json();
     const { phone, message } = body;
     const tenant = c.get('tenant');
@@ -298,6 +318,10 @@ whatsappAdmin.post(
 whatsappAdmin.get(
   '/logs',
   asyncHandler(async (c) => {
+    // Set short cache for logs (they change frequently)
+    c.header('Cache-Control', 'private, max-age=5');
+    c.header('Vary', 'Authorization');
+
     const limit = parseInt(c.req.query('limit') || '50');
     const tenantId = c.get('tenantId');
 
@@ -357,6 +381,11 @@ whatsappAdmin.get(
 whatsappAdmin.post(
   '/force-reconnect',
   asyncHandler(async (c) => {
+    // Set no-cache headers for reconnection operations
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
+
     const tenant = c.get('tenant');
     const user = c.get('user');
 
@@ -422,6 +451,10 @@ whatsappAdmin.post(
 whatsappAdmin.post(
   '/mark-read',
   asyncHandler(async (c) => {
+    // Set no-cache headers for message operations
+    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
+    c.header('Pragma', 'no-cache');
+    c.header('Expires', '0');
     const body = await c.req.json();
     const { phone, messageIds } = body;
 
