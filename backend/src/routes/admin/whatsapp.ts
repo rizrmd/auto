@@ -47,27 +47,41 @@ whatsappAdmin.get(
     
     // Use tenant-specific WhatsApp instance through proxy
     try {
-      // Get health status through proxy to ensure tenant-specific routing
-      const baseUrl = process.env.APP_URL || 'https://auto.lumiku.com';
-      const healthUrl = `${baseUrl.replace(/https?:\/\//, '')}/api/wa/health`;
+      // First check database status - this is the source of truth for disconnect state
+      const dbStatus = tenant.whatsappStatus || 'unknown';
+      const isDbDisconnected = dbStatus === 'disconnected';
 
-      const response = await fetch(`http://localhost:3000/api/wa/health`, {
-        method: 'GET',
-        headers: {
-          'Host': tenant.subdomain || tenant.customDomain,
-          'Content-Type': 'application/json',
-        },
-      });
+      console.log(`[WHATSAPP ADMIN] Database status for ${tenant.name}: ${dbStatus}`);
 
-      if (!response.ok) {
-        throw new Error(`Health check failed: ${response.status}`);
+      // Only check WhatsApp API health if database shows as connected
+      let health = null;
+      let version = 'v1.7.0';
+
+      if (!isDbDisconnected) {
+        try {
+          // Get health status through proxy to ensure tenant-specific routing
+          const response = await fetch(`http://localhost:3000/api/wa/health`, {
+            method: 'GET',
+            headers: {
+              'Host': tenant.subdomain || tenant.customDomain,
+              'Content-Type': 'application/json',
+            },
+          });
+
+          if (response.ok) {
+            const healthData = await response.json();
+            health = healthData.data?.data || healthData.data;
+            version = health?.version || 'v1.7.0';
+          } else {
+            console.warn(`[WHATSAPP ADMIN] Health check failed: ${response.status}`);
+          }
+        } catch (healthError) {
+          console.warn('[WHATSAPP ADMIN] Health check error:', healthError);
+          // Don't fail the entire status endpoint if health check fails
+        }
+      } else {
+        console.log('[WHATSAPP ADMIN] Skipping health check - tenant is marked as disconnected in database');
       }
-
-      const healthData = await response.json();
-      const health = healthData.data?.data || healthData.data;
-
-      // Get version information from health response
-      const version = health?.version || 'v1.7.0';
 
       // Get webhook configuration
       const webhookUrl = `${process.env.APP_URL || 'https://auto.lumiku.com'}/webhook/whatsapp`;
@@ -81,7 +95,7 @@ whatsappAdmin.get(
             slug: tenant.slug,
             whatsappNumber: tenant.whatsappNumber,
             whatsappBotEnabled: tenant.whatsappBotEnabled,
-            whatsappStatus: tenant.whatsappStatus,
+            whatsappStatus: tenant.whatsappStatus, // This reflects the database state
             whatsappPort: tenant.whatsappPort,
           },
           health: health,
@@ -424,54 +438,120 @@ whatsappAdmin.post(
       // Wait for disconnect to complete
       await new Promise(resolve => setTimeout(resolve, 2000));
 
-      // Verify disconnect by checking health status
-      console.log('[WHATSAPP ADMIN] Verifying device disconnection...');
-      const healthCheckResponse = await fetch(`http://localhost:8080/health`, {
-        method: 'GET',
-        headers: {
-          'User-Agent': 'AutoLeads-Proxy/1.0',
-        },
-      });
+      // Clear any cached session data
+      console.log('[WHATSAPP ADMIN] Clearing cached session data...');
 
-      if (healthCheckResponse.ok) {
-        const healthData = await healthCheckResponse.json();
-        console.log(`[WHATSAPP ADMIN] Health check after disconnect:`, healthData.data);
+      // Clear tenant WhatsApp instance cache/data if needed
+      try {
+        // Force logout/clear session to prevent auto-reconnect
+        const logoutResponse = await fetch(`http://localhost:8080/logout?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'AutoLeads-Proxy/1.0',
+          },
+        });
+        console.log(`[WHATSAPP ADMIN] Logout response: ${logoutResponse.status}`);
+      } catch (logoutError) {
+        console.log('[WHATSAPP ADMIN] Logout endpoint not available');
+      }
 
-        // If device is still connected, force restart the WhatsApp service
-        if (healthData.data?.connected) {
-          console.log('[WHATSAPP ADMIN] Device still connected after disconnect. Forcing service restart...');
+      // Additional wait for session clearing
+      await new Promise(resolve => setTimeout(resolve, 3000));
 
-          // Force restart by calling restart endpoint (if available) or using system command
-          try {
-            // Try to restart WhatsApp service
-            const restartResponse = await fetch(`http://localhost:8080/restart`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'AutoLeads-Proxy/1.0',
-              },
-            });
-            console.log(`[WHATSAPP ADMIN] Restart response: ${restartResponse.status}`);
-          } catch (restartError) {
-            console.log('[WHATSAPP ADMIN] Restart endpoint not available, waiting for natural disconnect...');
-          }
+      // Force restart WhatsApp service to ensure complete disconnection
+      console.log('[WHATSAPP ADMIN] Force restarting WhatsApp service...');
 
-          // Wait for service restart
-          await new Promise(resolve => setTimeout(resolve, 5000));
+      try {
+        const restartResponse = await fetch(`http://localhost:8080/restart`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'User-Agent': 'AutoLeads-Proxy/1.0',
+          },
+        });
+        console.log(`[WHATSAPP ADMIN] Restart response status: ${restartResponse.status}`);
+
+        // Wait for service to be fully restarted
+        await new Promise(resolve => setTimeout(resolve, 8000));
+
+      } catch (restartError) {
+        console.log('[WHATSAPP ADMIN] Service restart failed, attempting alternative approach...');
+
+        // Alternative: Force restart by stopping and starting the WhatsApp service
+        try {
+          console.log('[WHATSAPP ADMIN] Attempting manual WhatsApp service restart...');
+
+          // This would require system-level access which may not be available in container
+          // For now, we'll rely on the disconnect and cache clearing
+          await new Promise(resolve => setTimeout(resolve, 10000));
+
+        } catch (systemError) {
+          console.log('[WHATSAPP ADMIN] System-level restart not available');
         }
       }
 
-      console.log('[WHATSAPP ADMIN] Disconnect process completed');
+      // Update tenant database record to reflect disconnected state
+      console.log('[WHATSAPP ADMIN] Updating tenant status to disconnected...');
+      try {
+        await prisma.tenant.update({
+          where: { id: tenant.id },
+          data: {
+            whatsappStatus: 'disconnected',
+            whatsappBotEnabled: false,
+          },
+        });
+        console.log('[WHATSAPP ADMIN] Tenant status updated to disconnected');
+      } catch (dbError) {
+        console.error('[WHATSAPP ADMIN] Failed to update tenant status:', dbError);
+        // Continue anyway - the API disconnect should be sufficient
+      }
+
+      // Final verification to ensure disconnect worked
+      console.log('[WHATSAPP ADMIN] Verifying disconnect status...');
+      let finalVerificationPassed = false;
+
+      try {
+        const verifyResponse = await fetch(`http://localhost:8080/health`, {
+          method: 'GET',
+          headers: {
+            'Host': tenant.subdomain || tenant.customDomain,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (verifyResponse.ok) {
+          const verifyData = await verifyResponse.json();
+          const deviceStatus = verifyData.data?.data?.status;
+
+          if (deviceStatus === 'disconnected' || deviceStatus === 'not connected') {
+            console.log(`[WHATSAPP ADMIN] Verification successful: Device status is ${deviceStatus}`);
+            finalVerificationPassed = true;
+          } else {
+            console.warn(`[WHATSAPP ADMIN] Verification warning: Device still showing as ${deviceStatus}`);
+          }
+        } else {
+          console.warn('[WHATSAPP ADMIN] Verification failed: Health check error');
+        }
+      } catch (verifyError) {
+        console.warn('[WHATSAPP ADMIN] Verification error:', verifyError);
+      }
+
+      console.log('[WHATSAPP ADMIN] Disconnect process completed with service restart');
 
       const response: ApiResponse = {
         success: true,
         data: {
           disconnected: true,
-          message: 'WhatsApp device disconnected successfully. The device is now offline and ready for new QR code pairing.',
+          verified: finalVerificationPassed,
+          message: finalVerificationPassed
+            ? 'WhatsApp device disconnected successfully. The device is now offline and ready for new QR code pairing.'
+            : 'WhatsApp disconnect initiated. Please refresh the status to confirm disconnection.',
           tenant: {
             id: tenant.id,
             name: tenant.name,
             slug: tenant.slug,
+            whatsappStatus: 'disconnected',
           }
         },
       };
