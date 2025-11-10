@@ -125,7 +125,7 @@ async function generateTraefikConfig(): Promise<void> {
                 "Referrer-Policy": "strict-origin-when-cross-origin"
               },
               customResponseHeaders: {
-                "Cache-Control": "public, max-age=31536000",
+                "Cache-Control": "public, max-age=3600", // 1 hour for general content
                 "X-Static-File": "true"
               }
             }
