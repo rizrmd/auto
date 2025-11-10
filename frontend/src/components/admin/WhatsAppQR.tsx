@@ -91,8 +91,8 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
 
         // Start normal polling
         startNormalStatusPolling();
-      } else if (!isConnected && !qrData && !wasConnected) {
-        // Not connected and no QR - load QR
+      } else if ((!isConnected || !isPaired) && !qrData) {
+        // Not connected or not paired and no QR - load QR
         await loadQRCode();
       }
     } catch (err) {
@@ -480,7 +480,7 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
               </div>
             )}
 
-            {!isConnected && (
+            {(!isConnected || !isPaired) && (
               <div className="flex space-x-2">
                 <Button onClick={forceReconnect} variant="destructive" disabled={loading}>
                   🔄 Force Reconnect
@@ -507,11 +507,13 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
       </Card>
 
       {/* QR Code Scanner */}
-      {!isConnected && (
+      {(!isConnected || !isPaired) && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Connect WhatsApp Bot</span>
+              <span>
+                {isConnected && !isPaired ? 'Complete WhatsApp Pairing' : 'Connect WhatsApp Bot'}
+              </span>
               <Button onClick={refreshQR} variant="outline" size="sm" disabled={qrRefreshing}>
                 {qrRefreshing ? '🔄' : '🔄'} Refresh QR
               </Button>
@@ -531,7 +533,10 @@ export function WhatsAppQR({ onConnectionChange }: WhatsAppQRProps) {
                     </div>
                     <div className="space-y-2">
                       <p className="text-sm text-gray-600">
-                        Scan this QR code with your WhatsApp app
+                        {isConnected && !isPaired
+                          ? 'Your WhatsApp is connected but needs pairing. Scan this QR code to complete the setup.'
+                          : 'Scan this QR code with your WhatsApp app'
+                        }
                       </p>
                       <ol className="text-left text-sm text-gray-500 space-y-1 max-w-md mx-auto">
                         <li>1. Open WhatsApp on your phone</li>
