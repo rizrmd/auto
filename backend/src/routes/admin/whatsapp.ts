@@ -167,21 +167,21 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // For disconnected tenants, return empty QR response without calling WhatsApp API
+      // For disconnected tenants, update status to connecting and proceed with QR generation
       if (tenant.whatsappStatus === 'disconnected') {
-        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, returning empty QR response`);
+        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, updating to connecting for QR generation`);
 
-        const qrResponse: ApiResponse = {
-          success: true,
+        // Update tenant status to allow reconnection
+        await prisma.tenant.update({
+          where: { id: tenant.id },
           data: {
-            qr: null,
-            expires: Date.now() + 30000,
-            device_id: tenant.whatsappInstanceId || 'unknown',
-            message: 'Device is disconnected. Click "Refresh QR" to start reconnection process.',
-            requires_manual_action: true,
+            whatsappStatus: 'connecting',
           },
-        };
-        return c.json(qrResponse);
+        });
+
+        // Update tenant object for response
+        tenant.whatsappStatus = 'connecting';
+        console.log(`[WHATSAPP ADMIN] Updated tenant status to connecting for QR generation`);
       }
 
       // Use WhatsApp internal API through proxy for tenant-specific routing
