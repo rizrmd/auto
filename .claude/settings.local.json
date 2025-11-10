@@ -19,7 +19,21 @@
       "Bash(python:*)",
       "Bash(echo \"Masalah yang ditemukan:\n\n🔍 WhatsApp Status Analysis:\n- Connected: true ✅\n- Paired: false ❌ \n- QR Generation: working ✅\n- Issue: Device belum ter-pair\n\n💡 Solution Steps:\n1. Buka https://primamobil.id/admin/whatsapp\n2. Scan QR code dengan WhatsApp mobile\n3. Tunggu proses pairing selesai\n4. Status akan otomatis update ke ''Connected''\n\n🎯 Root Cause:\nBukan masalah frontend, tapi device pairing belum dilakukan.\nWhatsApp API sudah berjalan normal, hanya perlu pairing dengan device.\")",
       "Bash(node:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(bun run traefik:generate:*)",
+      "Bash(bun scripts/deployment/generate-traefik-config.ts:*)",
+      "Bash(scp:*)",
+      "Bash(bun run:*)",
+      "mcp__chrome-devtools__new_page",
+      "mcp__chrome-devtools__take_snapshot",
+      "mcp__chrome-devtools__click",
+      "mcp__chrome-devtools__list_console_messages",
+      "mcp__chrome-devtools__list_network_requests",
+      "mcp__chrome-devtools__get_network_request",
+      "mcp__chrome-devtools__evaluate_script",
+      "mcp__chrome-devtools__navigate_page",
+      "mcp__chrome-devtools__wait_for",
+      "mcp__chrome-devtools__handle_dialog"
     ],
     "deny": [],
     "ask": []
