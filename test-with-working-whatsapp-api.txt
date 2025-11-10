@@ -1,0 +1,8 @@
+uid=45_0 RootWebArea "Auto Lumiku - Showroom Mobil Bekas Berkualitas" url="https://primamobil.id/admin/whatsapp"
+  uid=45_1 heading "Oops! Terjadi Kesalahan" level="1"
+  uid=45_2 StaticText "Maaf, terjadi kesalahan pada aplikasi. Tim kami telah diberitahu dan akan segera memperbaikinya."
+  uid=45_3 button "Coba lagi"
+  uid=45_4 link "Kembali ke beranda" url="https://primamobil.id/"
+    uid=45_5 StaticText "Kembali ke Beranda"
+  uid=45_6 link "Hubungi Support WhatsApp" url="https://wa.me/6281234567890"
+    uid=45_7 StaticText "Hubungi Support WhatsApp"

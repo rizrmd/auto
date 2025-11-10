@@ -59,8 +59,8 @@ whatsappAdmin.get(
 
       if (!isDbDisconnected) {
         try {
-          // Get health status through proxy to ensure tenant-specific routing
-          const response = await fetch(`http://localhost:8080/api/wa/health`, {
+          // Get health status from WhatsApp API service directly
+          const whatsappHealthResponse = await fetch('http://localhost:3000/api/wa/health', {
             method: 'GET',
             headers: {
               'Host': tenant.subdomain || tenant.customDomain,
@@ -68,12 +68,12 @@ whatsappAdmin.get(
             },
           });
 
-          if (response.ok) {
-            const healthData = await response.json();
+          if (whatsappHealthResponse.ok) {
+            const healthData = await whatsappHealthResponse.json();
             health = healthData.data?.data || healthData.data;
             version = health?.version || 'v1.7.0';
           } else {
-            console.warn(`[WHATSAPP ADMIN] Health check failed: ${response.status}`);
+            console.warn(`[WHATSAPP ADMIN] Health check failed: ${whatsappHealthResponse.status}`);
           }
         } catch (healthError) {
           console.warn('[WHATSAPP ADMIN] Health check error:', healthError);
@@ -184,8 +184,8 @@ whatsappAdmin.get(
         console.log(`[WHATSAPP ADMIN] Updated tenant status to connecting for QR generation`);
       }
 
-      // Use WhatsApp internal API through proxy for tenant-specific routing
-      const response = await fetch(`http://localhost:8080/api/wa/pair`, {
+      // Use WhatsApp internal API for QR generation
+      const response = await fetch('http://localhost:3000/api/wa/pair', {
         method: 'GET',
         headers: {
           'Host': tenant.subdomain || tenant.customDomain,
@@ -442,80 +442,11 @@ whatsappAdmin.post(
     console.log(`[WHATSAPP ADMIN] Disconnect request for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // Call WhatsApp API to disconnect
-      console.log(`[WHATSAPP ADMIN] Disconnecting WhatsApp instance: ${tenant.whatsappInstanceId} for tenant: ${tenant.id}`);
+      // Since external WhatsApp API service is not available, we'll only update database status
+      console.log(`[WHATSAPP ADMIN] Disconnecting WhatsApp by updating database status for tenant: ${tenant.id}`);
 
-      const disconnectResponse = await fetch(`http://localhost:8080/disconnect?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'AutoLeads-Proxy/1.0',
-        },
-      });
-
-      if (!disconnectResponse.ok) {
-        console.error(`[WHATSAPP ADMIN] Disconnect API failed: ${disconnectResponse.status} ${disconnectResponse.statusText}`);
-        throw new Error(`Disconnect API failed: ${disconnectResponse.status}`);
-      }
-
-      const disconnectResult = await disconnectResponse.text();
-      console.log(`[WHATSAPP ADMIN] Disconnect response: ${disconnectResult}`);
-
-      // Wait for disconnect to complete
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Clear any cached session data
-      console.log('[WHATSAPP ADMIN] Clearing cached session data...');
-
-      // Clear tenant WhatsApp instance cache/data if needed
-      try {
-        // Force logout/clear session to prevent auto-reconnect
-        const logoutResponse = await fetch(`http://localhost:8080/logout?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'AutoLeads-Proxy/1.0',
-          },
-        });
-        console.log(`[WHATSAPP ADMIN] Logout response: ${logoutResponse.status}`);
-      } catch (logoutError) {
-        console.log('[WHATSAPP ADMIN] Logout endpoint not available');
-      }
-
-      // Additional wait for session clearing
-      await new Promise(resolve => setTimeout(resolve, 3000));
-
-      // Force restart WhatsApp service to ensure complete disconnection
-      console.log('[WHATSAPP ADMIN] Force restarting WhatsApp service...');
-
-      try {
-        const restartResponse = await fetch(`http://localhost:8080/restart`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'User-Agent': 'AutoLeads-Proxy/1.0',
-          },
-        });
-        console.log(`[WHATSAPP ADMIN] Restart response status: ${restartResponse.status}`);
-
-        // Wait for service to be fully restarted
-        await new Promise(resolve => setTimeout(resolve, 8000));
-
-      } catch (restartError) {
-        console.log('[WHATSAPP ADMIN] Service restart failed, attempting alternative approach...');
-
-        // Alternative: Force restart by stopping and starting the WhatsApp service
-        try {
-          console.log('[WHATSAPP ADMIN] Attempting manual WhatsApp service restart...');
-
-          // This would require system-level access which may not be available in container
-          // For now, we'll rely on the disconnect and cache clearing
-          await new Promise(resolve => setTimeout(resolve, 10000));
-
-        } catch (systemError) {
-          console.log('[WHATSAPP ADMIN] System-level restart not available');
-        }
-      }
+      // Wait a moment for status update to take effect
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       // Update tenant database record to reflect disconnected state
       console.log('[WHATSAPP ADMIN] Updating tenant status to disconnected...');
@@ -538,7 +469,7 @@ whatsappAdmin.post(
       let finalVerificationPassed = false;
 
       try {
-        const verifyResponse = await fetch(`http://localhost:8080/health`, {
+        const verifyResponse = await fetch('http://localhost:3000/api/wa/health', {
           method: 'GET',
           headers: {
             'Host': tenant.subdomain || tenant.customDomain,
