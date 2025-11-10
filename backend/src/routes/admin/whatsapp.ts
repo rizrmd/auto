@@ -421,9 +421,47 @@ whatsappAdmin.post(
       const disconnectResult = await disconnectResponse.text();
       console.log(`[WHATSAPP ADMIN] Disconnect response: ${disconnectResult}`);
 
-      // Wait longer for disconnect to complete and prevent immediate reconnection
-      console.log('[WHATSAPP ADMIN] Waiting for device to fully disconnect...');
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // Wait for disconnect to complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
+
+      // Verify disconnect by checking health status
+      console.log('[WHATSAPP ADMIN] Verifying device disconnection...');
+      const healthCheckResponse = await fetch(`http://localhost:8080/health`, {
+        method: 'GET',
+        headers: {
+          'User-Agent': 'AutoLeads-Proxy/1.0',
+        },
+      });
+
+      if (healthCheckResponse.ok) {
+        const healthData = await healthCheckResponse.json();
+        console.log(`[WHATSAPP ADMIN] Health check after disconnect:`, healthData.data);
+
+        // If device is still connected, force restart the WhatsApp service
+        if (healthData.data?.connected) {
+          console.log('[WHATSAPP ADMIN] Device still connected after disconnect. Forcing service restart...');
+
+          // Force restart by calling restart endpoint (if available) or using system command
+          try {
+            // Try to restart WhatsApp service
+            const restartResponse = await fetch(`http://localhost:8080/restart`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'User-Agent': 'AutoLeads-Proxy/1.0',
+              },
+            });
+            console.log(`[WHATSAPP ADMIN] Restart response: ${restartResponse.status}`);
+          } catch (restartError) {
+            console.log('[WHATSAPP ADMIN] Restart endpoint not available, waiting for natural disconnect...');
+          }
+
+          // Wait for service restart
+          await new Promise(resolve => setTimeout(resolve, 5000));
+        }
+      }
+
+      console.log('[WHATSAPP ADMIN] Disconnect process completed');
 
       const response: ApiResponse = {
         success: true,
