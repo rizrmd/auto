@@ -60,7 +60,7 @@ whatsappAdmin.get(
       if (!isDbDisconnected) {
         try {
           // Get health status from WhatsApp API service directly
-          const whatsappHealthResponse = await fetch('http://localhost:8081/health', {
+          const whatsappHealthResponse = await fetch('http://localhost:8080/health', {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ whatsappAdmin.get(
       }
 
       // Use WhatsApp API service for QR generation
-      const response = await fetch(`http://localhost:8081/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+      const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
         method: 'GET',
         headers: {
           'User-Agent': 'AutoLeads-Proxy/1.0',
@@ -468,7 +468,7 @@ whatsappAdmin.post(
       let finalVerificationPassed = false;
 
       try {
-        const verifyResponse = await fetch(`http://localhost:8081/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+        const verifyResponse = await fetch(`http://localhost:8080/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
