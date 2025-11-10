@@ -12,15 +12,24 @@ app.get('/pair', logger(), async (c) => {
   try {
     // Get tenant from domain/subdomain
     const host = c.req.header('host') || '';
-    const tenant = await prisma.tenant.findFirst({
-      where: {
-        OR: [
-          { subdomain: host },
-          { customDomain: host }
-        ],
-        whatsappBotEnabled: true
-      }
-    });
+
+    // Special handling for PrimaMobil - use hardcoded tenant ID
+    let tenant;
+    if (host.includes('primamobil')) {
+      tenant = await prisma.tenant.findFirst({
+        where: { id: 4 }
+      });
+    } else {
+      tenant = await prisma.tenant.findFirst({
+        where: {
+          OR: [
+            { subdomain: host },
+            { customDomain: host }
+          ],
+          whatsappBotEnabled: true
+        }
+      });
+    }
 
     if (!tenant) {
       return c.json({
@@ -114,15 +123,24 @@ app.get('/health', logger(), async (c) => {
   try {
     // Get tenant from domain/subdomain
     const host = c.req.header('host') || '';
-    const tenant = await prisma.tenant.findFirst({
-      where: {
-        OR: [
-          { subdomain: host },
-          { customDomain: host }
-        ],
-        whatsappBotEnabled: true
-      }
-    });
+
+    // Special handling for PrimaMobil - use hardcoded tenant ID
+    let tenant;
+    if (host.includes('primamobil')) {
+      tenant = await prisma.tenant.findFirst({
+        where: { id: 4 }
+      });
+    } else {
+      tenant = await prisma.tenant.findFirst({
+        where: {
+          OR: [
+            { subdomain: host },
+            { customDomain: host }
+          ],
+          whatsappBotEnabled: true
+        }
+      });
+    }
 
     if (!tenant) {
       return c.json({
@@ -179,15 +197,24 @@ app.post('/send', logger(), async (c) => {
 
     // Get tenant from domain/subdomain
     const host = c.req.header('host') || '';
-    const tenant = await prisma.tenant.findFirst({
-      where: {
-        OR: [
-          { subdomain: host },
-          { customDomain: host }
-        ],
-        whatsappBotEnabled: true
-      }
-    });
+
+    // Special handling for PrimaMobil - use hardcoded tenant ID
+    let tenant;
+    if (host.includes('primamobil')) {
+      tenant = await prisma.tenant.findFirst({
+        where: { id: 4 }
+      });
+    } else {
+      tenant = await prisma.tenant.findFirst({
+        where: {
+          OR: [
+            { subdomain: host },
+            { customDomain: host }
+          ],
+          whatsappBotEnabled: true
+        }
+      });
+    }
 
     if (!tenant) {
       return c.json({
