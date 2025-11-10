@@ -86,6 +86,15 @@ whatsappAdmin.get(
       // Get webhook configuration
       const webhookUrl = `${process.env.APP_URL || 'https://auto.lumiku.com'}/webhook/whatsapp`;
 
+      // For disconnected tenants, provide default health structure to prevent frontend errors
+      const healthData = health || {
+        connected: false,
+        paired: false,
+        status: 'disconnected',
+        version: 'v1.7.0',
+        webhook_configured: true,
+      };
+
       const apiResponse: ApiResponse = {
         success: true,
         data: {
@@ -98,7 +107,7 @@ whatsappAdmin.get(
             whatsappStatus: tenant.whatsappStatus, // This reflects the database state
             whatsappPort: tenant.whatsappPort,
           },
-          health: health,
+          health: healthData,
           webhook: {
             configured: !!webhookUrl,
             url: webhookUrl,
@@ -158,18 +167,21 @@ whatsappAdmin.get(
     console.log(`[WHATSAPP ADMIN] QR generation for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
 
     try {
-      // For disconnected tenants, return a message to click "Refresh QR" instead of auto-generating
+      // For disconnected tenants, return a success response with instructions instead of generating QR
       if (tenant.whatsappStatus === 'disconnected') {
-        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, requiring manual QR generation request`);
+        console.log(`[WHATSAPP ADMIN] Tenant is disconnected, providing reconnection instructions`);
 
         const qrResponse: ApiResponse = {
-          success: false,
-          error: {
-            code: 'TENANT_DISCONNECTED',
-            message: 'Tenant is disconnected. Click "Refresh QR" to reconnect.',
+          success: true,
+          data: {
+            qr: null,
+            expires: Date.now() + 30000,
+            device_id: tenant.whatsappInstanceId || 'unknown',
+            message: 'Device is disconnected. Click "Refresh QR" to start reconnection process.',
+            requires_manual_action: true,
           },
         };
-        return c.json(qrResponse, 200);
+        return c.json(qrResponse);
       }
 
       // Use WhatsApp internal API through proxy for tenant-specific routing
