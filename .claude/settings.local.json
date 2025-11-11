@@ -39,7 +39,8 @@
       "mcp__chrome-devtools__list_pages",
       "Bash(git reset:*)",
       "Bash(git tag:*)",
-      "mcp__chrome-devtools__take_screenshot"
+      "mcp__chrome-devtools__take_screenshot",
+      "mcp__chrome-devtools__select_page"
     ],
     "deny": [],
     "ask": []
