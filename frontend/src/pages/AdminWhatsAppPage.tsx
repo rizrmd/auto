@@ -52,8 +52,10 @@ export function AdminWhatsAppPage() {
               <p className="text-lg font-semibold text-gray-900">{tenant?.name}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-700">Subdomain</p>
-              <p className="text-lg font-semibold text-gray-900">{tenant?.subdomain}.lumiku.com</p>
+              <p className="text-sm font-medium text-gray-700">Domain</p>
+              <p className="text-lg font-semibold text-gray-900">
+                {tenant?.customDomain || `${tenant?.subdomain}.lumiku.com`}
+              </p>
             </div>
             <div>
               <p className="text-sm font-medium text-gray-700">WhatsApp Number</p>
