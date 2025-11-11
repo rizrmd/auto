@@ -1,0 +1,3 @@
+[submodule "backend/wapi"]
+	path = backend/wapi
+	url = https://github.com/rizrmd/whatsapp-web-api
