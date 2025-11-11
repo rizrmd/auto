@@ -60,58 +60,14 @@ ENV NODE_ENV=production
 ENV PORT=3000
 ENV APP_URL=https://auto.lumiku.com
 
-# Create startup script for both services
-RUN echo '#!/bin/bash\n\
-set -e\n\
-\n\
-echo "🚀 Starting AutoLeads application..."\n\
-\n\
-# Generate Traefik configuration if DATABASE_URL is available\n\
-if [ -n "$DATABASE_URL" ]; then\n\
-    echo "🔧 Generating Traefik proxy configuration..."\n\
-    # Use proper service name for Coolify setup\n\
-    CONTAINER_SERVICE_NAME=${CONTAINER_SERVICE_NAME:-autoleads}\n\
-    export CONTAINER_SERVICE_NAME\n\
-    bun run traefik:generate || echo "⚠️  Warning: Failed to generate traefik config"\n\
-    \n\
-    # Ensure configuration is loaded by restarting traefik\n\
-    echo "🔄 Restarting Traefik to load new configuration..."\n\
-    if command -v docker >/dev/null 2>&1; then\n\
-        docker restart coolify-proxy || echo "⚠️  Could not restart traefik"\n\
-    fi\n\
-else\n\
-    echo "⚠️  DATABASE_URL not available, skipping traefik config generation"\n\
-fi\n\
-\n\
-# Start WhatsApp Web API in background\n\
-if [ -f "/app/whatsapp-api.env" ] && [ -n "$DATABASE_URL" ]; then\n\
-    echo "📱 Starting WhatsApp Web API on port 8080..."\n\
-    \n\
-    # Configure webhook URL if APP_URL is available\n\
-    if [ -n "$APP_URL" ]; then\n\
-        WA_WEBHOOK_URL="$APP_URL/webhook/whatsapp"\n\
-        echo "🔗 Configuring webhook: $WA_WEBHOOK_URL"\n\
-    fi\n\
-    \n\
-    # Start WhatsApp Web API with environment variables (fixed syntax)\n\
-    if [ -n "$WA_WEBHOOK_URL" ]; then\n\
-        PORT=8080 DATABASE_URL="$DATABASE_URL" WA_WEBHOOK_URL="$WA_WEBHOOK_URL" /usr/local/bin/whatsapp-web-api > /tmp/wa-service.log 2>&1 &\n\
-    else\n\
-        PORT=8080 DATABASE_URL="$DATABASE_URL" /usr/local/bin/whatsapp-web-api > /tmp/wa-service.log 2>&1 &\n\
-    fi\n\
-    WHATSAPP_PID=$!\n\
-    echo "WhatsApp API started with PID: $WHATSAPP_PID"\n\
-    echo "WhatsApp API logs: /tmp/wa-service.log"\n\
-else\n\
-    echo "⚠️  WhatsApp API not configured (missing DATABASE_URL)"\n\
-fi\n\
-\n\
-# Start main application\n\
-echo "🌐 Starting main AutoLeads application on port 3000..."\n\
-exec ./start.sh' > /app/start-multi-services.sh
+# Install additional tools for service supervision
+RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
+
+# Copy enhanced multi-service startup script
+COPY scripts/startup/whatsapp-multi-service.sh /app/start-multi-services.sh
 
 # Make startup script executable
 RUN chmod +x /app/start-multi-services.sh
 
-# Use multi-service startup script
+# Use enhanced multi-service startup script
 CMD ["/app/start-multi-services.sh"]
