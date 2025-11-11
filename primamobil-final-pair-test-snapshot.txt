@@ -1,0 +1,273 @@
+uid=106_0 RootWebArea "Auto Lumiku - Showroom Mobil Bekas Berkualitas" url="https://primamobil.id/admin/whatsapp"
+  uid=106_1 ignored
+    uid=106_2 generic
+      uid=106_3 generic
+        uid=106_4 ignored
+          uid=106_5 generic
+            uid=106_6 ignored
+              uid=106_7 ignored
+                uid=106_8 ignored
+                  uid=106_9 ignored
+                    uid=106_10 ignored
+                      uid=106_11 StaticText "A"
+                  uid=106_12 ignored
+                    uid=106_13 heading "Admin Panel" level="1"
+                      uid=106_14 StaticText "Admin Panel"
+                    uid=106_15 paragraph
+                      uid=106_16 StaticText "Tenant Management"
+                uid=106_17 navigation
+                  uid=106_18 link "📊 Dashboard Status overview" url="https://primamobil.id/admin"
+                    uid=106_19 button "📊 Dashboard Status overview"
+                      uid=106_20 ignored
+                        uid=106_21 ignored
+                          uid=106_22 StaticText "📊"
+                        uid=106_23 ignored
+                          uid=106_24 generic
+                            uid=106_25 StaticText "Dashboard"
+                          uid=106_26 generic
+                            uid=106_27 StaticText "Status overview"
+                  uid=106_28 link "📈 Analytics Search demand" url="https://primamobil.id/admin/analytics"
+                    uid=106_29 button "📈 Analytics Search demand"
+                      uid=106_30 ignored
+                        uid=106_31 ignored
+                          uid=106_32 StaticText "📈"
+                        uid=106_33 ignored
+                          uid=106_34 generic
+                            uid=106_35 StaticText "Analytics"
+                          uid=106_36 generic
+                            uid=106_37 StaticText "Search demand"
+                  uid=106_38 link "📱 WhatsApp Bot management" url="https://primamobil.id/admin/whatsapp"
+                    uid=106_39 button "📱 WhatsApp Bot management"
+                      uid=106_40 ignored
+                        uid=106_41 ignored
+                          uid=106_42 StaticText "📱"
+                        uid=106_43 ignored
+                          uid=106_44 generic
+                            uid=106_45 StaticText "WhatsApp"
+                          uid=106_46 generic
+                            uid=106_47 StaticText "Bot management"
+                  uid=106_48 link "👥 Users & Sales Team management" url="https://primamobil.id/admin/users"
+                    uid=106_49 button "👥 Users & Sales Team management"
+                      uid=106_50 ignored
+                        uid=106_51 ignored
+                          uid=106_52 StaticText "👥"
+                        uid=106_53 ignored
+                          uid=106_54 generic
+                            uid=106_55 StaticText "Users & Sales"
+                          uid=106_56 generic
+                            uid=106_57 StaticText "Team management"
+                uid=106_58 ignored
+                  uid=106_59 ignored
+                    uid=106_60 ignored
+                      uid=106_61 ignored
+                        uid=106_62 ignored
+                        uid=106_63 ignored
+                          uid=106_64 StaticText "System Status"
+                      uid=106_65 paragraph
+                        uid=106_66 StaticText "All systems operational"
+                uid=106_67 generic
+                  uid=106_68 link "← Back to Site" url="https://primamobil.id/"
+                    uid=106_69 button "← Back to Site"
+                      uid=106_70 ignored
+                        uid=106_71 StaticText "←"
+                      uid=106_72 StaticText "Back to Site"
+          uid=106_73 ignored
+            uid=106_74 banner
+              uid=106_75 ignored
+                uid=106_76 ignored
+                  uid=106_77 ignored
+                    uid=106_78 heading "WhatsApp Management" level="1"
+                      uid=106_79 StaticText "WhatsApp Management"
+                    uid=106_80 paragraph
+                      uid=106_81 StaticText "Manage WhatsApp bot connection and settings"
+                uid=106_82 ignored
+                  uid=106_83 ignored
+                    uid=106_84 ignored
+                      uid=106_85 ignored
+                        uid=106_86 ignored
+                          uid=106_87 ignored
+                          uid=106_88 ignored
+                            uid=106_89 StaticText "PrimaMobil Indonesia"
+                  uid=106_90 generic
+                    uid=106_91 button "A Admin PrimaMobil"
+                      uid=106_92 ignored
+                        uid=106_93 ignored
+                          uid=106_94 StaticText "A"
+                      uid=106_95 ignored
+                        uid=106_96 StaticText "Admin PrimaMobil"
+                      uid=106_97 image
+            uid=106_98 main
+              uid=106_99 ignored
+                uid=106_100 ignored
+                  uid=106_101 ignored
+                    uid=106_102 ignored
+                      uid=106_103 heading "WhatsApp Management" level="1"
+                        uid=106_104 StaticText "WhatsApp Management"
+                      uid=106_105 paragraph
+                        uid=106_106 StaticText "Manage your tenant's WhatsApp bot connection and settings"
+                uid=106_107 ignored
+                  uid=106_108 ignored
+                    uid=106_109 ignored
+                      uid=106_110 ignored
+                        uid=106_111 StaticText "🏢"
+                      uid=106_112 ignored
+                        uid=106_113 StaticText "Tenant Information"
+                  uid=106_114 ignored
+                    uid=106_115 ignored
+                      uid=106_116 ignored
+                        uid=106_117 paragraph
+                          uid=106_118 StaticText "Tenant Name"
+                        uid=106_119 paragraph
+                          uid=106_120 StaticText "PrimaMobil Indonesia"
+                      uid=106_121 ignored
+                        uid=106_122 paragraph
+                          uid=106_123 StaticText "Subdomain"
+                        uid=106_124 paragraph
+                          uid=106_125 StaticText ".lumiku.com"
+                      uid=106_126 ignored
+                        uid=106_127 paragraph
+                          uid=106_128 StaticText "WhatsApp Number"
+                        uid=106_129 paragraph
+                          uid=106_130 StaticText "Not configured"
+                      uid=106_131 ignored
+                        uid=106_132 paragraph
+                          uid=106_133 StaticText "Bot Status"
+                        uid=106_134 paragraph
+                          uid=106_135 StaticText "❌ Disabled"
+                uid=106_136 ignored
+                  uid=106_137 ignored
+                    uid=106_138 ignored
+                      uid=106_139 ignored
+                        uid=106_140 ignored
+                          uid=106_141 StaticText "WhatsApp Server Status"
+                        uid=106_142 ignored
+                    uid=106_143 ignored
+                      uid=106_144 ignored
+                        uid=106_145 ignored
+                          uid=106_146 ignored
+                            uid=106_147 paragraph
+                              uid=106_148 StaticText "Server Connection"
+                            uid=106_149 paragraph
+                              uid=106_150 StaticText "Disconnected"
+                          uid=106_151 ignored
+                            uid=106_152 paragraph
+                              uid=106_153 StaticText "API Version"
+                            uid=106_154 paragraph
+                              uid=106_155 StaticText "v1.7.0"
+                        uid=106_156 ignored
+                          uid=106_157 paragraph
+                            uid=106_158 strong
+                              uid=106_159 StaticText "ℹ️ Info:"
+                            uid=106_160 StaticText " Server status menunjukkan koneksi ke WhatsApp API."
+                            uid=106_161 StaticText " Server tidak terhubung. Periksa konfigurasi API."
+                  uid=106_162 ignored
+                    uid=106_163 ignored
+                      uid=106_164 ignored
+                        uid=106_165 ignored
+                          uid=106_166 StaticText "Device Connection Status"
+                        uid=106_167 ignored
+                    uid=106_168 ignored
+                      uid=106_169 ignored
+                        uid=106_170 ignored
+                          uid=106_171 ignored
+                            uid=106_172 paragraph
+                              uid=106_173 StaticText "Device Status"
+                            uid=106_174 paragraph
+                              uid=106_175 StaticText "Not Paired"
+                          uid=106_176 ignored
+                            uid=106_177 paragraph
+                              uid=106_178 StaticText "Device Number"
+                            uid=106_179 paragraph
+                              uid=106_180 StaticText "6283134446903"
+                        uid=106_181 ignored
+                          uid=106_182 paragraph
+                            uid=106_183 strong
+                              uid=106_184 StaticText "📱 Info:"
+                            uid=106_185 StaticText " Device status menunjukkan apakah HP sudah dipairing."
+                            uid=106_186 StaticText " Device belum ter-pair. Klik tombol "Pair Device" untuk mulai pairing."
+                        uid=106_187 ignored
+                          uid=106_188 button "📱 Pair Device"
+                            uid=106_189 StaticText "📱 Pair Device"
+                uid=106_190 ignored
+                  uid=106_191 ignored
+                    uid=106_192 ignored
+                      uid=106_193 ignored
+                        uid=106_194 StaticText "📖"
+                      uid=106_195 ignored
+                        uid=106_196 StaticText "WhatsApp Bot Setup Guide"
+                  uid=106_197 ignored
+                    uid=106_198 ignored
+                      uid=106_199 ignored
+                        uid=106_200 ignored
+                          uid=106_201 heading "🔧 Setup Instructions" level="4"
+                            uid=106_202 StaticText "🔧 Setup Instructions"
+                          uid=106_203 list
+                            uid=106_204 listitem level="1"
+                              uid=106_205 StaticText "1. Ensure your tenant has a dedicated WhatsApp number"
+                            uid=106_206 listitem level="1"
+                              uid=106_207 StaticText "2. Click "Connect WhatsApp" and scan the QR code"
+                            uid=106_208 listitem level="1"
+                              uid=106_209 StaticText "3. Keep the browser tab open during pairing"
+                            uid=106_210 listitem level="1"
+                              uid=106_211 StaticText "4. Test the connection using the test button"
+                            uid=106_212 listitem level="1"
+                              uid=106_213 StaticText "5. Configure webhook settings if needed"
+                        uid=106_214 ignored
+                          uid=106_215 heading "⚡ Features Available" level="4"
+                            uid=106_216 StaticText "⚡ Features Available"
+                          uid=106_217 list
+                            uid=106_218 listitem level="1"
+                              uid=106_219 StaticText "• Automatic message handling"
+                            uid=106_220 listitem level="1"
+                              uid=106_221 StaticText "• Customer inquiry processing"
+                            uid=106_222 listitem level="1"
+                              uid=106_223 StaticText "• Lead capture and management"
+                            uid=106_224 listitem level="1"
+                              uid=106_225 StaticText "• Real-time message sync"
+                            uid=106_226 listitem level="1"
+                              uid=106_227 StaticText "• Multi-device support"
+                      uid=106_228 ignored
+                        uid=106_229 heading "⚠️ Important Notes" level="4"
+                          uid=106_230 StaticText "⚠️ Important Notes"
+                        uid=106_231 list
+                          uid=106_232 listitem level="1"
+                            uid=106_233 StaticText "• WhatsApp Business API is required for production use"
+                          uid=106_234 listitem level="1"
+                            uid=106_235 StaticText "• Only one device can be connected per tenant"
+                          uid=106_236 listitem level="1"
+                            uid=106_237 StaticText "• Messages older than 24 hours may not receive replies"
+                          uid=106_238 listitem level="1"
+                            uid=106_239 StaticText "• Rate limits apply to prevent spam"
+                uid=106_240 ignored
+                  uid=106_241 ignored
+                    uid=106_242 ignored
+                      uid=106_243 ignored
+                        uid=106_244 StaticText "🛠️"
+                      uid=106_245 ignored
+                        uid=106_246 StaticText "Troubleshooting"
+                  uid=106_247 ignored
+                    uid=106_248 ignored
+                      uid=106_249 ignored
+                        uid=106_250 heading "Common Issues" level="4"
+                          uid=106_251 StaticText "Common Issues"
+                        uid=106_252 ignored
+                          uid=106_253 ignored
+                            uid=106_254 paragraph
+                              uid=106_255 StaticText "QR Code Not Working"
+                            uid=106_256 paragraph
+                              uid=106_257 StaticText "Try refreshing the QR code or ensure your WhatsApp app is updated"
+                          uid=106_258 ignored
+                            uid=106_259 paragraph
+                              uid=106_260 StaticText "Connection Fails"
+                            uid=106_261 paragraph
+                              uid=106_262 StaticText "Check your internet connection and WhatsApp server status"
+                          uid=106_263 ignored
+                            uid=106_264 paragraph
+                              uid=106_265 StaticText "Messages Not Received"
+                            uid=106_266 paragraph
+                              uid=106_267 StaticText "Verify webhook URL is configured correctly in WhatsApp Business settings"
+                      uid=106_268 ignored
+                        uid=106_269 button "📧 Contact Support"
+                          uid=106_270 StaticText "📧 Contact Support"
+                        uid=106_271 button "📚 View Documentation"
+                          uid=106_272 StaticText "📚 View Documentation"
