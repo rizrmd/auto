@@ -33,6 +33,12 @@ model Tenant {
   primaryColor   String  @default("#FF5722") @map("primary_color") @db.VarChar(7)
   secondaryColor String  @default("#000000") @map("secondary_color") @db.VarChar(7)
 
+  // HEADER CUSTOMIZATION
+  headerTagline  String?  @map("header_tagline") @db.VarChar(200) @default("Mobil Bekas Berkualitas")
+  headerTitle    String   @map("header_title") @db.VarChar(200) @default("Temukan Mobil Impian Kamu")
+  headerSubtitle String   @map("header_subtitle") @db.Text @default("Jelajahi koleksi mobil bekas pilihan kami. Kualitas terjamin, harga terpercaya, dan pelayanan terbaik.")
+  headerCtaText  String   @map("header_cta_text") @db.VarChar(100) @default("Lihat Semua Mobil")
+
   // CONTACT
   phone              String  @db.VarChar(20)
   whatsappNumber     String  @map("whatsapp_number") @db.VarChar(20)

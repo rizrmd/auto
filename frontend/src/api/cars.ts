@@ -44,6 +44,10 @@ export interface Tenant {
   city: string | null;
   mapsUrl: string | null;
   businessHours: Record<string, string> | null;
+  headerTagline: string | null;
+  headerTitle: string | null;
+  headerSubtitle: string | null;
+  headerCtaText: string | null;
 }
 
 export interface CarFilters {

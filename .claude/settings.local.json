@@ -40,7 +40,17 @@
       "Bash(git reset:*)",
       "Bash(git tag:*)",
       "mcp__chrome-devtools__take_screenshot",
-      "mcp__chrome-devtools__select_page"
+      "mcp__chrome-devtools__select_page",
+      "mcp__zai-mcp-server__analyze_image",
+      "Bash(bun install:*)",
+      "Bash(bunx prisma migrate dev:*)",
+      "Bash(bunx prisma migrate:*)",
+      "Bash(bunx prisma generate:*)",
+      "Bash(bunx prisma db push:*)",
+      "Bash(bunx prisma db execute:*)",
+      "Bash(bun test:*)",
+      "Bash(bun update-all-tenants.ts:*)",
+      "Bash(bun test-header-fields.js:*)"
     ],
     "deny": [],
     "ask": []

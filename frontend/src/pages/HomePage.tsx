@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react';
 import { ArrowRight, Car, Shield, TrendingUp } from 'lucide-react';
 import { Header } from '../components/layout/Header';
+import { HeroHeader } from '../components/layout/HeroHeader';
 import { Footer } from '../components/layout/Footer';
 import { CarGrid } from '../components/car/CarGrid';
 import { Button } from '../components/ui/button';
@@ -51,62 +52,11 @@ export function HomePage() {
     <div className="min-h-screen flex flex-col">
       <Header onSearch={handleSearch} showSearch={true} />
 
-      {/* Premium Hero Section */}
-      <section className="relative py-24 md:py-40 overflow-hidden bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center">
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8">
-              <Car className="h-4 w-4 text-primary" />
-              <span className="text-sm font-semibold text-primary">Mobil Bekas Berkualitas</span>
-            </div>
-
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 leading-tight tracking-tight">
-              Temukan Mobil{' '}
-              <span className="bg-gradient-to-r from-primary via-primary/80 to-primary/60 bg-clip-text text-transparent">
-                Impian Kamu
-              </span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed max-w-2xl mx-auto font-light">
-              Jelajahi koleksi mobil bekas pilihan kami. Kualitas terjamin, harga terpercaya, dan pelayanan terbaik.
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button
-                asChild
-                size="lg"
-                className="text-base min-w-[200px] shadow-xl hover:shadow-2xl"
-              >
-                <a href="/cars" onClick={handleBrowseAll}>
-                  Lihat Semua Mobil
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
-              </Button>
-              {tenant?.whatsappNumber && (
-                <Button
-                  variant="outline"
-                  size="lg"
-                  asChild
-                  className="text-base min-w-[200px]"
-                >
-                  <a
-                    href={`https://wa.me/${tenant.whatsappNumber.replace(/[^0-9]/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Hubungi Kami
-                  </a>
-                </Button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Premium Decorative Elements */}
-        <div className="absolute top-20 left-10 w-96 h-96 bg-primary/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }} />
-        <div className="absolute pointer-events-none  bottom-20 right-10 w-[500px] h-[500px] bg-secondary/8 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }} />
-        <div className="absolute pointer-events-none top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-accent/5 rounded-full blur-3xl" />
-      </section>
+      {/* Customizable Hero Section */}
+      <HeroHeader
+        onBrowseAll={handleBrowseAll}
+        showWhatsApp={!!tenant?.whatsappNumber}
+      />
 
       {/* Premium Features Section */}
       <section className="py-20 bg-gradient-to-b from-muted/30 to-background">
