@@ -136,6 +136,10 @@ export interface LoginResponse {
     id: number;
     name: string;
     slug: string;
+    subdomain: string;
+    customDomain?: string;
+    whatsappNumber: string;
+    whatsappBotEnabled: boolean;
   };
 }
 

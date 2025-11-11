@@ -139,6 +139,10 @@ export class AuthService {
         id: user.tenant.id,
         name: user.tenant.name,
         slug: user.tenant.slug,
+        subdomain: user.tenant.subdomain,
+        customDomain: user.tenant.customDomain,
+        whatsappNumber: user.tenant.whatsappNumber,
+        whatsappBotEnabled: user.tenant.whatsappBotEnabled,
       },
     };
   }
