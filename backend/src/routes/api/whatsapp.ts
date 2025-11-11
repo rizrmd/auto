@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { prisma } from '../../db';
+import WhatsAppServiceManager from '../../services/whatsapp-service-manager';
 
 const app = new Hono();
 
@@ -42,6 +43,35 @@ app.get('/pair', logger(), async (c) => {
     }
 
     console.log(`[WHATSAPP PAIR] Pairing for tenant: ${tenant.name} (${tenant.slug})`);
+
+    // Check service state to prevent concurrent pairing
+    const whatsappManager = WhatsAppServiceManager.getInstance();
+
+    if (!whatsappManager.canStartNewPairing()) {
+      const state = whatsappManager.getState();
+      return c.json({
+        success: false,
+        error: {
+          code: 'PAIRING_IN_PROGRESS',
+          message: state.isPairing ?
+            'Pairing already in progress. Please wait for current session to complete.' :
+            'Maximum connections reached. Please disconnect existing devices first.',
+          state: state
+        },
+      }, 429); // Too Many Requests
+    }
+
+    // Start pairing process with service manager
+    const pairingResult = await whatsappManager.startPairing(tenant.slug);
+    if (!pairingResult.success) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'PAIRING_DENIED',
+          message: pairingResult.message,
+        },
+      }, 429);
+    }
 
     // Use single WhatsApp API instance with tenant identifier
     const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
