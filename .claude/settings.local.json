@@ -50,7 +50,10 @@
       "Bash(bunx prisma db execute:*)",
       "Bash(bun test:*)",
       "Bash(bun update-all-tenants.ts:*)",
-      "Bash(bun test-header-fields.js:*)"
+      "Bash(bun test-header-fields.js:*)",
+      "Bash(git submodule update:*)",
+      "Bash(GOOS=linux GOARCH=amd64 go build:*)",
+      "mcp__chrome-devtools__fill"
     ],
     "deny": [],
     "ask": []
