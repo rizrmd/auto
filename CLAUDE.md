@@ -141,3 +141,31 @@ docker exec b8sc48s8s0c4w00008k808w8 curl -X POST http://localhost:3000/webhook/
 - Ensure API endpoints exist before building frontend components
 - Test full integration between frontend and backend
 - **All development must be done in deployed environment via SSH**
+
+## File Organization Guidelines
+
+### Documentation Files (.md/.txt)
+- **Project README**: `/README.md` (root level) - Main project overview and quick start
+- **Development Guidelines**: `/CLAUDE.md` (root level) - This file, comprehensive development rules
+- **API Documentation**: `/docs/api/` - API endpoint documentation and schemas
+- **User Guides**: `/docs/user-guides/` - End-user documentation and manuals
+- **Technical Docs**: `/docs/technical/` - Architecture, setup, and technical specifications
+- **Deployment Docs**: `/docs/deployment/` - Deployment procedures and environment configs
+- **Testing Docs**: `/docs/testing/` - Test procedures and coverage reports
+- **Change Logs**: `/CHANGELOG.md` (root level) - Version history and changes
+- **License**: `/LICENSE.md` (root level) - Project license information
+- **Contributing**: `/CONTRIBUTING.md` (root level) - Contribution guidelines
+
+### File Naming Conventions
+- **Markdown files**: Use kebab-case (e.g., `api-endpoints.md`, `user-authentication.md`)
+- **Text files**: Use descriptive names with purpose (e.g., `deployment-notes.txt`, `debug-logs.txt`)
+- **Documentation structure**: Follow hierarchical organization with clear folder structure
+- **Index files**: Use `README.md` or `index.md` for folder navigation
+
+### Documentation Standards
+- **Markdown format**: Use GitHub Flavored Markdown (GFM) for consistency
+- **Headers**: Use consistent header hierarchy (# ## ### ####)
+- **Code blocks**: Specify language for syntax highlighting (```typescript, ```bash)
+- **Links**: Use relative paths for internal documentation links
+- **Images**: Store in `/docs/images/` and use relative paths
+- **Version control**: Keep documentation versioned with code changes

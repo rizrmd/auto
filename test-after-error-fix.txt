@@ -1,2 +1,0 @@
-uid=37_0 RootWebArea url="https://primamobil.id/admin/whatsapp"
-  uid=37_1 StaticText "Bad Gateway"
