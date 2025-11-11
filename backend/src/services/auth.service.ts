@@ -143,6 +143,10 @@ export class AuthService {
         customDomain: user.tenant.customDomain,
         whatsappNumber: user.tenant.whatsappNumber,
         whatsappBotEnabled: user.tenant.whatsappBotEnabled,
+        headerTagline: user.tenant.headerTagline,
+        headerTitle: user.tenant.headerTitle,
+        headerSubtitle: user.tenant.headerSubtitle,
+        headerCtaText: user.tenant.headerCtaText,
       },
     };
   }

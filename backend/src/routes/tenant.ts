@@ -34,6 +34,10 @@ tenantRoutes.get('/', asyncHandler(async (c) => {
       email: true,
       address: true,
       businessHours: true,
+      headerTagline: true,
+      headerTitle: true,
+      headerSubtitle: true,
+      headerCtaText: true,
     },
   });
 
@@ -72,6 +76,10 @@ tenantRoutes.get('/:id', asyncHandler(async (c) => {
       businessHours: true,
       status: true,
       plan: true,
+      headerTagline: true,
+      headerTitle: true,
+      headerSubtitle: true,
+      headerCtaText: true,
     },
   });
 

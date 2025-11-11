@@ -198,6 +198,10 @@ export class TenantService {
       whatsappBotEnabled: tenant.whatsappBotEnabled,
       primaryColor: tenant.primaryColor,
       secondaryColor: tenant.secondaryColor,
+      headerTagline: tenant.headerTagline,
+      headerTitle: tenant.headerTitle,
+      headerSubtitle: tenant.headerSubtitle,
+      headerCtaText: tenant.headerCtaText,
       ...settings,
     };
   }

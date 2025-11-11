@@ -140,6 +140,10 @@ export interface LoginResponse {
     customDomain?: string;
     whatsappNumber: string;
     whatsappBotEnabled: boolean;
+    headerTagline?: string;
+    headerTitle: string;
+    headerSubtitle: string;
+    headerCtaText: string;
   };
 }
 
