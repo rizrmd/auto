@@ -32,7 +32,7 @@ whatsappAdmin.get(
 
     const tenant = c.get('tenant');
     const user = c.get('user');
-    
+
     if (!tenant) {
       return c.json({
         success: false,
@@ -44,6 +44,45 @@ whatsappAdmin.get(
     }
 
     console.log(`[WHATSAPP ADMIN] Status check for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+
+    // Ensure WhatsApp service is running and generate QR if needed
+    let autoQRGenerated = false;
+    try {
+      const healthResponse = await fetch('http://localhost:8080/health', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'AutoLeads-Proxy/1.0',
+        },
+      });
+
+      if (healthResponse.ok) {
+        const healthData = await healthResponse.json();
+
+        // If WhatsApp service is not connected but database shows connecting, try to initialize it
+        if (!healthData.data?.connected && tenant.whatsappStatus === 'connecting') {
+          console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name}`);
+
+          try {
+            const qrResponse = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}`, {
+              method: 'GET',
+              headers: {
+                'User-Agent': 'AutoLeads-Proxy/1.0',
+              },
+            });
+
+            if (qrResponse.ok) {
+              autoQRGenerated = true;
+              console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name}`);
+            }
+          } catch (qrError) {
+            console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name}:`, qrError);
+          }
+        }
+      }
+    } catch (healthCheckError) {
+      console.warn(`[WHATSAPP ADMIN] Failed to check WhatsApp service health:`, healthCheckError);
+    }
     
     // Use tenant-specific WhatsApp instance through proxy
     try {
@@ -56,6 +95,8 @@ whatsappAdmin.get(
       // Only check WhatsApp API health if database shows as connected
       let health = null;
       let version = 'v1.7.0';
+      let serviceAvailable = false;
+      let serviceStatus = 'unreachable';
 
       if (!isDbDisconnected) {
         try {
@@ -72,15 +113,64 @@ whatsappAdmin.get(
             const healthData = await whatsappHealthResponse.json();
             health = healthData.data?.data || healthData.data;
             version = health?.version || 'v1.7.0';
+            serviceAvailable = true;
+            serviceStatus = 'available';
+            console.log(`[WHATSAPP ADMIN] Service available for ${tenant.name}, connected: ${health?.connected || false}`);
           } else {
+            serviceStatus = 'error';
             console.warn(`[WHATSAPP ADMIN] Health check failed: ${whatsappHealthResponse.status}`);
           }
         } catch (healthError) {
-          console.warn('[WHATSAPP ADMIN] Health check error:', healthError);
-          // Don't fail the entire status endpoint if health check fails
+          serviceStatus = 'unreachable';
+          console.warn('[WHATSAPP ADMIN] Health check error - service may be down:', healthError);
+
+          // Check if WhatsApp binary process is running
+          try {
+            const processCheck = await fetch('http://localhost:8080/', {
+              method: 'HEAD',
+              headers: { 'User-Agent': 'AutoLeads-Proxy/1.0' },
+            });
+            if (processCheck.ok) {
+              serviceStatus = 'running-but-unhealthy';
+            }
+          } catch (processError) {
+            serviceStatus = 'not-running';
+            console.warn('[WHATSAPP ADMIN] WhatsApp binary service appears to be not running');
+          }
         }
       } else {
         console.log('[WHATSAPP ADMIN] Skipping health check - tenant is marked as disconnected in database');
+      }
+
+      let autoQRGenerated = false;
+      let autoQRMessage = '';
+
+      // If WhatsApp service is not connected but database shows connecting, try to initialize it
+      // Only attempt if service is available or running
+      if ((!health?.connected || serviceStatus === 'running-but-unhealthy') && tenant.whatsappStatus === 'connecting' && serviceStatus !== 'not-running') {
+        console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name}`);
+        try {
+          const qrResponse = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}`, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'User-Agent': 'AutoLeads-Proxy/1.0',
+            },
+          });
+
+          if (qrResponse.ok) {
+            const qrData = await qrResponse.json();
+            autoQRGenerated = true;
+            autoQRMessage = 'QR code auto-generated to initialize service';
+            console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name}:`, qrData);
+          } else {
+            autoQRMessage = `QR generation failed with status: ${qrResponse.status}`;
+            console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name}: ${qrResponse.status}`);
+          }
+        } catch (qrError) {
+          autoQRMessage = `QR generation error: ${qrError instanceof Error ? qrError.message : 'Unknown error'}`;
+          console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name}:`, qrError);
+        }
       }
 
       // Get webhook configuration
@@ -115,6 +205,15 @@ whatsappAdmin.get(
           api: {
             url: `${process.env.APP_URL || 'https://auto.lumiku.com'}/api/wa`,
             pairing: `${process.env.APP_URL || 'https://auto.lumiku.com'}/api/wa/pair`,
+          },
+          autoInit: {
+            enabled: autoQRGenerated,
+            message: autoQRMessage,
+          },
+          service: {
+            status: serviceStatus,
+            available: serviceAvailable,
+            version: version,
           }
         },
       };
