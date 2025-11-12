@@ -177,7 +177,7 @@ whatsappAdmin.get(
               });
 
               if (qrResponse.ok) {
-                const qrData = await qrResponse.json();
+                const qrData = await qrResponse.arrayBuffer();
                 autoQRGenerated = true;
                 autoQRMessage = 'QR code auto-generated to initialize service';
                 console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name} [ID: ${requestId}]`);
@@ -193,24 +193,30 @@ whatsappAdmin.get(
 
           // 🎯 ENHANCED STATUS LOGIC: More conservative status transitions with guards
           const isActuallyConnected = health?.connected && health?.paired;
-          const isActuallyDisconnected = !health?.connected && !health?.paired;
+          // 🚨 FIXED: Only consider truly disconnected when health check completely fails
+          // Don't treat "connected: true, paired: false" as disconnected - this is a transient pairing state
+          const isActuallyDisconnected = !health?.connected || (!health?.paired && tenant.whatsappStatus === 'disconnected');
           const isCurrentlyConnected = tenant.whatsappStatus === 'connected';
           const isCurrentlyDisconnected = tenant.whatsappStatus === 'disconnected';
           const isCurrentlyConnecting = tenant.whatsappStatus === 'connecting';
+
+          // 🚨 CRITICAL FIX: Handle the transient "connected but not paired" state
+          const isTransientPairingState = health?.connected && !health?.paired;
+          const lastStatusChangeKey = `status-change-${tenant.id}`;
+          const isInGracePeriod = isCurrentlyConnecting && (Date.now() - (globalThis[lastStatusChangeKey] || 0)) < 60000; // 60s grace period
 
           // ENHANCED: Only sync to connected if actually connected AND not already connected
           const shouldSyncToConnected = isActuallyConnected && !isCurrentlyConnected;
 
           // ENHANCED: Only sync to disconnected if actually disconnected AND currently connected
-          // NEVER sync from "connecting" to "disconnected" - this was causing the loop
-          const shouldSyncToDisconnected = isActuallyDisconnected && isCurrentlyConnected;
+          // 🚨 FIXED: Never sync during transient pairing state or grace period
+          const shouldSyncToDisconnected = isActuallyDisconnected && isCurrentlyConnected && !isTransientPairingState && !isInGracePeriod;
 
           // 🎯 CRITICAL: NEVER interfere with "connecting" state - let natural process complete
           const shouldMaintainConnectingState = isCurrentlyConnecting &&
                                                isServiceAvailableButNotPaired;
 
           // Add debounce logic to prevent rapid status changes
-          const lastStatusChangeKey = `status-change-${tenant.id}`;
           const lastStatusChange = globalThis[lastStatusChangeKey] || 0;
           const statusChangeDebounceTime = 5000; // 5 seconds between status changes
 
