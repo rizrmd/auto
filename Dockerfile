@@ -1,5 +1,26 @@
 # ============================================================================
-# Runtime environment with WhatsApp Web API v1.7.0 (Downloaded from GitHub)
+# Stage 1: Build WhatsApp Web API from source using Go
+# ============================================================================
+FROM golang:1.23-bookworm AS whatsapp-builder
+
+WORKDIR /build
+
+# Copy the WhatsApp service source code from submodule
+COPY backend/wapi/ .
+
+# Generate go.sum and download Go module dependencies
+RUN go mod tidy && go mod download
+
+# Build the WhatsApp service binary for Linux AMD64
+# CGO_ENABLED=0 creates a statically linked binary (no external dependencies)
+# -ldflags="-w -s" strips debug information to reduce binary size
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -ldflags="-w -s" \
+    -o whatsapp-web-api \
+    main.go
+
+# ============================================================================
+# Stage 2: Runtime environment with compiled WhatsApp Web API
 # ============================================================================
 FROM oven/bun:latest
 
@@ -9,20 +30,16 @@ WORKDIR /app
 RUN mkdir -p /app/data && chmod 755 /app/data
 VOLUME ["/app/data"]
 
-# Install PostgreSQL client, CA certificates, wget, curl, and unzip for WhatsApp API
+# Install PostgreSQL client, CA certificates, curl for WhatsApp API
 # ca-certificates is CRITICAL for WhatsApp Web API to verify SSL/TLS connections
-RUN apt-get update && apt-get install -y postgresql-client ca-certificates wget curl unzip && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y postgresql-client ca-certificates curl && rm -rf /var/lib/apt/lists/*
 
-# Download and setup WhatsApp Web API v1.7.0 from GitHub releases (force fresh download)
-RUN wget --no-cache https://github.com/rizrmd/whatsapp-web-api/releases/download/v1.7.0/whatsapp-web-api-linux-amd64.zip \
-    && unzip whatsapp-web-api-linux-amd64.zip \
-    && chmod +x whatsapp-web-api-linux-amd64 \
-    && mv whatsapp-web-api-linux-amd64 /usr/local/bin/whatsapp-web-api \
-    && rm whatsapp-web-api-linux-amd64.zip
+# Copy compiled WhatsApp Web API binary from builder stage
+COPY --from=whatsapp-builder /build/whatsapp-web-api /usr/local/bin/whatsapp-web-api
 
-# Verify binary is executable and properly copied
+# Make binary executable and verify
 RUN chmod +x /usr/local/bin/whatsapp-web-api && \
-    /usr/local/bin/whatsapp-web-api --version || echo "WhatsApp Web API v1.7.0 ready"
+    /usr/local/bin/whatsapp-web-api --version || echo "WhatsApp Web API compiled from source ready"
 
 # Create WhatsApp API environment file
 RUN echo "PORT=8080" > /app/whatsapp-api.env \
