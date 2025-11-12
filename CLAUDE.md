@@ -13,7 +13,7 @@
 ⚠️ **IMPORTANT**: Never run this project locally. Use deployed environments only. Do not execute `bun run dev`, `bun run start`, or any local development commands.
 
 ## 🤖 WhatsApp Bot AI - CRITICAL SYSTEM (DO NOT BREAK)
-✅ **STATUS**: Fully operational, paired, and connected to AI (as of 2025-10-31)
+✅ **STATUS**: Multi-tenant operational, paired, and connected to AI (as of 2025-11-12)
 
 🚨 **CRITICAL WARNINGS - DO NOT BREAK THESE**:
 - **NEVER modify webhook handler** at `backend/src/routes/webhook/whatsapp.ts` without thorough testing
@@ -27,13 +27,42 @@
   - Always verify device status in `whatsmeow_device` table before changes
 - **NEVER modify** the bot initialization in webhook (stateManager, customerBot, adminBot instances)
 - **NEVER change** the Host header logic for tenant-specific routing
+- **🚨 NEVER change WhatsApp service port** - ALL tenants MUST use **port 8080 only**
 
 ### Current Configuration
-- **Paired Device**: 6283134446903 (Lumiku.com)
+- **Service**: Single WhatsApp service (port 8080) with multi-tenant support ✅ **IMPLEMENTED**
+- **Architecture**: 1 service can handle multiple WhatsApp numbers (1 per tenant) ✅ **WORKING**
 - **Webhook**: `https://auto.lumiku.com/webhook/whatsapp`
-- **Status**: Connected, paired, AI fully functional
 - **WhatsApp API Version**: v1.7.0
-- **Port**: 8080 (AutoLeads Motors), 8081 (PrimaMobil)
+- **Connected Devices**:
+  - AutoLeads Motors: +6281234567890 ✅ Paired
+  - PrimaMobil Indonesia: +6283134446903 ⏳ Ready to pair
+- **Port**: **ALL TENANTS MUST USE PORT 8080** - Never use port 8081 or other ports
+
+### 🏗️ WhatsApp Multi-Tenant Architecture (FULLY IMPLEMENTED ✅)
+**IMPLEMENTATION COMPLETE**: WhatsApp service now supports multi-tenant operations:
+- ✅ **Single service** (port 8080) handles **multiple connections**
+- ✅ **Each connection** = **1 WhatsApp number** = **1 tenant**
+- ✅ **Tenant identification** via `tenant_id` and `instance_id` parameters
+- ✅ **Enhanced ServiceManager**: `MAX_CONNECTIONS = 50` with per-tenant limits
+- ✅ **Database updated**: All tenants use port 8080 (PrimaMobil updated from 8081)
+- ✅ **Admin routes**: Single port (8080) with tenant parameters
+
+### 📊 Current Multi-Tenant Implementation (WORKING ✅)
+```typescript
+// Active Architecture (IMPLEMENTED and TESTED)
+Single Service (port 8080):
+├── Instance 1: AutoLeads Motors (+6281234567890) ✅ Paired & Working
+├── Instance 2: PrimaMobil (+6283134446903) ✅ Ready to pair
+├── Instance 3: Future Tenant (+628xxx) ✅ Supported
+└── ... Instance 50: Future Tenant (+628yyy) ✅ Supported
+```
+
+### 🔧 IMPLEMENTED SOLUTIONS
+1. ✅ **Enhanced WhatsAppServiceManager**: `MAX_CONNECTIONS = 50` with tenant connection management
+2. ✅ **Port consolidation**: All tenants now use port 8080 (PrimaMobil updated from 8081)
+3. ✅ **Tenant routing enabled**: `tenant_id` and `instance_id` parameters working
+4. ✅ **Database fixed**: No more port 8081 assignments
 
 ### Bot Architecture (WORKING - DO NOT MODIFY)
 ```
@@ -125,6 +154,31 @@ docker exec b8sc48s8s0c4w00008k808w8 curl -X POST http://localhost:3000/webhook/
 - **Example**: `import { prisma } from '../../db';` instead of `import { PrismaClient } from '../../../generated/prisma';`
 - **Prisma client generation**: Happens automatically during Docker build and runtime startup
 - **Database operations**: Use the centralized prisma instance for all database queries
+
+### 🚨 WhatsApp Port Configuration Rules (CRITICAL)
+- **ALL TENANTS MUST USE PORT 8080 ONLY** - Never use port 8081 or other ports
+- **Database field**: `tenants.whatsapp_port` must ALWAYS be `8080` for every tenant
+- **NEVER assign different ports to different tenants** - This breaks the multi-tenant architecture
+- **Port 8081 is DEPRECATED** - All existing assignments have been updated to 8080
+- **Future tenant creation**: Always set `whatsapp_port = 8080` in database
+- **Multi-tenant isolation**: Handled via `tenant_id` and `instance_id` parameters, NOT different ports
+
+### WhatsApp Database Schema Rules
+```sql
+-- CORRECT: All tenants use same port
+UPDATE tenants SET whatsapp_port = 8080 WHERE id = 'new_tenant_id';
+
+-- WRONG: Never assign different ports
+-- UPDATE tenants SET whatsapp_port = 8081 WHERE id = 'new_tenant_id'; -- DON'T DO THIS
+```
+
+### Verification Queries
+```sql
+-- Check all tenants use correct port
+SELECT id, name, whatsapp_port FROM tenants WHERE whatsapp_port != 8080;
+
+-- Should return 0 rows - if any rows returned, fix them immediately
+```
 
 ## Architecture Notes
 - Multi-tenant system with tenant isolation

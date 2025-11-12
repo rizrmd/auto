@@ -126,29 +126,42 @@ whatsappAdmin.get(
       let autoQRGenerated = false;
       let autoQRMessage = '';
 
-      // 🎯 CRITICAL FIX: Prevent race conditions in database status updates
-      // Use a mutex-like approach to prevent simultaneous status updates
+      // 🎯 ENHANCED MUTEX: Improved race condition prevention with better timeout handling
       const updateMutexKey = `whatsapp-update-mutex-${tenant.id}`;
-      const isUpdateInProgress = globalThis[updateMutexKey] || false;
+      const mutexStartTime = Date.now();
+      const maxMutexWaitTime = 10000; // 10 seconds max wait
 
-      if (isUpdateInProgress) {
-        console.log(`[WHATSAPP ADMIN] Status update already in progress for tenant ${tenant.name}, skipping duplicate work [ID: ${requestId}]`);
+      // Wait for existing mutex to be released with timeout
+      while (globalThis[updateMutexKey] && (Date.now() - mutexStartTime) < maxMutexWaitTime) {
+        console.log(`[WHATSAPP ADMIN] Waiting for mutex release for tenant ${tenant.name} [ID: ${requestId}]`);
+        await new Promise(resolve => setTimeout(resolve, 100)); // Wait 100ms
+      }
+
+      // If we timed out waiting for the mutex, log and continue without status updates
+      if (globalThis[updateMutexKey]) {
+        console.warn(`[WHATSAPP ADMIN] ⚠️ Mutex timeout for tenant ${tenant.name}, skipping status updates [ID: ${requestId}]`);
+        globalThis[updateMutexKey] = false; // Force release to prevent permanent blocking
       } else {
-        globalThis[updateMutexKey] = true;
+        globalThis[updateMutexKey] = Date.now(); // Store timestamp instead of boolean
 
         try {
-          // Set a timeout to release the mutex in case of errors
-          setTimeout(() => {
-            globalThis[updateMutexKey] = false;
-          }, 5000); // 5 second timeout
+          // 🎯 ENHANCED: Only attempt auto-QR generation in very specific conditions
+          // Disable auto-QR during natural pairing process to prevent interference
+          const isServiceAvailableButNotPaired = serviceAvailable && health?.connected && !health?.paired;
+          const isInConnectingState = tenant.whatsappStatus === 'connecting';
+          const isServiceUnhealthy = serviceStatus === 'running-but-unhealthy';
+          const hasRecentQRActivity = globalThis[`qr-generated-${tenant.id}`] &&
+                                     (Date.now() - globalThis[`qr-generated-${tenant.id}`]) < 30000; // 30 seconds
 
-          // Only attempt auto-QR generation if service is available and not already being processed
-          if ((!health?.connected || serviceStatus === 'running-but-unhealthy') &&
-              tenant.whatsappStatus === 'connecting' &&
+          // Only generate QR if service is unhealthy OR if it's first time connecting AND no recent activity
+          if ((isServiceUnhealthy || (isInConnectingState && !isServiceAvailableButNotPaired)) &&
               serviceStatus !== 'not-running' &&
-              !autoQRGenerated) {
+              !hasRecentQRActivity) {
 
             console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name} [ID: ${requestId}]`);
+
+            // Mark QR generation time to prevent spam
+            globalThis[`qr-generated-${tenant.id}`] = Date.now();
 
             try {
               const tenantPort = tenant.whatsappPort;
@@ -167,7 +180,7 @@ whatsappAdmin.get(
                 const qrData = await qrResponse.json();
                 autoQRGenerated = true;
                 autoQRMessage = 'QR code auto-generated to initialize service';
-                console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name} [ID: ${requestId}]:`, qrData);
+                console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name} [ID: ${requestId}]`);
               } else {
                 autoQRMessage = `QR generation failed with status: ${qrResponse.status}`;
                 console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name} [ID: ${requestId}]: ${qrResponse.status}`);
@@ -178,17 +191,32 @@ whatsappAdmin.get(
             }
           }
 
-          // 🎯 CRITICAL FIX: Allow natural pairing process without interference
-          // Only sync status in clear cases, never interrupt ongoing pairing
-          const shouldSyncToConnected = health?.connected && health?.paired && tenant.whatsappStatus !== 'connected';
-          const shouldSyncToDisconnected = (!health?.connected && !health?.paired) &&
-                                        tenant.whatsappStatus === 'connected';
+          // 🎯 ENHANCED STATUS LOGIC: More conservative status transitions with guards
+          const isActuallyConnected = health?.connected && health?.paired;
+          const isActuallyDisconnected = !health?.connected && !health?.paired;
+          const isCurrentlyConnected = tenant.whatsappStatus === 'connected';
+          const isCurrentlyDisconnected = tenant.whatsappStatus === 'disconnected';
+          const isCurrentlyConnecting = tenant.whatsappStatus === 'connecting';
 
-          // REMOVED: shouldFixConnectingState - This was causing the infinite loop
-          // When service is running but not paired and status is "connecting",
-          // let the natural pairing process complete without interference
+          // ENHANCED: Only sync to connected if actually connected AND not already connected
+          const shouldSyncToConnected = isActuallyConnected && !isCurrentlyConnected;
 
-          if (shouldSyncToConnected) {
+          // ENHANCED: Only sync to disconnected if actually disconnected AND currently connected
+          // NEVER sync from "connecting" to "disconnected" - this was causing the loop
+          const shouldSyncToDisconnected = isActuallyDisconnected && isCurrentlyConnected;
+
+          // 🎯 CRITICAL: NEVER interfere with "connecting" state - let natural process complete
+          const shouldMaintainConnectingState = isCurrentlyConnecting &&
+                                               isServiceAvailableButNotPaired;
+
+          // Add debounce logic to prevent rapid status changes
+          const lastStatusChangeKey = `status-change-${tenant.id}`;
+          const lastStatusChange = globalThis[lastStatusChangeKey] || 0;
+          const statusChangeDebounceTime = 5000; // 5 seconds between status changes
+
+          const canChangeStatus = (Date.now() - lastStatusChange) > statusChangeDebounceTime;
+
+          if (shouldSyncToConnected && canChangeStatus) {
             console.log(`[WHATSAPP ADMIN] 🎉 WhatsApp is connected! Updating tenant status from "${tenant.whatsappStatus}" to "connected" [ID: ${requestId}]`);
 
             try {
@@ -203,10 +231,11 @@ whatsappAdmin.get(
               console.log(`[WHATSAPP ADMIN] ✅ Database updated: Tenant ${tenant.name} status set to "connected" [ID: ${requestId}]`);
               // Update local tenant object for response
               tenant.whatsappStatus = 'connected';
+              globalThis[lastStatusChangeKey] = Date.now();
             } catch (dbError) {
               console.error('[WHATSAPP ADMIN] ❌ Failed to update database status:', dbError);
             }
-          } else if (shouldSyncToDisconnected) {
+          } else if (shouldSyncToDisconnected && canChangeStatus) {
             console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is disconnected, syncing database status [ID: ${requestId}]`);
 
             try {
@@ -220,17 +249,24 @@ whatsappAdmin.get(
               console.log(`[WHATSAPP ADMIN] 🔄 Database synced: Tenant ${tenant.name} status set to "disconnected" [ID: ${requestId}]`);
               // Update local tenant object for response
               tenant.whatsappStatus = 'disconnected';
+              globalThis[lastStatusChangeKey] = Date.now();
             } catch (dbError) {
               console.error('[WHATSAPP ADMIN] ❌ Failed to sync database status:', dbError);
             }
+          } else if (shouldMaintainConnectingState) {
+            // 🎯 CRITICAL: Explicitly maintain "connecting" state and don't interfere
+            console.log(`[WHATSAPP ADMIN] 🔄 Pairing in progress: Service running, awaiting QR scan [ID: ${requestId}]`);
+            console.log(`[WHATSAPP ADMIN] ✅ Maintaining "connecting" status - allowing natural pairing process [ID: ${requestId}]`);
+          } else if (!canChangeStatus) {
+            console.log(`[WHATSAPP ADMIN] ⏳ Status change debounced for ${tenant.name} - last change ${(Date.now() - lastStatusChange) / 1000}s ago [ID: ${requestId}]`);
           } else {
-            // Log the current state for debugging
-            if (tenant.whatsappStatus === 'connecting' && health?.connected && !health?.paired) {
-              console.log(`[WHATSAPP ADMIN] 🔄 Pairing in progress: Service running, awaiting QR scan [ID: ${requestId}]`);
-            }
+            // Log current state for debugging when no action is taken
+            console.log(`[WHATSAPP ADMIN] ℹ️ Current state maintained for ${tenant.name}: DB=${tenant.whatsappStatus}, Service=${health?.connected ? 'connected' : 'disconnected'} [ID: ${requestId}]`);
           }
         } finally {
-          // Release the mutex
+          // Enhanced mutex release with logging
+          const mutexDuration = Date.now() - (globalThis[updateMutexKey] as number);
+          console.log(`[WHATSAPP ADMIN] Mutex released for tenant ${tenant.name} after ${mutexDuration}ms [ID: ${requestId}]`);
           globalThis[updateMutexKey] = false;
         }
       }

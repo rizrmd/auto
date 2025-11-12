@@ -55,7 +55,8 @@
       "Bash(GOOS=linux GOARCH=amd64 go build:*)",
       "mcp__chrome-devtools__fill",
       "Bash(python3:*)",
-      "Bash(docker run:*)"
+      "Bash(docker run:*)",
+      "Bash(bun:*)"
     ],
     "deny": [],
     "ask": []
