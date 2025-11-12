@@ -1,4 +1,9 @@
-import { logger } from 'hono/logger';
+// Simple logger for WhatsApp service manager
+const serviceLogger = {
+  info: (message: string) => console.log(`[WHATSAPP SERVICE] ${message}`),
+  warn: (message: string) => console.warn(`[WHATSAPP SERVICE] ${message}`),
+  error: (message: string) => console.error(`[WHATSAPP SERVICE] ${message}`)
+};
 
 interface WhatsAppServiceState {
   isPairing: boolean;
@@ -60,7 +65,7 @@ class WhatsAppServiceManager {
       this.resetPairingState();
     }, this.PAIRING_TIMEOUT);
 
-    logger.info(`[WHATSAPP SERVICE] Starting pairing for tenant: ${tenantId}`);
+    serviceLogger.info(`Starting pairing for tenant: ${tenantId}`);
 
     return {
       success: true,
@@ -70,7 +75,7 @@ class WhatsAppServiceManager {
 
   public async completePairing(deviceId: string): Promise<void> {
     if (!this.state.isPairing) {
-      logger.warn(`[WHATSAPP SERVICE] Pairing completion received but no active pairing process`);
+      serviceLogger.warn(`Pairing completion received but no active pairing process`);
       return;
     }
 
@@ -83,11 +88,11 @@ class WhatsAppServiceManager {
       this.pairingTimeout = null;
     }
 
-    logger.info(`[WHATSAPP SERVICE] Pairing completed successfully for device: ${deviceId}`);
+    serviceLogger.info(`Pairing completed successfully for device: ${deviceId}`);
   }
 
   public async disconnectPairing(reason: string): Promise<void> {
-    logger.info(`[WHATSAPP SERVICE] Disconnecting pairing. Reason: ${reason}`);
+    serviceLogger.info(`Disconnecting pairing. Reason: ${reason}`);
     await this.resetPairingState();
   }
 
