@@ -61,7 +61,9 @@
       "Bash(go version:*)",
       "Bash(docker exec:*)",
       "Bash(git submodule:*)",
-      "Bash(./build-linux.sh:*)"
+      "Bash(./build-linux.sh:*)",
+      "Bash(git config:*)",
+      "Bash(BUILD_LINUX.md)"
     ],
     "deny": [],
     "ask": []
