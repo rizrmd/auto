@@ -8,6 +8,9 @@ WORKDIR /build
 # Copy the WhatsApp service source code from submodule
 COPY backend/wapi/ .
 
+# Set GOTOOLCHAIN to auto to allow downloading required Go version
+ENV GOTOOLCHAIN=auto
+
 # Generate go.sum and download Go module dependencies
 RUN go mod tidy && go mod download
 
