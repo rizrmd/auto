@@ -73,8 +73,12 @@ whatsappAdmin.get(
 
       if (!isDbDisconnected) {
         try {
-          // Get health status from WhatsApp API service directly
-          const whatsappHealthResponse = await fetch('http://localhost:8080/health', {
+          // Get tenant-specific port from database
+          const tenantPort = tenant.whatsappPort || 8080;
+          console.log(`[WHATSAPP ADMIN] Using port ${tenantPort} for tenant ${tenant.name}`);
+
+          // Get health status from WhatsApp API service on tenant-specific port
+          const whatsappHealthResponse = await fetch(`http://localhost:${tenantPort}/health`, {
             method: 'GET',
             headers: {
               'Content-Type': 'application/json',
@@ -97,9 +101,9 @@ whatsappAdmin.get(
           serviceStatus = 'unreachable';
           console.warn('[WHATSAPP ADMIN] Health check error - service may be down:', healthError);
 
-          // Check if WhatsApp binary process is running
+          // Check if WhatsApp binary process is running on tenant port
           try {
-            const processCheck = await fetch('http://localhost:8080/', {
+            const processCheck = await fetch(`http://localhost:${tenantPort}/`, {
               method: 'HEAD',
               headers: { 'User-Agent': 'AutoLeads-Proxy/1.0' },
             });
@@ -108,7 +112,7 @@ whatsappAdmin.get(
             }
           } catch (processError) {
             serviceStatus = 'not-running';
-            console.warn('[WHATSAPP ADMIN] WhatsApp binary service appears to be not running');
+            console.warn(`[WHATSAPP ADMIN] WhatsApp binary service appears to be not running on port ${tenantPort}`);
           }
         }
       } else {
@@ -143,7 +147,8 @@ whatsappAdmin.get(
             console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name} [ID: ${requestId}]`);
 
             try {
-              const qrResponse = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}`, {
+              const tenantPort = tenant.whatsappPort || 8080;
+              const qrResponse = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}`, {
                 method: 'GET',
                 headers: {
                   'Content-Type': 'application/json',
@@ -336,8 +341,11 @@ whatsappAdmin.get(
         console.log(`[WHATSAPP ADMIN] Updated tenant status to connecting for QR generation`);
       }
 
-      // Use WhatsApp API service for QR generation
-      const response = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+      // Use tenant-specific WhatsApp API service for QR generation
+      const tenantPort = tenant.whatsappPort || 8080;
+      console.log(`[WHATSAPP ADMIN] Generating QR using port ${tenantPort} for tenant ${tenant.name}`);
+
+      const response = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
         method: 'GET',
         headers: {
           'User-Agent': 'AutoLeads-Proxy/1.0',
@@ -620,7 +628,8 @@ whatsappAdmin.post(
       let finalVerificationPassed = false;
 
       try {
-        const verifyResponse = await fetch(`http://localhost:8080/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+        const tenantPort = tenant.whatsappPort || 8080;
+        const verifyResponse = await fetch(`http://localhost:${tenantPort}/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
