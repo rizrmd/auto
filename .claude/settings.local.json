@@ -60,7 +60,8 @@
       "Bash(find:*)",
       "Bash(go version:*)",
       "Bash(docker exec:*)",
-      "Bash(git submodule:*)"
+      "Bash(git submodule:*)",
+      "Bash(./build-linux.sh:*)"
     ],
     "deny": [],
     "ask": []
