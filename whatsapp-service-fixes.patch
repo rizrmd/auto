@@ -1,0 +1,60 @@
+From a9dae5522447c18f9c330ebac6b126632a8a8fc4 Mon Sep 17 00:00:00 2001
+From: Claude Code <claude@anthropic.com>
+Date: Thu, 13 Nov 2025 06:44:23 +0700
+Subject: [PATCH] fix: critical pairing bugs - webhook notification, health
+ check, and sleep delay
+
+- Add webhook notification when pairing succeeds (sends pair_success event)
+- Fix health endpoint to check actual device store instead of variable
+- Remove 2-second sleep delay that was causing pairing failures
+
+These fixes ensure database is updated when pairing succeeds.
+---
+ main.go | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
+diff --git a/main.go b/main.go
+index 900928b..87f6f6b 100644
+--- a/main.go
++++ b/main.go
+@@ -182,9 +182,6 @@ func pairHandler(w http.ResponseWriter, r *http.Request) {
+ 		}
+ 	}
+ 
+-	// Add a small delay to ensure proper disconnection
+-	time.Sleep(2 * time.Second)
+-
+ 	// Get QR channel (must be called before connecting)
+ 	log.Println("Getting QR channel...")
+ 	qrChan, err := client.GetQRChannel(context.Background())
+@@ -454,9 +451,15 @@ func sendHandler(w http.ResponseWriter, r *http.Request) {
+ func healthHandler(w http.ResponseWriter, r *http.Request) {
+ 	w.Header().Set("Content-Type", "application/json")
+ 
++	// Check actual device store for accurate pairing status
++	actuallyPaired := false
++	if client != nil && client.Store != nil && client.Store.ID != nil {
++		actuallyPaired = true
++	}
++
+ 	status := map[string]interface{}{
+ 		"version":            version,
+-		"paired":             isPaired,
++		"paired":             actuallyPaired,
+ 		"connected":          client != nil && client.IsConnected(),
+ 		"webhook_configured": webhookURL != "",
+ 	}
+@@ -638,6 +641,10 @@ func handler(rawEvt interface{}) {
+ 	case *events.PairSuccess:
+ 		log.Printf("🎉 Successfully paired! Device: %s", evt.ID)
+ 		isPaired = true
++		// Notify backend that pairing succeeded so database can be updated
++		if webhookURL != "" {
++			go sendToWebhook("pair_success", fmt.Sprintf("Device paired: %s", evt.ID), evt.ID.String(), "", nil)
++		}
+ 	case *events.LoggedOut:
+ 		log.Println("🔒 Logged out from WhatsApp")
+ 		log.Println("💡 This may happen if another device connects or if you log out from WhatsApp mobile app")
+-- 
+2.50.1.windows.1
+

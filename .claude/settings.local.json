@@ -63,7 +63,14 @@
       "Bash(git submodule:*)",
       "Bash(./build-linux.sh:*)",
       "Bash(git config:*)",
-      "Bash(BUILD_LINUX.md)"
+      "Bash(BUILD_LINUX.md)",
+      "Bash(for i in 1 2 3 4 5)",
+      "Bash(do echo \"Checking deployment (attempt $i/5)...\")",
+      "Bash(break)",
+      "Bash(continue)",
+      "Bash(done)",
+      "Bash(git checkout:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []

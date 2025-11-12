@@ -145,51 +145,10 @@ whatsappAdmin.get(
         globalThis[updateMutexKey] = Date.now(); // Store timestamp instead of boolean
 
         try {
-          // 🎯 ENHANCED: Only attempt auto-QR generation in very specific conditions
-          // Disable auto-QR during natural pairing process to prevent interference
-          const isServiceAvailableButNotPaired = serviceAvailable && health?.connected && !health?.paired;
-          const isInConnectingState = tenant.whatsappStatus === 'connecting';
-          const isServiceUnhealthy = serviceStatus === 'running-but-unhealthy';
-          const hasRecentQRActivity = globalThis[`qr-generated-${tenant.id}`] &&
-                                     (Date.now() - globalThis[`qr-generated-${tenant.id}`]) < 30000; // 30 seconds
-
-          // Only generate QR if service is unhealthy OR if it's first time connecting AND no recent activity
-          if ((isServiceUnhealthy || (isInConnectingState && !isServiceAvailableButNotPaired)) &&
-              serviceStatus !== 'not-running' &&
-              !hasRecentQRActivity) {
-
-            console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name} [ID: ${requestId}]`);
-
-            // Mark QR generation time to prevent spam
-            globalThis[`qr-generated-${tenant.id}`] = Date.now();
-
-            try {
-              const tenantPort = tenant.whatsappPort;
-              if (!tenantPort) {
-                throw new Error(`No port assigned to tenant ${tenant.name}`);
-              }
-              const qrResponse = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}`, {
-                method: 'GET',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'User-Agent': 'AutoLeads-Proxy/1.0',
-                },
-              });
-
-              if (qrResponse.ok) {
-                const qrData = await qrResponse.arrayBuffer();
-                autoQRGenerated = true;
-                autoQRMessage = 'QR code auto-generated to initialize service';
-                console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name} [ID: ${requestId}]`);
-              } else {
-                autoQRMessage = `QR generation failed with status: ${qrResponse.status}`;
-                console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name} [ID: ${requestId}]: ${qrResponse.status}`);
-              }
-            } catch (qrError) {
-              autoQRMessage = `QR generation error: ${qrError instanceof Error ? qrError.message : 'Unknown error'}`;
-              console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name} [ID: ${requestId}]:`, qrError);
-            }
-          }
+          // 🎯 DISABLED AUTO-QR: Let users manually generate QR codes via frontend
+          // Auto-QR generation was causing interference with manual pairing attempts
+          // Frontend has proper QR generation button that users can click when ready
+          console.log(`[WHATSAPP ADMIN] Auto-QR disabled - users should use frontend "Pair Device" button for ${tenant.name} [ID: ${requestId}]`);
 
           // 🎯 ENHANCED STATUS LOGIC: More conservative status transitions with guards
           const isActuallyConnected = health?.connected && health?.paired;

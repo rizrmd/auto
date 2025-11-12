@@ -70,13 +70,39 @@ whatsappWebhook.post('/', async (c) => {
     console.log(`[WEBHOOK] 🕐 Timestamp: ${new Date().toISOString()}`);
     console.log(`[WEBHOOK] 🌐 Request headers:`, JSON.stringify(c.req.header(), null, 2));
 
-    // Validate required fields
+    // Handle pair_success event
+    if (payload.event === 'pair_success') {
+      console.log(`[WEBHOOK] 🎉 WhatsApp pairing successful!`);
+      console.log(`[WEBHOOK] Device ID: ${payload.sender}`);
+
+      // Get tenant from Host header
+      const host = c.req.header('host') || '';
+      const tenant = await prisma.tenant.findFirst({
+        where: { domain: host.split(':')[0] }
+      });
+
+      if (tenant) {
+        // Update tenant status to connected
+        await prisma.tenant.update({
+          where: { id: tenant.id },
+          data: { whatsappStatus: 'connected' }
+        });
+        console.log(`[WEBHOOK] ✅ Updated tenant ${tenant.name} status to connected`);
+      }
+
+      return c.json({
+        success: true,
+        message: 'Pairing status updated successfully',
+      });
+    }
+
+    // Validate required fields for message events
     if (!payload.event || payload.event !== 'message') {
       return c.json({
         success: false,
         error: {
           code: 'INVALID_EVENT',
-          message: 'Only message events are supported',
+          message: 'Only message and pair_success events are supported',
         },
       }, 400);
     }
