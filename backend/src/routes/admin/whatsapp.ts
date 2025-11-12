@@ -397,7 +397,7 @@ whatsappAdmin.get(
       }
       console.log(`[WHATSAPP ADMIN] Generating QR using port ${tenantPort} for tenant ${tenant.name}`);
 
-      const response = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
+      const response = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}&instance_id=${tenant.whatsappInstanceId}`, {
         method: 'GET',
         headers: {
           'User-Agent': 'AutoLeads-Proxy/1.0',
