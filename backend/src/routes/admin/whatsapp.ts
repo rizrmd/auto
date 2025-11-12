@@ -230,7 +230,7 @@ whatsappAdmin.get(
                 where: { id: tenant.id },
                 data: {
                   whatsappStatus: 'connected',
-                  whatsappNumber: health?.deviceNumber || '6283134446903',
+                  whatsappNumber: health?.deviceNumber || null, // Allow any number, no hard-coded fallback
                 },
               });
 

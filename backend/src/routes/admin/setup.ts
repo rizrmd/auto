@@ -42,8 +42,8 @@ setupAdmin.post(
             name: body.tenantName,
             slug: body.tenantSlug,
             subdomain: body.tenantSlug,
-            phone: '+628123456789',
-            whatsappNumber: '+6283134446903',
+            phone: body.tenantPhone || '+628123456789', // Use provided phone or default
+            whatsappNumber: null, // Will be set when WhatsApp is paired - allow any number
             whatsappBotEnabled: true,
             primaryColor: '#FF5722',
             secondaryColor: '#000000',
@@ -82,8 +82,8 @@ setupAdmin.post(
           name: body.adminName,
           email: body.adminEmail,
           passwordHash: hashedPassword,
-          phone: '+628123456789',
-          whatsappNumber: '+628123456789',
+          phone: body.adminPhone || '+628123456789', // Use provided admin phone or default
+          whatsappNumber: body.adminPhone || '+628123456789', // Use provided admin phone or default
           role: 'admin',
           status: 'active',
         }
