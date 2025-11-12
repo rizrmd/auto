@@ -1,0 +1,10 @@
+uid=180_0 RootWebArea url="https://primamobil.id/api/wa/pair?tenant_id=primamobil-indonesia&instance=main"
+  uid=180_1 ignored
+    uid=180_2 ignored
+      uid=180_3 generic
+        uid=180_4 StaticText "{"success":false,"error":{"code":"PAIRING_IN_PROGRESS","message":"Pairing already in progress. Please wait for current session to complete.","state":{"isPairing":true,"isPaired":false,"activeConnections":1,"pairingStartTime":1762901185723}}}"
+      uid=180_5 generic
+        uid=180_6 generic
+          uid=180_7 LabelText
+            uid=180_8 StaticText "Pretty-print"
+            uid=180_9 checkbox "Pretty-print"

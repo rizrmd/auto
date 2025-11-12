@@ -1,0 +1,184 @@
+uid=178_0 RootWebArea "Auto Lumiku - Showroom Mobil Bekas Berkualitas" url="https://primamobil.id/api/whatsapp/pair?tenant_id=primamobil-indonesia&instance=main"
+  uid=178_1 ignored
+    uid=178_2 generic
+      uid=178_3 generic
+        uid=178_4 ignored
+          uid=178_5 banner
+            uid=178_6 ignored
+              uid=178_7 ignored
+                uid=178_8 link "Go to homepage" url="https://primamobil.id/"
+                  uid=178_9 ignored
+                    uid=178_10 ignored
+                      uid=178_11 StaticText "A"
+                    uid=178_12 ignored
+                      uid=178_13 StaticText "AutoLeads"
+                uid=178_14 ignored
+                  uid=178_15 generic
+                    uid=178_16 generic
+                      uid=178_17 textbox "Search cars"
+                        uid=178_18 ignored
+                        uid=178_19 generic
+                uid=178_20 navigation
+                  uid=178_21 link "Cari Mobil" url="https://primamobil.id/cars"
+                    uid=178_22 StaticText "Cari Mobil"
+              uid=178_23 ignored
+              uid=178_24 ignored
+          uid=178_25 region "Temukan Mobil Impian Kamu"
+            uid=178_26 ignored
+              uid=178_27 ignored
+                uid=178_28 ignored
+                  uid=178_29 StaticText "Mobil Bekas Berkualitas"
+                uid=178_30 heading "Temukan Mobil Impian Kamu" level="1"
+                  uid=178_31 StaticText "Temukan"
+                  uid=178_32 StaticText " "
+                  uid=178_33 StaticText "Mobil"
+                  uid=178_34 StaticText " "
+                  uid=178_35 StaticText "Impian"
+                  uid=178_36 StaticText " "
+                  uid=178_37 StaticText "Kamu"
+                uid=178_38 paragraph
+                  uid=178_39 StaticText "Jelajahi koleksi mobil bekas pilihan kami. Kualitas terjamin, harga terpercaya, dan pelayanan terbaik."
+                uid=178_40 ignored
+                  uid=178_41 link "Lihat Semua Mobil" url="https://primamobil.id/cars"
+                    uid=178_42 StaticText "Lihat Semua Mobil"
+          uid=178_43 generic
+            uid=178_44 ignored
+              uid=178_45 ignored
+                uid=178_46 ignored
+                  uid=178_47 ignored
+                  uid=178_48 heading "Kualitas Terjamin" level="3"
+                    uid=178_49 StaticText "Kualitas Terjamin"
+                  uid=178_50 paragraph
+                    uid=178_51 StaticText "Setiap mobil diperiksa secara menyeluruh untuk ketenangan pikiran Kamu"
+                uid=178_52 ignored
+                  uid=178_53 ignored
+                  uid=178_54 heading "Harga Terbaik" level="3"
+                    uid=178_55 StaticText "Harga Terbaik"
+                  uid=178_56 paragraph
+                    uid=178_57 StaticText "Harga kompetitif dengan biaya transparan tanpa biaya tersembunyi"
+                uid=178_58 ignored
+                  uid=178_59 ignored
+                  uid=178_60 heading "Pilihan Lengkap" level="3"
+                    uid=178_61 StaticText "Pilihan Lengkap"
+                  uid=178_62 paragraph
+                    uid=178_63 StaticText "Beragam pilihan merek dan model untuk memenuhi kebutuhan Kamu"
+          uid=178_64 generic
+            uid=178_65 ignored
+              uid=178_66 ignored
+                uid=178_67 ignored
+                  uid=178_68 heading "Mobil Pilihan" level="2"
+                    uid=178_69 StaticText "Mobil Pilihan"
+                  uid=178_70 paragraph
+                    uid=178_71 StaticText "Koleksi terbaik dari kendaraan kami"
+                uid=178_72 link "Lihat Semua" url="https://primamobil.id/cars"
+                  uid=178_73 StaticText "Lihat Semua"
+              uid=178_74 ignored
+                uid=178_75 ignored
+                  uid=178_76 link "Mazda 2 R Hatchback 2014 Merah Metalik #MZ01 #MZ01 Mazda Mazda 2 R Hatchback 2014 • Merah Metalik Rp 135.000.000 82.000 km Matic Mesin SKYACTIV 1.5L Irit BBM Transmisi Matic 4-Speed Smooth +2 lainnya" url="https://primamobil.id/cars/mazda-2-2014-merah-mz01"
+                    uid=178_77 generic
+                      uid=178_78 image "Mazda 2 R Hatchback 2014 Merah Metalik #MZ01" url="https://primamobil.id/uploads/tenant-1/cars/mazda-2-2014-merah-mz01/1.webp"
+                      uid=178_79 generic
+                      uid=178_80 generic
+                        uid=178_81 StaticText "#MZ01"
+                      uid=178_82 generic
+                    uid=178_83 ignored
+                      uid=178_84 ignored
+                        uid=178_85 heading "Mazda Mazda 2 R Hatchback" level="3"
+                          uid=178_86 StaticText "Mazda"
+                          uid=178_87 StaticText " "
+                          uid=178_88 StaticText "Mazda 2 R Hatchback"
+                        uid=178_89 paragraph
+                          uid=178_90 StaticText "2014"
+                          uid=178_91 StaticText " • "
+                          uid=178_92 StaticText "Merah Metalik"
+                      uid=178_93 ignored
+                        uid=178_94 ignored
+                          uid=178_95 StaticText "Rp 135.000.000"
+                      uid=178_96 ignored
+                        uid=178_97 ignored
+                          uid=178_98 ignored
+                          uid=178_99 ignored
+                            uid=178_100 StaticText "82.000"
+                            uid=178_101 StaticText " km"
+                        uid=178_102 ignored
+                          uid=178_103 ignored
+                          uid=178_104 ignored
+                            uid=178_105 StaticText "Matic"
+                      uid=178_106 ignored
+                        uid=178_107 ignored
+                          uid=178_108 StaticText "Mesin SKYACTIV 1.5L Irit BBM"
+                        uid=178_109 ignored
+                          uid=178_110 StaticText "Transmisi Matic 4-Speed Smooth"
+                        uid=178_111 ignored
+                          uid=178_112 StaticText "+"
+                          uid=178_113 StaticText "2"
+                          uid=178_114 StaticText " lainnya"
+                uid=178_115 ignored
+                  uid=178_116 link "Toyota Yaris G CVT 2020 Silver Metalik #Y01 #Y01 Toyota Yaris G CVT 2020 • Silver Metalik Rp 255.000.000 42.000 km Matic Mesin 1.5L Dual VVT-i CVT 7-Speed Sequential +3 lainnya" url="https://primamobil.id/cars/toyota-yaris-2020-silver-y01"
+                    uid=178_117 generic
+                      uid=178_118 image "Toyota Yaris G CVT 2020 Silver Metalik #Y01" url="https://primamobil.id/uploads/tenant-1/cars/toyota-yaris-2020-silver-y01/1.webp"
+                      uid=178_119 generic
+                      uid=178_120 generic
+                        uid=178_121 StaticText "#Y01"
+                      uid=178_122 generic
+                    uid=178_123 ignored
+                      uid=178_124 ignored
+                        uid=178_125 heading "Toyota Yaris G CVT" level="3"
+                          uid=178_126 StaticText "Toyota"
+                          uid=178_127 StaticText " "
+                          uid=178_128 StaticText "Yaris G CVT"
+                        uid=178_129 paragraph
+                          uid=178_130 StaticText "2020"
+                          uid=178_131 StaticText " • "
+                          uid=178_132 StaticText "Silver Metalik"
+                      uid=178_133 ignored
+                        uid=178_134 ignored
+                          uid=178_135 StaticText "Rp 255.000.000"
+                      uid=178_136 ignored
+                        uid=178_137 ignored
+                          uid=178_138 ignored
+                          uid=178_139 ignored
+                            uid=178_140 StaticText "42.000"
+                            uid=178_141 StaticText " km"
+                        uid=178_142 ignored
+                          uid=178_143 ignored
+                          uid=178_144 ignored
+                            uid=178_145 StaticText "Matic"
+                      uid=178_146 ignored
+                        uid=178_147 ignored
+                          uid=178_148 StaticText "Mesin 1.5L Dual VVT-i"
+                        uid=178_149 ignored
+                          uid=178_150 StaticText "CVT 7-Speed Sequential"
+                        uid=178_151 ignored
+                          uid=178_152 StaticText "+"
+                          uid=178_153 StaticText "3"
+                          uid=178_154 StaticText " lainnya"
+          uid=178_155 generic
+            uid=178_156 generic
+              uid=178_157 heading "Siap Menemukan Mobil Impian Kamu?" level="2"
+                uid=178_158 StaticText "Siap Menemukan Mobil Impian Kamu?"
+              uid=178_159 paragraph
+                uid=178_160 StaticText "Jelajahi koleksi lengkap kami atau hubungi kami untuk bantuan personal"
+              uid=178_161 link "Lihat Semua Mobil" url="https://primamobil.id/cars"
+                uid=178_162 StaticText "Lihat Semua Mobil"
+            uid=178_163 generic
+            uid=178_164 generic
+          uid=178_165 contentinfo
+            uid=178_166 ignored
+              uid=178_167 ignored
+                uid=178_168 paragraph
+                  uid=178_169 StaticText "© "
+                  uid=178_170 StaticText "2025"
+                  uid=178_171 StaticText " "
+                  uid=178_172 StaticText "AutoLeads"
+                  uid=178_173 StaticText ". All rights reserved."
+                uid=178_174 ignored
+                  uid=178_175 ignored
+                    uid=178_176 StaticText "Powered by"
+                    uid=178_177 StaticText " "
+                    uid=178_178 link "Lumiku AutoLeads" url="https://lumiku.com/"
+                      uid=178_179 StaticText "Lumiku AutoLeads"
+                  uid=178_180 ignored
+                    uid=178_181 StaticText "•"
+                  uid=178_182 ignored
+                    uid=178_183 StaticText "Trusted by thousands"

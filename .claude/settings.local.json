@@ -53,7 +53,9 @@
       "Bash(bun test-header-fields.js:*)",
       "Bash(git submodule update:*)",
       "Bash(GOOS=linux GOARCH=amd64 go build:*)",
-      "mcp__chrome-devtools__fill"
+      "mcp__chrome-devtools__fill",
+      "Bash(python3:*)",
+      "Bash(docker run:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,0 +1,10 @@
+uid=179_0 RootWebArea url="https://primamobil.id/api/wa/pair?tenant_id=primamobil-indonesia&instance=main"
+  uid=179_1 ignored
+    uid=179_2 ignored
+      uid=179_3 generic
+        uid=179_4 StaticText "{"success":false,"error":{"code":"PROXY_ERROR","message":"Failed to generate QR code","details":"logger.info is not a function. (In 'logger.info(`[WHATSAPP SERVICE] Starting pairing for tenant: ${tenantId}`)', 'logger.info' is undefined)"}}"
+      uid=179_5 generic
+        uid=179_6 generic
+          uid=179_7 LabelText
+            uid=179_8 StaticText "Pretty-print"
+            uid=179_9 checkbox "Pretty-print"
