@@ -73,8 +73,12 @@ whatsappAdmin.get(
 
       if (!isDbDisconnected) {
         try {
-          // Get tenant-specific port from database
-          const tenantPort = tenant.whatsappPort || 8080;
+          // Get tenant-specific port from database - CRITICAL: Must use tenant port
+          const tenantPort = tenant.whatsappPort;
+          if (!tenantPort) {
+            console.error(`[WHATSAPP ADMIN] ❌ CRITICAL: No port assigned to tenant ${tenant.name}`);
+            throw new Error(`Tenant ${tenant.name} has no WhatsApp port assigned`);
+          }
           console.log(`[WHATSAPP ADMIN] Using port ${tenantPort} for tenant ${tenant.name}`);
 
           // Get health status from WhatsApp API service on tenant-specific port
@@ -147,7 +151,10 @@ whatsappAdmin.get(
             console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name} [ID: ${requestId}]`);
 
             try {
-              const tenantPort = tenant.whatsappPort || 8080;
+              const tenantPort = tenant.whatsappPort;
+              if (!tenantPort) {
+                throw new Error(`No port assigned to tenant ${tenant.name}`);
+              }
               const qrResponse = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}`, {
                 method: 'GET',
                 headers: {
@@ -342,7 +349,10 @@ whatsappAdmin.get(
       }
 
       // Use tenant-specific WhatsApp API service for QR generation
-      const tenantPort = tenant.whatsappPort || 8080;
+      const tenantPort = tenant.whatsappPort;
+      if (!tenantPort) {
+        throw new Error(`No port assigned to tenant ${tenant.name}`);
+      }
       console.log(`[WHATSAPP ADMIN] Generating QR using port ${tenantPort} for tenant ${tenant.name}`);
 
       const response = await fetch(`http://localhost:${tenantPort}/pair?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
@@ -628,7 +638,10 @@ whatsappAdmin.post(
       let finalVerificationPassed = false;
 
       try {
-        const tenantPort = tenant.whatsappPort || 8080;
+        const tenantPort = tenant.whatsappPort;
+        if (!tenantPort) {
+          throw new Error(`No port assigned to tenant ${tenant.name}`);
+        }
         const verifyResponse = await fetch(`http://localhost:${tenantPort}/health?tenant_id=${tenant.id}&instance=${tenant.whatsappInstanceId}`, {
           method: 'GET',
           headers: {
@@ -745,77 +758,6 @@ whatsappAdmin.post(
         error: {
           code: 'RESET_STATUS_ERROR',
           message: error instanceof Error ? error.message : 'Failed to reset status',
-        },
-      };
-
-      return c.json(response, 500);
-    }
-  })
-);
-
-/**
- * POST /api/admin/whatsapp/force-reconnect
- * Force reconnection and generate QR code after disconnect
- * Note: This route was previously duplicated, now consolidated
- */
-whatsappAdmin.post(
-  '/force-reconnect',
-  asyncHandler(async (c) => {
-    // Set no-cache headers for reconnection operations
-    c.header('Cache-Control', 'no-cache, no-store, must-revalidate, private');
-    c.header('Pragma', 'no-cache');
-    c.header('Expires', '0');
-
-    const tenant = c.get('tenant');
-    const user = c.get('user');
-
-    if (!tenant) {
-      return c.json({
-        success: false,
-        error: {
-          code: 'TENANT_REQUIRED',
-          message: 'Tenant context is required',
-        },
-      }, 400);
-    }
-
-    console.log(`[WHATSAPP ADMIN] Force reconnect request for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
-
-    try {
-      // Update tenant status to allow reconnection
-      console.log(`[WHATSAPP ADMIN] Updating tenant status to allow reconnection...`);
-      await prisma.tenant.update({
-        where: { id: tenant.id },
-        data: {
-          whatsappStatus: 'connecting',
-          whatsappBotEnabled: false,
-        },
-      });
-      console.log(`[WHATSAPP ADMIN] Updated tenant status to connecting (ready for QR generation)`);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          reconnected: true,
-          message: 'Tenant status updated. You can now generate QR code for reconnection.',
-          tenant: {
-            id: tenant.id,
-            name: tenant.name,
-            slug: tenant.slug,
-            whatsappStatus: 'connecting',
-          }
-        },
-      };
-
-      return c.json(response);
-    } catch (error) {
-      console.error('[WHATSAPP ADMIN] Error during force reconnect:', error);
-
-      const response: ApiResponse = {
-        success: false,
-        error: {
-          code: 'FORCE_RECONNECT_ERROR',
-          message: error instanceof Error ? error.message : 'Failed to force reconnect',
         },
       };
 
