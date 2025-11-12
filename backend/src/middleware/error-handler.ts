@@ -197,23 +197,59 @@ function mapErrorToResponse(error: Error): {
 }
 
 /**
+ * Sanitize sensitive information from error details
+ */
+function sanitizeDetails(details: Record<string, any>): Record<string, any> {
+  if (!details || isDevelopment) return details;
+
+  const sanitized: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(details)) {
+    // Remove or mask sensitive fields
+    if (key.toLowerCase().includes('password') ||
+        key.toLowerCase().includes('secret') ||
+        key.toLowerCase().includes('token') ||
+        key.toLowerCase().includes('credential') ||
+        key.toLowerCase().includes('key')) {
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof value === 'string' &&
+               (value.includes('postgresql://') ||
+                value.includes('jwt_secret') ||
+                value.includes('database'))) {
+      // Mask connection strings and secrets
+      sanitized[key] = value.replace(/\/\/.*@/, '://****@').replace(/:[^@]*@/, ':****@');
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
  * Global error handler middleware
  */
 export function errorHandler(error: Error, c: Context) {
-  console.error('Error occurred:', {
-    name: error.name,
-    message: error.message,
-    stack: isDevelopment ? error.stack : undefined,
-    url: c.req.url,
-    method: c.req.method,
-  });
+  // Log error with appropriate detail level
+  if (isDevelopment) {
+    console.error('Error occurred:', {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      url: c.req.url,
+      method: c.req.method,
+    });
+  } else {
+    // Production logging without sensitive details
+    console.error(`[${new Date().toISOString()}] ${error.name}: ${error.message} at ${c.req.method} ${c.req.url}`);
+  }
 
   const { statusCode, code, message, details } = mapErrorToResponse(error);
 
   const apiError: ApiError = {
     code,
     message,
-    details,
+    details: sanitizeDetails(details),
     stack: isDevelopment ? error.stack : undefined,
   };
 

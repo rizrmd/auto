@@ -83,8 +83,8 @@ export const env: EnvConfig = {
   // Database
   DATABASE_URL: getEnvVar('DATABASE_URL'),
 
-  // JWT Authentication
-  JWT_SECRET: getOptionalEnvVar('JWT_SECRET', generateSecureJWTSecret()),
+  // JWT Authentication - CRITICAL: Must use persistent secret
+  JWT_SECRET: getEnvVar('JWT_SECRET'),
   JWT_EXPIRES_IN: getOptionalEnvVar('JWT_EXPIRES_IN', '7d'),
 
 
