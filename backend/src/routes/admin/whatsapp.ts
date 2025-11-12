@@ -166,11 +166,15 @@ whatsappAdmin.get(
             }
           }
 
-          // 🎯 ENHANCED FIX: Consolidated database synchronization logic
+          // 🎯 CRITICAL FIX: Allow natural pairing process without interference
+          // Only sync status in clear cases, never interrupt ongoing pairing
           const shouldSyncToConnected = health?.connected && health?.paired && tenant.whatsappStatus !== 'connected';
           const shouldSyncToDisconnected = (!health?.connected && !health?.paired) &&
-                                        (tenant.whatsappStatus === 'connected' || tenant.whatsappStatus === 'connecting');
-          const shouldFixConnectingState = health?.connected && !health?.paired && tenant.whatsappStatus === 'connecting';
+                                        tenant.whatsappStatus === 'connected';
+
+          // REMOVED: shouldFixConnectingState - This was causing the infinite loop
+          // When service is running but not paired and status is "connecting",
+          // let the natural pairing process complete without interference
 
           if (shouldSyncToConnected) {
             console.log(`[WHATSAPP ADMIN] 🎉 WhatsApp is connected! Updating tenant status from "${tenant.whatsappStatus}" to "connected" [ID: ${requestId}]`);
@@ -190,23 +194,6 @@ whatsappAdmin.get(
             } catch (dbError) {
               console.error('[WHATSAPP ADMIN] ❌ Failed to update database status:', dbError);
             }
-          } else if (shouldFixConnectingState) {
-            console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is running but not paired, fixing stuck "connecting" status [ID: ${requestId}]`);
-
-            try {
-              await prisma.tenant.update({
-                where: { id: tenant.id },
-                data: {
-                  whatsappStatus: 'disconnected',
-                },
-              });
-
-              console.log(`[WHATSAPP ADMIN] 🔄 Database fixed: Tenant ${tenant.name} status set to "disconnected" (ready for pairing) [ID: ${requestId}]`);
-              // Update local tenant object for response
-              tenant.whatsappStatus = 'disconnected';
-            } catch (dbError) {
-              console.error('[WHATSAPP ADMIN] ❌ Failed to fix database status:', dbError);
-            }
           } else if (shouldSyncToDisconnected) {
             console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is disconnected, syncing database status [ID: ${requestId}]`);
 
@@ -223,6 +210,11 @@ whatsappAdmin.get(
               tenant.whatsappStatus = 'disconnected';
             } catch (dbError) {
               console.error('[WHATSAPP ADMIN] ❌ Failed to sync database status:', dbError);
+            }
+          } else {
+            // Log the current state for debugging
+            if (tenant.whatsappStatus === 'connecting' && health?.connected && !health?.paired) {
+              console.log(`[WHATSAPP ADMIN] 🔄 Pairing in progress: Service running, awaiting QR scan [ID: ${requestId}]`);
             }
           }
         } finally {
