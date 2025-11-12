@@ -56,7 +56,11 @@
       "mcp__chrome-devtools__fill",
       "Bash(python3:*)",
       "Bash(docker run:*)",
-      "Bash(bun:*)"
+      "Bash(bun:*)",
+      "Bash(find:*)",
+      "Bash(go version:*)",
+      "Bash(docker exec:*)",
+      "Bash(git submodule:*)"
     ],
     "deny": [],
     "ask": []
