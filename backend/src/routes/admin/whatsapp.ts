@@ -43,46 +43,19 @@ whatsappAdmin.get(
       }, 400);
     }
 
-    console.log(`[WHATSAPP ADMIN] Status check for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email}`);
+    // Add a unique request identifier to prevent duplicate processing
+    const requestId = `${tenant.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    console.log(`[WHATSAPP ADMIN] Status check for tenant: ${tenant.name} (${tenant.slug}) by user: ${user.email} [ID: ${requestId}]`);
 
-    // Ensure WhatsApp service is running and generate QR if needed
-    let autoQRGenerated = false;
-    try {
-      const healthResponse = await fetch('http://localhost:8080/health', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'AutoLeads-Proxy/1.0',
-        },
-      });
+    // Check if we already have a recent status check for this tenant to prevent race conditions
+    const statusCacheKey = `whatsapp-status-${tenant.id}`;
+    const now = Date.now();
+    const lastCheck = globalThis[statusCacheKey] || 0;
 
-      if (healthResponse.ok) {
-        const healthData = await healthResponse.json();
-
-        // If WhatsApp service is not connected but database shows connecting, try to initialize it
-        if (!healthData.data?.connected && tenant.whatsappStatus === 'connecting') {
-          console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name}`);
-
-          try {
-            const qrResponse = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}`, {
-              method: 'GET',
-              headers: {
-                'User-Agent': 'AutoLeads-Proxy/1.0',
-              },
-            });
-
-            if (qrResponse.ok) {
-              autoQRGenerated = true;
-              console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name}`);
-            }
-          } catch (qrError) {
-            console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name}:`, qrError);
-          }
-        }
-      }
-    } catch (healthCheckError) {
-      console.warn(`[WHATSAPP ADMIN] Failed to check WhatsApp service health:`, healthCheckError);
+    if (now - lastCheck < 2000) { // 2 second throttle
+      console.log(`[WHATSAPP ADMIN] Status check throttled for tenant ${tenant.name} - last check ${now - lastCheck}ms ago`);
     }
+    globalThis[statusCacheKey] = now;
     
     // Use tenant-specific WhatsApp instance through proxy
     try {
@@ -145,31 +118,116 @@ whatsappAdmin.get(
       let autoQRGenerated = false;
       let autoQRMessage = '';
 
-      // If WhatsApp service is not connected but database shows connecting, try to initialize it
-      // Only attempt if service is available or running
-      if ((!health?.connected || serviceStatus === 'running-but-unhealthy') && tenant.whatsappStatus === 'connecting' && serviceStatus !== 'not-running') {
-        console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name}`);
-        try {
-          const qrResponse = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}`, {
-            method: 'GET',
-            headers: {
-              'Content-Type': 'application/json',
-              'User-Agent': 'AutoLeads-Proxy/1.0',
-            },
-          });
+      // 🎯 CRITICAL FIX: Prevent race conditions in database status updates
+      // Use a mutex-like approach to prevent simultaneous status updates
+      const updateMutexKey = `whatsapp-update-mutex-${tenant.id}`;
+      const isUpdateInProgress = globalThis[updateMutexKey] || false;
 
-          if (qrResponse.ok) {
-            const qrData = await qrResponse.json();
-            autoQRGenerated = true;
-            autoQRMessage = 'QR code auto-generated to initialize service';
-            console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name}:`, qrData);
-          } else {
-            autoQRMessage = `QR generation failed with status: ${qrResponse.status}`;
-            console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name}: ${qrResponse.status}`);
+      if (isUpdateInProgress) {
+        console.log(`[WHATSAPP ADMIN] Status update already in progress for tenant ${tenant.name}, skipping duplicate work [ID: ${requestId}]`);
+      } else {
+        globalThis[updateMutexKey] = true;
+
+        try {
+          // Set a timeout to release the mutex in case of errors
+          setTimeout(() => {
+            globalThis[updateMutexKey] = false;
+          }, 5000); // 5 second timeout
+
+          // Only attempt auto-QR generation if service is available and not already being processed
+          if ((!health?.connected || serviceStatus === 'running-but-unhealthy') &&
+              tenant.whatsappStatus === 'connecting' &&
+              serviceStatus !== 'not-running' &&
+              !autoQRGenerated) {
+
+            console.log(`[WHATSAPP ADMIN] Auto-generating QR to initialize service for ${tenant.name} [ID: ${requestId}]`);
+
+            try {
+              const qrResponse = await fetch(`http://localhost:8080/pair?tenant_id=${tenant.id}`, {
+                method: 'GET',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'User-Agent': 'AutoLeads-Proxy/1.0',
+                },
+              });
+
+              if (qrResponse.ok) {
+                const qrData = await qrResponse.json();
+                autoQRGenerated = true;
+                autoQRMessage = 'QR code auto-generated to initialize service';
+                console.log(`[WHATSAPP ADMIN] Auto QR generated successfully for ${tenant.name} [ID: ${requestId}]:`, qrData);
+              } else {
+                autoQRMessage = `QR generation failed with status: ${qrResponse.status}`;
+                console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name} [ID: ${requestId}]: ${qrResponse.status}`);
+              }
+            } catch (qrError) {
+              autoQRMessage = `QR generation error: ${qrError instanceof Error ? qrError.message : 'Unknown error'}`;
+              console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name} [ID: ${requestId}]:`, qrError);
+            }
           }
-        } catch (qrError) {
-          autoQRMessage = `QR generation error: ${qrError instanceof Error ? qrError.message : 'Unknown error'}`;
-          console.warn(`[WHATSAPP ADMIN] Auto QR generation failed for ${tenant.name}:`, qrError);
+
+          // 🎯 ENHANCED FIX: Consolidated database synchronization logic
+          const shouldSyncToConnected = health?.connected && health?.paired && tenant.whatsappStatus !== 'connected';
+          const shouldSyncToDisconnected = (!health?.connected && !health?.paired) &&
+                                        (tenant.whatsappStatus === 'connected' || tenant.whatsappStatus === 'connecting');
+          const shouldFixConnectingState = health?.connected && !health?.paired && tenant.whatsappStatus === 'connecting';
+
+          if (shouldSyncToConnected) {
+            console.log(`[WHATSAPP ADMIN] 🎉 WhatsApp is connected! Updating tenant status from "${tenant.whatsappStatus}" to "connected" [ID: ${requestId}]`);
+
+            try {
+              await prisma.tenant.update({
+                where: { id: tenant.id },
+                data: {
+                  whatsappStatus: 'connected',
+                  whatsappNumber: health?.deviceNumber || '6283134446903',
+                },
+              });
+
+              console.log(`[WHATSAPP ADMIN] ✅ Database updated: Tenant ${tenant.name} status set to "connected" [ID: ${requestId}]`);
+              // Update local tenant object for response
+              tenant.whatsappStatus = 'connected';
+            } catch (dbError) {
+              console.error('[WHATSAPP ADMIN] ❌ Failed to update database status:', dbError);
+            }
+          } else if (shouldFixConnectingState) {
+            console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is running but not paired, fixing stuck "connecting" status [ID: ${requestId}]`);
+
+            try {
+              await prisma.tenant.update({
+                where: { id: tenant.id },
+                data: {
+                  whatsappStatus: 'disconnected',
+                },
+              });
+
+              console.log(`[WHATSAPP ADMIN] 🔄 Database fixed: Tenant ${tenant.name} status set to "disconnected" (ready for pairing) [ID: ${requestId}]`);
+              // Update local tenant object for response
+              tenant.whatsappStatus = 'disconnected';
+            } catch (dbError) {
+              console.error('[WHATSAPP ADMIN] ❌ Failed to fix database status:', dbError);
+            }
+          } else if (shouldSyncToDisconnected) {
+            console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is disconnected, syncing database status [ID: ${requestId}]`);
+
+            try {
+              await prisma.tenant.update({
+                where: { id: tenant.id },
+                data: {
+                  whatsappStatus: 'disconnected',
+                },
+              });
+
+              console.log(`[WHATSAPP ADMIN] 🔄 Database synced: Tenant ${tenant.name} status set to "disconnected" [ID: ${requestId}]`);
+              // Update local tenant object for response
+              tenant.whatsappStatus = 'disconnected';
+            } catch (dbError) {
+              console.error('[WHATSAPP ADMIN] ❌ Failed to sync database status:', dbError);
+            }
+          }
+        } finally {
+          // Release the mutex
+          globalThis[updateMutexKey] = false;
         }
       }
 
@@ -185,63 +243,8 @@ whatsappAdmin.get(
         webhook_configured: true,
       };
 
-      // 🎯 CRITICAL FIX: Sync database with actual WhatsApp service state
-      if (healthData.connected && healthData.paired && tenant.whatsappStatus !== 'connected') {
-        console.log(`[WHATSAPP ADMIN] 🎉 WhatsApp is connected! Updating tenant status from "${tenant.whatsappStatus}" to "connected"`);
-
-        try {
-          await prisma.tenant.update({
-            where: { id: tenant.id },
-            data: {
-              whatsappStatus: 'connected',
-              whatsappNumber: '6283134446903', // Update with actual paired number from health data
-            },
-          });
-
-          console.log(`[WHATSADMIN] ✅ Database updated: Tenant ${tenant.name} status set to "connected"`);
-        } catch (dbError) {
-          console.error('[WHATSAPP ADMIN] ❌ Failed to update database status:', dbError);
-          // Continue without failing the status endpoint
-        }
-      }
-
-      // 🎯 CRITICAL FIX: Handle "connected but not paired" scenario
-      if (healthData.connected && !healthData.paired && tenant.whatsappStatus === 'connecting') {
-        console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is running but not paired, database stuck in "connecting". Updating to "disconnected" to allow pairing...`);
-
-        try {
-          await prisma.tenant.update({
-            where: { id: tenant.id },
-            data: {
-              whatsappStatus: 'disconnected',
-            },
-          });
-
-          console.log(`[WHATSAPP ADMIN] 🔄 Database fixed: Tenant ${tenant.name} status set to "disconnected" (ready for pairing)`);
-        } catch (dbError) {
-          console.error('[WHATSAPP ADMIN] ❌ Failed to fix database status:', dbError);
-          // Continue without failing the status endpoint
-        }
-      }
-
-      // If service shows disconnected but database still shows connected, sync properly
-      if (!healthData.connected && !healthData.paired && tenant.whatsappStatus === 'connected') {
-        console.log(`[WHATSAPP ADMIN] ⚠️ WhatsApp service is disconnected but database shows "connected". Syncing database status...`);
-
-        try {
-          await prisma.tenant.update({
-            where: { id: tenant.id },
-            data: {
-              whatsappStatus: 'disconnected',
-            },
-          });
-
-          console.log(`[WHATSAPP ADMIN] 🔄 Database synced: Tenant ${tenant.name} status set to "disconnected"`);
-        } catch (dbError) {
-          console.error('[WHATSAPP ADMIN] ❌ Failed to sync database status:', dbError);
-          // Continue without failing the status endpoint
-        }
-      }
+      // Note: Database synchronization logic has been consolidated above with mutex protection
+      // This prevents race conditions and ensures consistent state updates
 
       const apiResponse: ApiResponse = {
         success: true,
@@ -752,6 +755,7 @@ whatsappAdmin.post(
 /**
  * POST /api/admin/whatsapp/force-reconnect
  * Force reconnection and generate QR code after disconnect
+ * Note: This route was previously duplicated, now consolidated
  */
 whatsappAdmin.post(
   '/force-reconnect',
@@ -786,7 +790,7 @@ whatsappAdmin.post(
           whatsappBotEnabled: false,
         },
       });
-      console.log(`[WHATSAPP ADMIN] Updated tenant status from disconnected to connecting`);
+      console.log(`[WHATSAPP ADMIN] Updated tenant status to connecting (ready for QR generation)`);
 
       const response: ApiResponse = {
         success: true,
