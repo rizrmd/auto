@@ -199,16 +199,16 @@ export class ZaiClient {
   private initializeHttpAgent(): void {
     try {
       // Use undici for better performance if available
-      const { fetch } = require('undici');
-      
+      const { Agent } = require('undici');
+
       // Create agent with connection pooling
-      this.httpAgent = new fetch.Agent({
+      this.httpAgent = new Agent({
         connections: 10,
         keepAlive: true,
         keepAliveTimeout: 30000,
         timeout: this.REQUEST_TIMEOUT,
       });
-      
+
       console.log('[ZAI CLIENT] HTTP agent initialized with connection pooling');
     } catch (error) {
       console.warn('[ZAI CLIENT] Using default fetch, connection pooling not available:', error);
