@@ -134,6 +134,16 @@ whatsappWebhook.post('/', async (c) => {
 
     console.log(`[WEBHOOK] Message from ${customerPhone}: "${message}"`);
 
+    // Skip status broadcast messages (WhatsApp Stories/Status updates)
+    // These are not real customer messages and should not trigger lead creation
+    if (payload.chat === 'status@broadcast') {
+      console.log(`[WEBHOOK] ⏭️  Skipping status broadcast message from ${customerPhone}`);
+      return c.json({
+        success: true,
+        message: 'Status broadcast message ignored',
+      });
+    }
+
     // Find tenant by domain from webhook headers or request context
     const host = c.req.header('host') || '';
     console.log(`[WEBHOOK] Looking up tenant for domain: ${host}`);
