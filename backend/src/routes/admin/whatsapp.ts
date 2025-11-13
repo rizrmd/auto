@@ -188,6 +188,8 @@ whatsappAdmin.get(
               let detectedPhone: string | null = null;
               try {
                 console.log(`[WHATSAPP ADMIN] 📱 Attempting to auto-detect phone number from device [ID: ${requestId}]`);
+                // Instantiate WhatsAppClient to fetch device info
+                const waClient = new WhatsAppClient();
                 const deviceInfo = await waClient.getDeviceInfo();
 
                 if (deviceInfo.success && deviceInfo.phone) {

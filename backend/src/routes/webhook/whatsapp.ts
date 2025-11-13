@@ -77,8 +77,16 @@ whatsappWebhook.post('/', async (c) => {
 
       // Get tenant from Host header
       const host = c.req.header('host') || '';
+      console.log(`[WEBHOOK] Looking up tenant for domain: ${host}`);
+
       const tenant = await prisma.tenant.findFirst({
-        where: { domain: host.split(':')[0] }
+        where: {
+          OR: [
+            { subdomain: host.split(':')[0] },
+            { customDomain: host.split(':')[0] }
+          ],
+          status: 'active',
+        }
       });
 
       if (tenant) {
@@ -88,6 +96,8 @@ whatsappWebhook.post('/', async (c) => {
           data: { whatsappStatus: 'connected' }
         });
         console.log(`[WEBHOOK] ✅ Updated tenant ${tenant.name} status to connected`);
+      } else {
+        console.warn(`[WEBHOOK] ⚠️ No tenant found for host: ${host}`);
       }
 
       return c.json({
