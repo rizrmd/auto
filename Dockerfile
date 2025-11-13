@@ -3,6 +3,10 @@
 # ============================================================================
 FROM golang:1.23-bookworm AS whatsapp-builder
 
+# Build argument to bust cache (Coolify sets this automatically with commit hash)
+ARG SOURCE_COMMIT
+RUN echo "Building from commit: ${SOURCE_COMMIT}"
+
 WORKDIR /build
 
 # Copy the WhatsApp service source code from submodule
@@ -10,7 +14,7 @@ COPY backend/wapi/ .
 
 # Copy fixed main.go with pairing fixes (mutex, timing, webhook moved to Connected event)
 COPY whatsapp-main-fixed.go /build/main.go
-RUN echo "✅ WhatsApp pairing fix applied (fixed main.go)"
+RUN echo "✅ WhatsApp pairing fix applied (fixed main.go) - commit: ${SOURCE_COMMIT}"
 
 # Set GOTOOLCHAIN to auto to allow downloading required Go version
 ENV GOTOOLCHAIN=auto
