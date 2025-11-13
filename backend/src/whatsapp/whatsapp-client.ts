@@ -643,19 +643,71 @@ export class WhatsAppClient {
   }
 
   /**
+   * Get device information (phone number, JID, etc.)
+   * Returns the phone number of the paired WhatsApp device
+   */
+  async getDeviceInfo(): Promise<{
+    success: boolean;
+    phone?: string;
+    deviceId?: string;
+    jid?: any;
+    message?: string;
+  }> {
+    try {
+      const devicesUrl = this.baseUrl + '/devices';
+      console.log(`[WHATSAPP] Fetching device information from ${devicesUrl}`);
+
+      const response = await fetch(devicesUrl, {
+        method: 'GET'
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error('[WHATSAPP] Device info API error:', data);
+        return {
+          success: false,
+          message: `HTTP ${response.status}: ${data.message || 'Failed to get device info'}`
+        };
+      }
+
+      // Extract phone number from response
+      const phone = data.data?.phone || null;
+      const deviceId = data.data?.device_id || null;
+      const jid = data.data?.jid || null;
+
+      console.log(`[WHATSAPP] Device info retrieved: phone=${phone}, deviceId=${deviceId}`);
+
+      return {
+        success: true,
+        phone,
+        deviceId,
+        jid
+      };
+
+    } catch (error) {
+      console.error('[WHATSAPP] Error fetching device info:', error);
+      return {
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to fetch device info'
+      };
+    }
+  }
+
+  /**
    * Get API version information
    */
   async getVersion(): Promise<{ version: string; features: string[] }> {
     try {
       const health = await this.healthCheck();
-      
+
       // Based on the health response, determine available features
       const features = ['send_message'];
-      
+
       if (health.success && health.data?.paired !== undefined) {
         features.push('qr_pairing', 'health_check');
       }
-      
+
       // Try to detect v1.1.0 features
       try {
         const response = await fetch(this.baseUrl + '/read', { method: 'POST', body: '{}' });

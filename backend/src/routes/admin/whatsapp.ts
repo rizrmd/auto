@@ -184,17 +184,47 @@ whatsappAdmin.get(
             console.log(`[WHATSAPP ADMIN] 🎉 WhatsApp is connected! Updating tenant status from "${tenant.whatsappStatus}" to "connected" [ID: ${requestId}]`);
 
             try {
+              // 🔍 AUTO-DETECT: Try to get device phone number from WhatsApp service
+              let detectedPhone: string | null = null;
+              try {
+                console.log(`[WHATSAPP ADMIN] 📱 Attempting to auto-detect phone number from device [ID: ${requestId}]`);
+                const deviceInfo = await waClient.getDeviceInfo();
+
+                if (deviceInfo.success && deviceInfo.phone) {
+                  detectedPhone = deviceInfo.phone;
+                  console.log(`[WHATSAPP ADMIN] ✅ Phone number detected: ${detectedPhone} [ID: ${requestId}]`);
+                } else {
+                  console.log(`[WHATSAPP ADMIN] ⚠️ Could not detect phone number: ${deviceInfo.message || 'Unknown error'} [ID: ${requestId}]`);
+                }
+              } catch (detectError) {
+                console.error(`[WHATSAPP ADMIN] ❌ Error detecting phone number:`, detectError);
+              }
+
+              // Update database with new status and detected phone (if available)
+              const updateData: any = {
+                whatsappStatus: 'connected',
+              };
+
+              // Only update phone number if we successfully detected it
+              if (detectedPhone) {
+                updateData.whatsappNumber = detectedPhone;
+                console.log(`[WHATSAPP ADMIN] 📝 Updating database with detected phone: ${detectedPhone} [ID: ${requestId}]`);
+              } else {
+                console.log(`[WHATSAPP ADMIN] 📝 Keeping existing phone number in database [ID: ${requestId}]`);
+              }
+
               await prisma.tenant.update({
                 where: { id: tenant.id },
-                data: {
-                  whatsappStatus: 'connected',
-                  // whatsappNumber is already set during tenant creation, no need to update
-                },
+                data: updateData,
               });
 
-              console.log(`[WHATSAPP ADMIN] ✅ Database updated: Tenant ${tenant.name} status set to "connected" [ID: ${requestId}]`);
+              console.log(`[WHATSAPP ADMIN] ✅ Database updated: Tenant ${tenant.name} status set to "connected"${detectedPhone ? ` with phone ${detectedPhone}` : ''} [ID: ${requestId}]`);
+
               // Update local tenant object for response
               tenant.whatsappStatus = 'connected';
+              if (detectedPhone) {
+                tenant.whatsappNumber = detectedPhone;
+              }
               globalThis[lastStatusChangeKey] = Date.now();
             } catch (dbError) {
               console.error('[WHATSAPP ADMIN] ❌ Failed to update database status:', dbError);
