@@ -8,12 +8,9 @@ WORKDIR /build
 # Copy the WhatsApp service source code from submodule
 COPY backend/wapi/ .
 
-# Copy and apply pairing fix patch
-COPY whatsapp-pairing-fix.patch /build/
-RUN apt-get update && apt-get install -y patch && \
-    patch -p1 < whatsapp-pairing-fix.patch && \
-    echo "✅ WhatsApp pairing fix applied" && \
-    rm /build/whatsapp-pairing-fix.patch
+# Copy fixed main.go with pairing fixes (mutex, timing, webhook moved to Connected event)
+COPY whatsapp-main-fixed.go /build/main.go
+RUN echo "✅ WhatsApp pairing fix applied (fixed main.go)"
 
 # Set GOTOOLCHAIN to auto to allow downloading required Go version
 ENV GOTOOLCHAIN=auto
