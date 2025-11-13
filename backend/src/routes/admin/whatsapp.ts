@@ -172,8 +172,7 @@ whatsappAdmin.get(
           const shouldSyncToDisconnected = isActuallyDisconnected && isCurrentlyConnected && !isTransientPairingState && !isInGracePeriod;
 
           // 🎯 CRITICAL: NEVER interfere with "connecting" state - let natural process complete
-          const shouldMaintainConnectingState = isCurrentlyConnecting &&
-                                               isServiceAvailableButNotPaired;
+          const shouldMaintainConnectingState = isCurrentlyConnecting && isTransientPairingState;
 
           // Add debounce logic to prevent rapid status changes
           const lastStatusChange = globalThis[lastStatusChangeKey] || 0;
