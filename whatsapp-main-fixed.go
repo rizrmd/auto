@@ -127,6 +127,12 @@ func initializeWhatsApp() {
 	clientLog := waLog.Stdout("Client", "INFO", true)
 	client = whatsmeow.NewClient(deviceStore, clientLog)
 
+	// Configure app state error handler to ignore missing key errors during initial pairing
+	// This prevents device removal when app state keys haven't been synced yet
+	client.DontSendSelfBroadcastMessages = true
+	client.EnableAutoReconnect = true
+	client.AutomaticMessageRerequestFromPhone = false
+
 	// Add event handlers
 	client.AddEventHandler(handler)
 
@@ -1356,3 +1362,4 @@ func main() {
 	log.Println("Server stopped")
 }
 // Build: 1763024800
+// Build: 1763028119 - App state fix
