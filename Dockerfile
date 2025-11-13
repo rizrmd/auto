@@ -5,14 +5,8 @@ FROM golang:1.23-bookworm AS whatsapp-builder
 
 WORKDIR /build
 
-# Copy the WhatsApp service source code from submodule
+# Copy the WhatsApp service source code from submodule (with pairing fixes already applied)
 COPY backend/wapi/ .
-
-# Install patch utility and apply critical pairing fixes
-COPY whatsapp-service-fixes.patch .
-RUN apt-get update && apt-get install -y patch && \
-    patch -p1 < whatsapp-service-fixes.patch && \
-    echo "✅ WhatsApp pairing fixes applied successfully"
 
 # Set GOTOOLCHAIN to auto to allow downloading required Go version
 ENV GOTOOLCHAIN=auto
