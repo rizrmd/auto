@@ -188,7 +188,7 @@ whatsappAdmin.get(
                 where: { id: tenant.id },
                 data: {
                   whatsappStatus: 'connected',
-                  whatsappNumber: health?.deviceNumber || null, // Allow any number, no hard-coded fallback
+                  // whatsappNumber is already set during tenant creation, no need to update
                 },
               });
 
