@@ -854,4 +854,59 @@ whatsappAdmin.post(
   })
 );
 
+/**
+ * GET /api/admin/whatsapp/rate-limit-status
+ * Check if tenant is suspected to be rate-limited by WhatsApp
+ */
+whatsappAdmin.get(
+  '/rate-limit-status',
+  asyncHandler(async (c) => {
+    const tenant = c.get('tenant');
+    const user = c.get('user');
+
+    if (!tenant) {
+      return c.json({
+        success: false,
+        error: {
+          code: 'TENANT_REQUIRED',
+          message: 'Tenant context is required',
+        },
+      }, 400);
+    }
+
+    console.log(`[WHATSAPP ADMIN] Rate limit status check for tenant: ${tenant.name} by user: ${user.email}`);
+
+    const now = new Date();
+    const isRateLimited = tenant.whatsappRateLimitedUntil &&
+                         tenant.whatsappRateLimitedUntil > now;
+
+    const failureCount = tenant.whatsappPairingFailures || 0;
+    const suspectedRateLimit = failureCount >= 3;
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        isRateLimited,
+        failureCount,
+        suspectedRateLimit,
+        lastAttempt: tenant.whatsappLastPairingAttempt,
+        rateLimitedUntil: tenant.whatsappRateLimitedUntil,
+        whatsappNumber: tenant.whatsappNumber,
+        recommendations: suspectedRateLimit ? [
+          'Use a different WhatsApp number (clean number with no previous attempts)',
+          'Wait 24-48 hours before attempting again with the same number',
+          'Clear WhatsApp mobile app cache and restart device',
+          'Ensure stable internet connection on mobile device'
+        ] : failureCount >= 2 ? [
+          'One more failed attempt may trigger rate limiting',
+          'Consider using a different number to avoid lockout',
+          'Ensure stable internet connection on both server and mobile'
+        ] : []
+      }
+    };
+
+    return c.json(response);
+  })
+);
+
 export default whatsappAdmin;

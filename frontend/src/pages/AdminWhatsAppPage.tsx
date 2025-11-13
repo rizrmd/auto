@@ -3,18 +3,56 @@
  * Complete WhatsApp management interface
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAdminAuth } from '../context/AdminAuthContext';
 import { WhatsAppQR } from '../components/admin/WhatsAppQR';
+import { RateLimitWarning } from '../components/admin/RateLimitWarning';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card';
 import { Button } from '../components/ui/button';
+
+interface RateLimitStatus {
+  isRateLimited: boolean;
+  failureCount: number;
+  suspectedRateLimit: boolean;
+  lastAttempt: string | null;
+  rateLimitedUntil: string | null;
+  whatsappNumber: string;
+  recommendations: string[];
+}
 
 export function AdminWhatsAppPage() {
   const { tenant } = useAdminAuth();
   const [isConnected, setIsConnected] = useState(false);
+  const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
+
+  // Fetch rate limit status on mount and when connection changes
+  useEffect(() => {
+    fetchRateLimitStatus();
+  }, [isConnected]);
+
+  const fetchRateLimitStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/whatsapp/rate-limit-status', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('admin_token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setRateLimitStatus(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rate limit status:', error);
+    }
+  };
 
   const handleConnectionChange = (connected: boolean) => {
     setIsConnected(connected);
+    // Refresh rate limit status when connection changes
+    if (connected) {
+      fetchRateLimitStatus();
+    }
   };
 
   return (
@@ -70,6 +108,16 @@ export function AdminWhatsAppPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Rate Limit Warning - Show if pairing failures detected */}
+      {rateLimitStatus && rateLimitStatus.failureCount >= 2 && (
+        <RateLimitWarning
+          failureCount={rateLimitStatus.failureCount}
+          rateLimitedUntil={rateLimitStatus.rateLimitedUntil}
+          whatsappNumber={rateLimitStatus.whatsappNumber}
+          recommendations={rateLimitStatus.recommendations}
+        />
+      )}
 
       {/* WhatsApp QR Scanner */}
       <WhatsAppQR onConnectionChange={handleConnectionChange} />

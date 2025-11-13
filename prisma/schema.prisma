@@ -48,6 +48,12 @@ model Tenant {
   whatsappInstanceId String? @map("whatsapp_instance_id") @db.VarChar(100) // Unique ID for WhatsApp instance
   whatsappPort      Int?    @map("whatsapp_port") // Port for tenant's WhatsApp instance (8080, 8081, etc.)
   whatsappStatus    String? @default("disconnected") @map("whatsapp_status") @db.VarChar(20) // connected, disconnected, pairing
+
+  // WHATSAPP RATE LIMITING TRACKING
+  whatsappPairingFailures   Int?      @default(0) @map("whatsapp_pairing_failures") // Counter for failed pairing attempts
+  whatsappLastPairingAttempt DateTime? @map("whatsapp_last_pairing_attempt") // Last pairing attempt timestamp
+  whatsappRateLimitedUntil   DateTime? @map("whatsapp_rate_limited_until") // Rate limit expires at this time
+
   email              String? @db.VarChar(200)
   address            String? @db.Text
   city               String? @db.VarChar(100)

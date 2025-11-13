@@ -70,32 +70,36 @@ whatsappWebhook.post('/', async (c) => {
     console.log(`[WEBHOOK] 🕐 Timestamp: ${new Date().toISOString()}`);
     console.log(`[WEBHOOK] 🌐 Request headers:`, JSON.stringify(c.req.header(), null, 2));
 
-    // Handle pair_success event
-    if (payload.event === 'pair_success') {
-      console.log(`[WEBHOOK] 🎉 WhatsApp pairing successful!`);
-      console.log(`[WEBHOOK] Device ID: ${payload.sender}`);
+    // Get tenant from Host header (used by multiple event handlers)
+    const host = c.req.header('host') || '';
+    const tenant = await prisma.tenant.findFirst({
+      where: {
+        OR: [
+          { subdomain: host.split(':')[0] },
+          { customDomain: host.split(':')[0] }
+        ],
+        status: 'active',
+      }
+    });
 
-      // Get tenant from Host header
-      const host = c.req.header('host') || '';
+    // Handle Connected event (successful pairing)
+    if (payload.event === 'Connected' || payload.event === 'pair_success') {
+      console.log(`[WEBHOOK] 🎉 WhatsApp connected successfully!`);
+      console.log(`[WEBHOOK] Device ID: ${payload.sender}`);
       console.log(`[WEBHOOK] Looking up tenant for domain: ${host}`);
 
-      const tenant = await prisma.tenant.findFirst({
-        where: {
-          OR: [
-            { subdomain: host.split(':')[0] },
-            { customDomain: host.split(':')[0] }
-          ],
-          status: 'active',
-        }
-      });
-
       if (tenant) {
-        // Update tenant status to connected
+        // Update tenant status to connected AND reset failure counters
         await prisma.tenant.update({
           where: { id: tenant.id },
-          data: { whatsappStatus: 'connected' }
+          data: {
+            whatsappStatus: 'connected',
+            whatsappPairingFailures: 0,
+            whatsappRateLimitedUntil: null,
+            whatsappLastPairingAttempt: new Date()
+          }
         });
-        console.log(`[WEBHOOK] ✅ Updated tenant ${tenant.name} status to connected`);
+        console.log(`[WEBHOOK] ✅ Updated tenant ${tenant.name} status to connected and reset failure counters`);
       } else {
         console.warn(`[WEBHOOK] ⚠️ No tenant found for host: ${host}`);
       }
@@ -106,13 +110,65 @@ whatsappWebhook.post('/', async (c) => {
       });
     }
 
+    // Handle disconnection events (potential rate limit indicator)
+    if (payload.event === 'device_removed' || payload.event === 'disconnected' || payload.event === 'Disconnected') {
+      console.log(`[WEBHOOK] ⚠️ Device disconnected/removed`);
+      console.log(`[WEBHOOK] Device ID: ${payload.sender}`);
+      console.log(`[WEBHOOK] Looking up tenant for domain: ${host}`);
+
+      if (tenant) {
+        const timeSinceLastAttempt = tenant.whatsappLastPairingAttempt
+          ? Date.now() - tenant.whatsappLastPairingAttempt.getTime()
+          : Infinity;
+
+        // If disconnected within 2 minutes after last pairing attempt, likely rate limit
+        if (timeSinceLastAttempt < 120000) {
+          const currentFailures = tenant.whatsappPairingFailures || 0;
+          const newFailures = currentFailures + 1;
+
+          await prisma.tenant.update({
+            where: { id: tenant.id },
+            data: {
+              whatsappPairingFailures: newFailures,
+              whatsappLastPairingAttempt: new Date(),
+              whatsappStatus: 'disconnected',
+              // Set rate limit flag if >= 3 failures
+              whatsappRateLimitedUntil: newFailures >= 3
+                ? new Date(Date.now() + 24 * 60 * 60 * 1000) // +24 hours
+                : null
+            }
+          });
+
+          console.warn(`[WEBHOOK] 🚨 [RATE LIMIT] Suspected rate limiting for tenant ${tenant.name}: ${newFailures} failures`);
+
+          if (newFailures >= 3) {
+            console.error(`[WEBHOOK] ❌ [RATE LIMIT] Tenant ${tenant.name} likely rate-limited! Recommend using different number or waiting 24-48 hours.`);
+          }
+        } else {
+          // Normal disconnection (not rate limit related)
+          await prisma.tenant.update({
+            where: { id: tenant.id },
+            data: { whatsappStatus: 'disconnected' }
+          });
+          console.log(`[WEBHOOK] ℹ️ Normal disconnection for tenant ${tenant.name} (outside 2-minute window)`);
+        }
+      } else {
+        console.warn(`[WEBHOOK] ⚠️ No tenant found for host: ${host}`);
+      }
+
+      return c.json({
+        success: true,
+        message: 'Disconnection event processed',
+      });
+    }
+
     // Validate required fields for message events
     if (!payload.event || payload.event !== 'message') {
       return c.json({
         success: false,
         error: {
           code: 'INVALID_EVENT',
-          message: 'Only message and pair_success events are supported',
+          message: 'Event type not supported or message event expected',
         },
       }, 400);
     }
