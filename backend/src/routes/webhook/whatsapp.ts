@@ -200,22 +200,8 @@ whatsappWebhook.post('/', async (c) => {
       });
     }
 
-    // Find tenant by domain from webhook headers or request context
-    const host = c.req.header('host') || '';
-    console.log(`[WEBHOOK] Looking up tenant for domain: ${host}`);
-    
-    const tenant = await prisma.tenant.findFirst({
-      where: {
-        OR: [
-          { subdomain: host },
-          { customDomain: host }
-        ],
-        status: 'active',
-        whatsappBotEnabled: true,
-      },
-    });
-
-    if (!tenant) {
+    // Use tenant from earlier lookup (already declared at line 75)
+    if (!tenant || !tenant.whatsappBotEnabled) {
       console.warn('[WEBHOOK] No active tenant found');
       return c.json({
         success: false,
