@@ -17,8 +17,7 @@ import {
   BlogIdParamSchema,
 } from '../../validation/blog-schemas';
 import { tenantMiddleware } from '../../middleware/tenant';
-import { authMiddleware } from '../../middleware/auth';
-import { requireAdmin } from '../../middleware/role';
+import { authMiddleware, requireAdmin } from '../../middleware/auth';
 
 const app = new Hono();
 const blogService = new BlogService();
