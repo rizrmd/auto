@@ -544,7 +544,8 @@ model BlogPost {
   tags     String[]
 
   // ENGAGEMENT
-  viewCount Int @default(0) @map("view_count")
+  viewCount          Int @default(0) @map("view_count")
+  readingTimeMinutes Int @default(0) @map("reading_time_minutes")
 
   // META
   createdAt DateTime  @default(now()) @map("created_at")

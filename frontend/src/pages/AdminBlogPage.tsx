@@ -59,15 +59,25 @@ export function AdminBlogPage() {
         limit: postsPerPage,
       });
 
-      setPosts(response.data.posts);
-      setTotalPages(response.data.pagination.totalPages);
+      if (response && response.data) {
+        setPosts(response.data.posts || []);
+        setTotalPages(response.data.pagination?.totalPages || 1);
 
-      // Extract unique categories
-      const uniqueCategories = Array.from(new Set(response.data.posts.map(p => p.category)));
-      setCategories(uniqueCategories);
+        // Extract unique categories
+        const uniqueCategories = Array.from(new Set((response.data.posts || []).map(p => p.category).filter(Boolean)));
+        setCategories(uniqueCategories);
+      } else {
+        setPosts([]);
+        setTotalPages(1);
+        setCategories([]);
+      }
     } catch (err) {
+      console.error('[AdminBlogPage] Error loading posts:', err);
       const errorMessage = err instanceof Error ? err.message : 'Failed to load blog posts';
       setError(errorMessage);
+      setPosts([]);
+      setTotalPages(1);
+      setCategories([]);
     } finally {
       setLoading(false);
     }

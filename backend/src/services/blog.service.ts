@@ -49,6 +49,7 @@ export class BlogService {
         metaKeywords: data.metaKeywords || [],
         carIds: data.carIds || [],
         viewCount: 0,
+        readingTimeMinutes: this.calculateReadingTime(data.content),
         publishedAt: data.status === 'published' ? new Date() : null,
       },
     });
@@ -88,6 +89,11 @@ export class BlogService {
       ...data,
       slug,
     };
+
+    // Calculate reading time if content is being updated
+    if (data.content) {
+      updateData.readingTimeMinutes = this.calculateReadingTime(data.content);
+    }
 
     // Set publishedAt if status changed to published
     if (data.status === 'published' && existing.status !== 'published') {
@@ -144,9 +150,10 @@ export class BlogService {
    * Get blog post by slug (for public access)
    */
   async getBySlug(tenantId: number, slug: string): Promise<any | null> {
-    return await prisma.blogPost.findUnique({
+    const post = await prisma.blogPost.findUnique({
       where: {
         tenantId_slug: { tenantId, slug },
+        deletedAt: null,
       },
       include: {
         author: {
@@ -156,8 +163,49 @@ export class BlogService {
             email: true,
           },
         },
+        featuredCars: {
+          include: {
+            car: {
+              select: {
+                id: true,
+                slug: true,
+                brand: true,
+                model: true,
+                year: true,
+                price: true,
+                displayCode: true,
+                photos: true,
+                publicName: true,
+              },
+            },
+          },
+        },
       },
     });
+
+    if (!post) return null;
+
+    // Map car references to frontend format
+    const carReferences = post.featuredCars.map(fc => ({
+      carId: fc.car.id,
+      slug: fc.car.slug,
+      name: fc.car.publicName || `${fc.car.brand} ${fc.car.model}`,
+      brand: fc.car.brand,
+      model: fc.car.model,
+      year: fc.car.year,
+      price: fc.car.price.toString(),
+      primaryPhoto: fc.car.photos && fc.car.photos.length > 0 ? fc.car.photos[0] : null,
+      displayCode: fc.car.displayCode,
+    }));
+
+    // Remove featuredCars and add carReferences
+    const { featuredCars, ...postData } = post;
+
+    return {
+      ...postData,
+      carReferences,
+      readingTimeMinutes: this.calculateReadingTime(post.content),
+    };
   }
 
   /**
@@ -328,5 +376,108 @@ export class BlogService {
     const excerpt = words.slice(0, 150).join(' ');
 
     return excerpt.length < plainText.length ? excerpt + '...' : excerpt;
+  }
+
+  /**
+   * Get all categories with post counts
+   */
+  async getCategories(tenantId: number): Promise<Array<{ name: string; count: number }>> {
+    const posts = await prisma.blogPost.findMany({
+      where: {
+        tenantId,
+        status: 'published',
+        deletedAt: null,
+      },
+      select: {
+        category: true,
+      },
+    });
+
+    const categoryCounts: Record<string, number> = {};
+    posts.forEach(post => {
+      if (post.category) {
+        categoryCounts[post.category] = (categoryCounts[post.category] || 0) + 1;
+      }
+    });
+
+    return Object.entries(categoryCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count);
+  }
+
+  /**
+   * Get popular tags with post counts
+   */
+  async getPopularTags(tenantId: number, limit: number = 20): Promise<Array<{ name: string; count: number }>> {
+    const posts = await prisma.blogPost.findMany({
+      where: {
+        tenantId,
+        status: 'published',
+        deletedAt: null,
+      },
+      select: {
+        tags: true,
+      },
+    });
+
+    const tagCounts: Record<string, number> = {};
+    posts.forEach(post => {
+      post.tags.forEach(tag => {
+        tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+      });
+    });
+
+    return Object.entries(tagCounts)
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, limit);
+  }
+
+  /**
+   * Get related posts based on category and tags
+   */
+  async getRelatedPosts(
+    tenantId: number,
+    excludePostId: number,
+    category: string,
+    tags: string[],
+    limit: number = 4
+  ): Promise<any[]> {
+    const relatedPosts = await prisma.blogPost.findMany({
+      where: {
+        tenantId,
+        id: { not: excludePostId },
+        status: 'published',
+        deletedAt: null,
+        OR: [
+          { category },
+          { tags: { hasSome: tags } },
+        ],
+      },
+      take: limit,
+      orderBy: [
+        { publishedAt: 'desc' },
+      ],
+      include: {
+        author: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+      },
+    });
+
+    return relatedPosts;
+  }
+
+  /**
+   * Calculate reading time in minutes
+   */
+  private calculateReadingTime(content: string): number {
+    const wordsPerMinute = 200; // Average reading speed
+    const words = content.trim().split(/\s+/).length;
+    return Math.ceil(words / wordsPerMinute);
   }
 }
