@@ -32,6 +32,14 @@ export interface ConversationContext {
     tenure?: number;
   };
 
+  // Blog generation flow
+  blogPrompt?: string;
+  blogTone?: 'professional' | 'casual' | 'balanced';
+  blogCategory?: string;
+  blogCarIds?: number[];
+  blogKeywords?: string[];
+  authorId?: number;
+
   // Other flows
   [key: string]: any;
 }

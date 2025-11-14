@@ -86,6 +86,7 @@ model Tenant {
   conversationStates ConversationState[]
   searchDemands      SearchDemand[]
   securityLogs       SecurityLog[]
+  blogPosts          BlogPost[]
 
   @@map("tenants")
 }
@@ -162,9 +163,10 @@ model Car {
   slug String @db.VarChar(200) // "avanza-2020-hitam-a01"
 
   // RELATIONS
-  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  leads        Lead[]
+  tenant        Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  leads         Lead[]
   searchDemands SearchDemand[]
+  blogPostCars  BlogPostCar[]
 
   @@unique([tenantId, displayCode])
   @@unique([tenantId, slug])
@@ -334,9 +336,10 @@ model User {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // RELATIONS
-  tenant        Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  tenant        Tenant     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   assignedLeads Lead[]
-  securityLogs SecurityLog[]
+  securityLogs  SecurityLog[]
+  blogPosts     BlogPost[]
 
   @@unique([tenantId, email])
   @@index([tenantId, role])
@@ -499,4 +502,91 @@ enum SecurityLogStatus {
   SUCCESS
   FAILED
   WARNING
+}
+
+// ============================================
+// BLOG SYSTEM
+// ============================================
+
+model BlogPost {
+  id       Int @id @default(autoincrement())
+  tenantId Int @map("tenant_id")
+  authorId Int @map("author_id")
+
+  // CONTENT
+  title   String @db.VarChar(500)
+  slug    String @db.VarChar(200)
+  content String @db.Text // Markdown content
+  excerpt String @db.Text
+
+  // SEO
+  metaTitle       String?  @map("meta_title") @db.VarChar(500)
+  metaDescription String?  @map("meta_description") @db.Text
+  metaKeywords    String[] @map("meta_keywords")
+
+  // SOCIAL MEDIA (OPEN GRAPH)
+  ogImage       String? @map("og_image") @db.Text
+  ogTitle       String? @map("og_title") @db.VarChar(500)
+  ogDescription String? @map("og_description") @db.Text
+
+  // AI GENERATION
+  isAiGenerated Boolean @default(false) @map("is_ai_generated")
+  aiPrompt      String? @map("ai_prompt") @db.Text
+  aiTone        String? @map("ai_tone") @db.VarChar(100)
+
+  // PUBLISHING
+  status       BlogStatus @default(draft)
+  publishedAt  DateTime?  @map("published_at")
+  scheduledFor DateTime?  @map("scheduled_for")
+
+  // CATEGORIZATION
+  category String  @db.VarChar(100)
+  tags     String[]
+
+  // ENGAGEMENT
+  viewCount Int @default(0) @map("view_count")
+
+  // META
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  // RELATIONS
+  tenant    Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  author    User          @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  featuredCars BlogPostCar[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status, publishedAt])
+  @@index([tenantId, category])
+  @@index([tenantId, deletedAt])
+  @@map("blog_posts")
+}
+
+model BlogPostCar {
+  id         Int @id @default(autoincrement())
+  blogPostId Int @map("blog_post_id")
+  carId      Int @map("car_id")
+
+  // DISPLAY OPTIONS
+  position   Int     @default(0) // Order in article
+  showAsCard Boolean @default(true) @map("show_as_card") // Embed as card vs just link
+
+  // META
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // RELATIONS
+  blogPost BlogPost @relation(fields: [blogPostId], references: [id], onDelete: Cascade)
+  car      Car      @relation(fields: [carId], references: [id], onDelete: Cascade)
+
+  @@unique([blogPostId, carId])
+  @@index([blogPostId, position])
+  @@map("blog_post_cars")
+}
+
+enum BlogStatus {
+  draft
+  published
+  scheduled
+  archived
 }

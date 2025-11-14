@@ -20,11 +20,14 @@ import { ServiceContainer } from './src/services/service-container';
 // Import routes
 import healthRoutes from './src/routes/health';
 import publicCarsRoutes from './src/routes/public/cars';
+import publicBlogRoutes from './src/routes/public/blog';
+import sitemapRoutes from './src/routes/public/sitemap';
 
 import whatsappWebhookRoutes from './src/routes/webhook/whatsapp';
 import adminAuthRoutes from './src/routes/admin/auth';
 import adminAnalyticsRoutes from './src/routes/admin/analytics';
 import adminCarsRoutes from './src/routes/admin/cars';
+import adminBlogRoutes from './src/routes/admin/blog';
 import adminDashboardRoutes from './src/routes/admin/dashboard';
 import adminLeadsRoutes from './src/routes/admin/leads';
 import adminUsersRoutes from './src/routes/admin/users';
@@ -190,6 +193,8 @@ app.post('/api/csp-report', async (c) => {
 
 // Public API routes
 app.route('/api/cars', publicCarsRoutes);
+app.route('/api/blog', publicBlogRoutes);
+app.route('/sitemap.xml', sitemapRoutes);
 
 // Tenant routes (public)
 app.route('/api/tenant', tenantRoutes);
@@ -204,6 +209,7 @@ app.route('/webhook/whatsapp', whatsappWebhookRoutes);
 app.route('/api/admin/auth', adminAuthRoutes);
 app.route('/api/admin/analytics', adminAnalyticsRoutes);
 app.route('/api/admin/cars', adminCarsRoutes);
+app.route('/api/admin/blog', adminBlogRoutes);
 app.route('/api/admin/dashboard', adminDashboardRoutes);
 app.route('/api/admin/leads', adminLeadsRoutes);
 app.route('/api/admin/users', adminUsersRoutes);
@@ -229,10 +235,13 @@ app.get('/api', (c) => {
       health: '/health',
       public: {
         cars: '/api/cars',
+        blog: '/api/blog',
+        sitemap: '/sitemap.xml',
       },
       admin: {
         auth: '/api/admin/auth/login',
         cars: '/api/admin/cars',
+        blog: '/api/admin/blog',
         leads: '/api/admin/leads',
         whatsapp: '/api/admin/whatsapp',
         pairingPage: '/pairing.html',
@@ -491,12 +500,15 @@ console.log(`Database: ${env.DATABASE_URL.split('@')[1] || 'Connected'}`);
 console.log(`Storage: /uploads/* URLs served from /app/data/ directory`);
 console.log('='.repeat(60));
 console.log('API Endpoints:');
-console.log(`  Health Check:    /health`);
-console.log(`  Public Cars:     /api/cars`);
-console.log(`  Admin Login:     /api/admin/auth/login`);
-console.log(`  Admin Cars:      /api/admin/cars`);
-console.log(`  Admin Leads:     /api/admin/leads`);
-console.log(`  Admin WhatsApp:  /api/admin/whatsapp`);
+console.log(`  Health Check:     /health`);
+console.log(`  Public Cars:      /api/cars`);
+console.log(`  Public Blog:      /api/blog`);
+console.log(`  Sitemap:          /sitemap.xml`);
+console.log(`  Admin Login:      /api/admin/auth/login`);
+console.log(`  Admin Cars:       /api/admin/cars`);
+console.log(`  Admin Blog:       /api/admin/blog`);
+console.log(`  Admin Leads:      /api/admin/leads`);
+console.log(`  Admin WhatsApp:   /api/admin/whatsapp`);
 console.log(`  WhatsApp API:     /api/wa/pair`);
 console.log(`  WhatsApp Health:  /api/wa/health`);
 console.log(`  Super Admin:      /api/super-admin/auth/login`);
@@ -504,7 +516,6 @@ console.log(`  SA Tenants:       /api/super-admin/tenants`);
 console.log(`  SA Analytics:     /api/super-admin/analytics/global`);
 console.log(`  SA Monitoring:    /api/super-admin/monitoring/health`);
 console.log(`  SA Settings:      /api/super-admin/settings`);
-
 console.log(`  WhatsApp Webhook: /webhook/whatsapp`);
 console.log('='.repeat(60));
 

@@ -28,6 +28,12 @@ export function AdminSidebar({ currentPath, className = '' }: AdminSidebarProps)
       description: 'Search demand',
     },
     {
+      path: '/admin/blog',
+      label: 'Blog',
+      icon: '✍️',
+      description: 'Content management',
+    },
+    {
       path: '/admin/whatsapp',
       label: 'WhatsApp',
       icon: '📱',

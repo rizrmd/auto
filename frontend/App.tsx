@@ -19,6 +19,8 @@ import { AdminDashboardPage } from './src/pages/AdminDashboardPage';
 import { AdminAnalyticsPage } from './src/pages/AdminAnalyticsPage';
 import { AdminWhatsAppPage } from './src/pages/AdminWhatsAppPage';
 import { AdminUsersPage } from './src/pages/AdminUsersPage';
+import { BlogListingPage } from './src/pages/BlogListingPage';
+import { BlogDetailPage } from './src/pages/BlogDetailPage';
 
 export function App() {
   // Simple client-side routing based on URL path
@@ -62,7 +64,22 @@ export function App() {
     // Error test page (development/testing only)
     PageComponent = ErrorTest;
     pageProps = {};
-    } else if (path.startsWith('/cars/')) {
+  } else if (path.startsWith('/blog/')) {
+    // Blog detail page: /blog/tips-membeli-avanza-bekas
+    const slug = path.replace('/blog/', '');
+    PageComponent = BlogDetailPage;
+    pageProps = { slug };
+  } else if (path === '/blog') {
+    // Blog listing page: /blog?category=tips&search=avanza
+    PageComponent = BlogListingPage;
+    pageProps = {
+      initialFilters: {
+        category: params.get('category') || undefined,
+        tag: params.get('tag') || undefined,
+        search: params.get('search') || undefined,
+      }
+    };
+  } else if (path.startsWith('/cars/')) {
     // Car detail page: /cars/avanza-2020-hitam-a01
     const slug = path.replace('/cars/', '');
     PageComponent = CarDetailPage;

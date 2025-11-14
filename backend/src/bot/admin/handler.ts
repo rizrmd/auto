@@ -10,6 +10,7 @@ import { StatusCommand } from './commands/status';
 import { ListCommand } from './commands/list';
 import { UploadCommand } from './commands/upload';
 import { DeleteCommand } from './commands/delete';
+import { BlogCommand } from './commands/blog';
 
 export class AdminBotHandler {
   private prisma: PrismaClient;
@@ -19,6 +20,7 @@ export class AdminBotHandler {
   private listCommand: ListCommand;
   private uploadCommand: UploadCommand;
   private deleteCommand: DeleteCommand;
+  private blogCommand: BlogCommand;
 
   constructor(prisma: PrismaClient, stateManager: StateManager) {
     this.prisma = prisma;
@@ -28,6 +30,7 @@ export class AdminBotHandler {
     this.listCommand = new ListCommand(prisma);
     this.uploadCommand = new UploadCommand(prisma, stateManager, this.uploadFlowV2);
     this.deleteCommand = new DeleteCommand(prisma, stateManager);
+    this.blogCommand = new BlogCommand(prisma, stateManager);
   }
 
   /**
@@ -77,6 +80,17 @@ export class AdminBotHandler {
             state?.context || {}
           );
         }
+
+        if (currentFlow === 'blog_generation') {
+          // Allow /blog to restart flow
+          if (command.name === 'blog') {
+            await this.stateManager.resetState(tenant.id, userPhone);
+            return await this.blogCommand.execute(tenant, userPhone, message);
+          }
+
+          // Continue with blog generation flow
+          return await this.blogCommand.processStep(tenant, userPhone, message);
+        }
       }
 
       // Handle commands
@@ -93,6 +107,9 @@ export class AdminBotHandler {
         case 'delete':
         case 'hapus':
           return await this.deleteCommand.execute(tenant, userPhone, command.args);
+
+        case 'blog':
+          return await this.blogCommand.execute(tenant, userPhone, message);
 
         case 'help':
           return this.buildHelpResponse(userType);
@@ -161,10 +178,19 @@ export class AdminBotHandler {
     response += `/cancel - Batalkan proses\n\n`;
 
     if (userType === 'admin') {
-      response += `👑 *Admin Only:*\n`;
+      response += `👑 *Admin Only Commands:*\n`;
       response += `• Semua perintah di atas\n`;
       response += `• AI-powered copywriting\n`;
       response += `• Instant catalog upload\n\n`;
+
+      response += `📝 *BLOG COMMANDS:*\n`;
+      response += `/blog <prompt> - Generate blog post dengan AI\n\n`;
+      response += `*Contoh:*\n`;
+      response += `• /blog Tulis artikel tentang tips membeli Avanza bekas\n`;
+      response += `• /blog Panduan perawatan mobil matic untuk pemula\n`;
+      response += `• /blog Review Toyota Fortuner 2020 bekas\n\n`;
+      response += `ℹ️ Bot akan tanya tone, kategori, mobil featured, dan keywords.\n`;
+      response += `Artikel disimpan sebagai DRAFT di admin panel.\n\n`;
     }
 
     response += `❓ Ketik /help untuk lihat menu ini`;
