@@ -182,8 +182,8 @@ export class ZaiClient {
 
   constructor() {
     this.apiKey = process.env.ZAI_API_KEY || '';
-    this.baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/coding/paas/v4';
-    this.model = process.env.ZAI_MODEL || 'glm-4.5v';
+    this.baseUrl = process.env.ZAI_API_URL || 'https://api.z.ai/api/paas/v4';
+    this.model = process.env.ZAI_MODEL || 'glm-4.5';
 
     // Initialize HTTP agent with connection pooling
     this.initializeHttpAgent();
