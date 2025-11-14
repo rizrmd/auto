@@ -97,16 +97,25 @@ app.post('/', zValidator('json', CreateBlogPostSchema), async (c) => {
   const userId = c.get('userId');
   const data = c.req.valid('json');
 
-  const post = await blogService.create(tenantId, userId, data);
+  console.log('[ADMIN BLOG CREATE] Request:', { tenantId, userId, title: data.title, category: data.category });
 
-  return c.json(
-    {
-      success: true,
-      data: post,
-      message: 'Blog post created successfully',
-    },
-    201
-  );
+  try {
+    const post = await blogService.create(tenantId, userId, data);
+
+    console.log('[ADMIN BLOG CREATE] Success:', { postId: post.id, slug: post.slug });
+
+    return c.json(
+      {
+        success: true,
+        data: post,
+        message: 'Blog post created successfully',
+      },
+      201
+    );
+  } catch (error) {
+    console.error('[ADMIN BLOG CREATE] Error:', error);
+    throw error;
+  }
 });
 
 /**
