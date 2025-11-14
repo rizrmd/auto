@@ -17,7 +17,7 @@ import {
   BlogIdParamSchema,
 } from '../../validation/blog-schemas';
 import { tenantMiddleware } from '../../middleware/tenant';
-import { authMiddleware, requireAdmin } from '../../middleware/auth';
+import { authMiddleware, requireAdmin, getUser } from '../../middleware/auth';
 
 const app = new Hono();
 const blogService = new BlogService();
@@ -94,13 +94,13 @@ app.get('/:id', zValidator('param', BlogIdParamSchema), async (c) => {
  */
 app.post('/', zValidator('json', CreateBlogPostSchema), async (c) => {
   const tenantId = c.get('tenantId');
-  const userId = c.get('userId');
+  const user = getUser(c);
   const data = c.req.valid('json');
 
-  console.log('[ADMIN BLOG CREATE] Request:', { tenantId, userId, title: data.title, category: data.category });
+  console.log('[ADMIN BLOG CREATE] Request:', { tenantId, userId: user.id, title: data.title, category: data.category });
 
   try {
-    const post = await blogService.create(tenantId, userId, data);
+    const post = await blogService.create(tenantId, user.id, data);
 
     console.log('[ADMIN BLOG CREATE] Success:', { postId: post.id, slug: post.slug });
 
