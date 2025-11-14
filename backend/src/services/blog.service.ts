@@ -25,9 +25,12 @@ export class BlogService {
   async create(tenantId: number, authorId: number, data: CreateBlogPostRequest): Promise<any> {
     // Generate slug from title
     const baseSlug = this.createSlug(data.title);
+
+    // Capture tenantId in local variable to avoid closure issues
+    const tid = tenantId;
     const slug = await generateUniqueSlug(baseSlug, async (s) => {
       const existing = await prisma.blogPost.findUnique({
-        where: { tenantId_slug: { tenantId, slug: s } },
+        where: { tenantId_slug: { tenantId: tid, slug: s } },
       });
       return existing !== null;
     });
@@ -47,7 +50,6 @@ export class BlogService {
         metaTitle: data.metaTitle || data.title.substring(0, 60),
         metaDescription: data.metaDescription || data.excerpt?.substring(0, 160) || '',
         metaKeywords: data.metaKeywords || [],
-        carIds: data.carIds || [],
         viewCount: 0,
         readingTimeMinutes: this.calculateReadingTime(data.content),
         publishedAt: data.status === 'published' ? new Date() : null,
