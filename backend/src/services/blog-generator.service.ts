@@ -70,6 +70,8 @@ export class BlogGeneratorService {
 
     console.log('[BLOG GENERATOR] Starting generation...', {
       tenantId,
+      tenantIdType: typeof tenantId,
+      tenantIdValue: JSON.stringify(tenantId),
       category,
       tone,
       carIds: carIds?.length || 0,
@@ -77,10 +79,12 @@ export class BlogGeneratorService {
     });
 
     // Get tenant info
+    console.log('[BLOG GENERATOR] About to query tenant with ID:', tenantId, 'type:', typeof tenantId);
     const tenant = await prisma.tenant.findUnique({
       where: { id: tenantId },
       select: { name: true },
     });
+    console.log('[BLOG GENERATOR] Tenant query result:', tenant);
 
     if (!tenant) {
       throw new BadRequestError('Tenant not found');

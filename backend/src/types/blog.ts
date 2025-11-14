@@ -10,15 +10,9 @@
 export type BlogStatus = 'draft' | 'published' | 'archived';
 
 /**
- * Blog post category
+ * Blog post category - now accepts any string for flexibility
  */
-export type BlogCategory =
-  | 'tips_mobil'      // Tips & Trik Mobil
-  | 'berita_otomotif' // Berita Otomotif
-  | 'panduan_beli'    // Panduan Membeli
-  | 'perawatan'       // Perawatan Kendaraan
-  | 'review_mobil'    // Review Mobil
-  | 'promo';          // Promo & Penawaran
+export type BlogCategory = string;
 
 /**
  * AI generation tone
@@ -39,7 +33,7 @@ export interface BlogPost {
   content: string;
 
   // Metadata
-  category: BlogCategory;
+  category: string;
   tags: string[];
   status: BlogStatus;
 
@@ -71,7 +65,7 @@ export interface CreateBlogPostRequest {
   title: string;
   content: string;
   excerpt?: string;
-  category: BlogCategory;
+  category: string;
   tags?: string[];
   status?: BlogStatus;
   metaTitle?: string;
@@ -87,7 +81,7 @@ export interface UpdateBlogPostRequest {
   title?: string;
   content?: string;
   excerpt?: string;
-  category?: BlogCategory;
+  category?: string;
   tags?: string[];
   status?: BlogStatus;
   metaTitle?: string;
@@ -101,7 +95,7 @@ export interface UpdateBlogPostRequest {
  */
 export interface GenerateBlogContentRequest {
   prompt: string;
-  category: BlogCategory;
+  category?: string;
   carIds?: number[];
   keywords?: string[];
   tone?: AITone;
@@ -130,7 +124,7 @@ export interface BlogFilterParams {
   limit: number;
   offset: number;
   status?: BlogStatus;
-  category?: BlogCategory;
+  category?: string;
   search?: string;
   carId?: number;
   tags?: string[];

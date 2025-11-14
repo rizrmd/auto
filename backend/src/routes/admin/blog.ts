@@ -154,7 +154,8 @@ app.delete('/:id', zValidator('param', BlogIdParamSchema), async (c) => {
  * POST /generate-content - AI blog content generation
  */
 app.post('/generate-content', zValidator('json', GenerateBlogContentSchema), async (c) => {
-  const tenantId = c.get('tenantId');
+  const tenant = c.get('tenant');
+  const tenantId = tenant.id;
   const data = c.req.valid('json');
 
   console.log('[ADMIN BLOG] Generating blog content...', {
