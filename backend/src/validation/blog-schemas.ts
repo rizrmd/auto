@@ -111,7 +111,7 @@ export const GenerateBlogContentSchema = z.object({
     .string()
     .min(10, 'Prompt must be at least 10 characters')
     .max(1000, 'Prompt must not exceed 1000 characters'),
-  category: BlogCategoryEnum,
+  category: BlogCategoryEnum.optional(),
   carIds: z
     .array(z.number().int().positive())
     .max(20, 'Maximum 20 car references allowed')
