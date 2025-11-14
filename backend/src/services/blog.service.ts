@@ -26,14 +26,27 @@ export class BlogService {
     // Generate slug from title
     const baseSlug = this.createSlug(data.title);
 
-    // Capture tenantId in local variable to avoid closure issues
-    const tid = tenantId;
-    const slug = await generateUniqueSlug(baseSlug, async (s) => {
-      const existing = await prisma.blogPost.findUnique({
-        where: { tenantId_slug: { tenantId: tid, slug: s } },
+    // Generate unique slug with manual implementation to avoid closure issues
+    let slug = baseSlug;
+    let counter = 2;
+    while (true) {
+      const existing = await prisma.blogPost.findFirst({
+        where: {
+          tenantId: tenantId,
+          slug: slug,
+        },
       });
-      return existing !== null;
-    });
+
+      if (!existing) break;
+
+      slug = `${baseSlug}-${counter}`;
+      counter++;
+
+      if (counter > 1000) {
+        slug = `${baseSlug}-${Date.now()}`;
+        break;
+      }
+    }
 
     // Create blog post
     const post = await prisma.blogPost.create({
