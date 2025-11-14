@@ -170,7 +170,7 @@ function AdminAppRouter({ currentPath }: { currentPath: string }) {
     AdminPageComponent = AdminDashboardPage;
   } else if (currentPath.startsWith('/admin/analytics')) {
     AdminPageComponent = AdminAnalyticsPage;
-  } else if (currentPath.startsWith('/admin/blog/create')) {
+  } else if (currentPath.startsWith('/admin/blog/create') || currentPath.startsWith('/admin/blog/new')) {
     AdminPageComponent = AdminBlogEditorPage;
     pageProps = { mode: 'create' };
   } else if (currentPath.startsWith('/admin/blog/edit/')) {
