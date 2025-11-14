@@ -28,6 +28,14 @@ app.use('*', tenantMiddleware);
 app.use('*', authMiddleware);
 app.use('*', requireAdmin); // Only admin and owner can manage blog
 
+// Disable caching for admin routes to prevent stale data
+app.use('*', async (c, next) => {
+  await next();
+  c.header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  c.header('Pragma', 'no-cache');
+  c.header('Expires', '0');
+});
+
 /**
  * GET / - List all blog posts (including drafts)
  */
