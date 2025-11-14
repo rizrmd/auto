@@ -12,16 +12,9 @@ import { z } from 'zod';
 export const BlogStatusEnum = z.enum(['draft', 'published', 'archived']);
 
 /**
- * Blog category enum
+ * Blog category - accept any string for flexibility
  */
-export const BlogCategoryEnum = z.enum([
-  'tips_mobil',
-  'berita_otomotif',
-  'panduan_beli',
-  'perawatan',
-  'review_mobil',
-  'promo',
-]);
+export const BlogCategoryEnum = z.string().min(1).max(100);
 
 /**
  * AI tone enum
