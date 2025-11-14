@@ -19,6 +19,8 @@ import { AdminDashboardPage } from './src/pages/AdminDashboardPage';
 import { AdminAnalyticsPage } from './src/pages/AdminAnalyticsPage';
 import { AdminWhatsAppPage } from './src/pages/AdminWhatsAppPage';
 import { AdminUsersPage } from './src/pages/AdminUsersPage';
+import { AdminBlogPage } from './src/pages/AdminBlogPage';
+import { AdminBlogEditorPage } from './src/pages/AdminBlogEditorPage';
 import { BlogListingPage } from './src/pages/BlogListingPage';
 import { BlogDetailPage } from './src/pages/BlogDetailPage';
 
@@ -162,11 +164,21 @@ function AdminAppRouter({ currentPath }: { currentPath: string }) {
 
   // Determine which admin page to render
   let AdminPageComponent = AdminDashboardPage;
+  let pageProps = {};
 
   if (currentPath === '/admin' || currentPath === '/admin/') {
     AdminPageComponent = AdminDashboardPage;
   } else if (currentPath.startsWith('/admin/analytics')) {
     AdminPageComponent = AdminAnalyticsPage;
+  } else if (currentPath.startsWith('/admin/blog/create')) {
+    AdminPageComponent = AdminBlogEditorPage;
+    pageProps = { mode: 'create' };
+  } else if (currentPath.startsWith('/admin/blog/edit/')) {
+    const id = currentPath.replace('/admin/blog/edit/', '');
+    AdminPageComponent = AdminBlogEditorPage;
+    pageProps = { mode: 'edit', postId: parseInt(id) };
+  } else if (currentPath.startsWith('/admin/blog')) {
+    AdminPageComponent = AdminBlogPage;
   } else if (currentPath.startsWith('/admin/whatsapp')) {
     AdminPageComponent = AdminWhatsAppPage;
   } else if (currentPath.startsWith('/admin/users')) {
@@ -176,7 +188,7 @@ function AdminAppRouter({ currentPath }: { currentPath: string }) {
 
   return (
     <AdminLayout currentPath={currentPath}>
-      <AdminPageComponent />
+      <AdminPageComponent {...pageProps} />
     </AdminLayout>
   );
 }

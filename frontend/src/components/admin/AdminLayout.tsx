@@ -29,6 +29,12 @@ export function AdminLayout({ currentPath, children }: AdminLayoutProps) {
       return 'Dashboard';
     } else if (currentPath.startsWith('/admin/analytics')) {
       return 'Analytics';
+    } else if (currentPath.startsWith('/admin/blog/create')) {
+      return 'Create Blog Post';
+    } else if (currentPath.startsWith('/admin/blog/edit')) {
+      return 'Edit Blog Post';
+    } else if (currentPath.startsWith('/admin/blog')) {
+      return 'Blog Management';
     } else if (currentPath.startsWith('/admin/whatsapp')) {
       return 'WhatsApp Management';
     } else if (currentPath.startsWith('/admin/users')) {
@@ -42,6 +48,12 @@ export function AdminLayout({ currentPath, children }: AdminLayoutProps) {
       return 'Overview of your tenant status';
     } else if (currentPath.startsWith('/admin/analytics')) {
       return 'Track customer search demand and trends';
+    } else if (currentPath.startsWith('/admin/blog/create')) {
+      return 'Write a new blog post with AI-powered content generation';
+    } else if (currentPath.startsWith('/admin/blog/edit')) {
+      return 'Update and edit your blog post';
+    } else if (currentPath.startsWith('/admin/blog')) {
+      return 'Manage blog posts and AI-generated content';
     } else if (currentPath.startsWith('/admin/whatsapp')) {
       return 'Manage WhatsApp bot connection and settings';
     } else if (currentPath.startsWith('/admin/users')) {

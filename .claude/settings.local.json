@@ -89,7 +89,8 @@
       "Bash(bunx prisma db pull:*)",
       "Bash(temp_migration_check.sql)",
       "Bash(do echo '=== Deployment Check #$i ===')",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []
