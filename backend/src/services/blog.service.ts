@@ -48,11 +48,11 @@ export class BlogService {
       }
     }
 
-    // Create blog post
+    // Create blog post with relation syntax
     const post = await prisma.blogPost.create({
       data: {
-        tenantId,
-        authorId,
+        tenant: { connect: { id: tenantId } },
+        author: { connect: { id: authorId } },
         title: data.title,
         slug,
         content: data.content,
